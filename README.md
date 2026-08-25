@@ -93,11 +93,12 @@ npm run lint
 npm run typecheck
 npm run test:unit
 npm run test:billing-e2e
+npm run test:billing-rollback
 npm run build
 npm run test:e2e
 ```
 
-The dedicated billing browser suite uses local Supabase-compatible fixtures and does not contact Stripe or the linked Supabase project. It covers unsubscribed and expired redirects, active and canceled access, real session creation, Checkout plan submission, portal recovery, safe billing errors, mobile layout, and accessibility. The main browser suite covers the live public subject aggregate, one-click demo authentication, protected routes, sign-out, password recovery, dashboard navigation, billing isolation in demo mode, tutor and timed sessions, refresh restoration, notes, flags, review links, reset confirmation, offline fallback, light and dark accessibility, 375px layouts, and an iPhone viewport. Real login failure and password-reset submission checks are opt-in because they contact the configured Supabase project:
+The dedicated billing browser suite uses local Supabase-compatible fixtures and does not contact Stripe or the linked Supabase project. It covers unsubscribed and expired redirects, active and canceled access, real session creation, Checkout plan submission, portal recovery, safe billing errors, mobile layout, and accessibility. The rollback suite separately proves that disabling both documented enforcement switches restores dashboard and session access for an invited user without a subscription. The main browser suite covers the live public subject aggregate, one-click demo authentication, protected routes, sign-out, password recovery, dashboard navigation, billing isolation in demo mode, tutor and timed sessions, refresh restoration, notes, flags, review links, reset confirmation, offline fallback, light and dark accessibility, 375px layouts, and an iPhone viewport. Real login failure and password-reset submission checks are opt-in because they contact the configured Supabase project:
 
 ```bash
 RUN_SUPABASE_E2E=1 npm run test:e2e

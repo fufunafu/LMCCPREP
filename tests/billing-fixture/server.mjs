@@ -76,11 +76,11 @@ async function requestBody(request) {
 }
 
 function entitled() {
-  return ["active", "canceled_active", "past_due"].includes(billingState);
+  return ["active", "canceled_active", "past_due", "rollback_disabled"].includes(billingState);
 }
 
 function customerRows() {
-  return billingState === "unsubscribed" ? [] : [{ stripe_customer_id: "cus_fixture" }];
+  return ["unsubscribed", "rollback_disabled"].includes(billingState) ? [] : [{ stripe_customer_id: "cus_fixture" }];
 }
 
 function subscriptionRows() {
@@ -186,7 +186,7 @@ const server = createServer(async (request, response) => {
   }
   if (url.pathname === "/__fixture/state" && request.method === "POST") {
     const body = await requestBody(request);
-    const allowed = ["unsubscribed", "active", "canceled_active", "expired", "past_due"];
+    const allowed = ["unsubscribed", "active", "canceled_active", "expired", "past_due", "rollback_disabled"];
     if (!allowed.includes(body?.state)) return json(response, 400, { error: "Unknown fixture state" });
     billingState = body.state;
     return json(response, 200, { state: billingState });
