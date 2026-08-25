@@ -8,7 +8,7 @@ Billing is implemented locally, disabled by default, and not approved for live p
 
 | Phase | Status | Evidence and remaining work |
 | --- | --- | --- |
-| 0. Reproducible database | Implemented | The Git repository root contains the complete ordered `supabase/migrations` history. README setup commands use tracked paths. Vercel reports Root Directory `.` for the repository rooted at `web/`. Local Supabase runtime metadata, environment files, source exports, and credentials are ignored. |
+| 0. Reproducible database | Implemented locally, push pending | Local `main` contains the complete ordered `supabase/migrations` history. README setup commands use tracked paths. Vercel reports Root Directory `.` for the repository rooted at `web/`. Local Supabase runtime metadata, environment files, source exports, and credentials are ignored. Pushing the local billing commit to `origin/main` requires explicit owner approval. |
 | 1. Stripe account and catalog | Owner action required | No Stripe variables currently exist in Vercel. The owner must approve prices and terms, create the test product and CAD prices, configure the portal, and create the webhook endpoint. |
 | 2. Billing data model | Implemented and applied | Billing migrations `0009_billing.sql` and `0010_billing_reconciliation.sql` are applied remotely with enforcement off. Migration `0011_deduplicate_questions.sql` is unrelated and remains pending; later migration `0012_question_tags.sql` is applied. |
 | 3. Server Stripe foundation | Implemented | Stripe, server-only Stripe and Supabase clients, configuration validation, trusted plan mapping, entitlement helpers, key-mode checks, approved-price enforcement during webhook synchronization, and disabled-by-default flags are present. |
@@ -30,13 +30,15 @@ Billing is implemented locally, disabled by default, and not approved for live p
 - Latest Vercel Production and billing Preview deployments are Ready with billing disabled.
 - The canonical Production public and demo smoke suite passed on 2026-08-25: 17 tests passed and the 2 real-Supabase mutation checks remained intentionally opt-in.
 - The application, billing plan, and readiness preflight consistently use the customer-facing name `Montreal QBank`. Infrastructure identifiers remain unchanged.
+- Local `main` contains the complete billing implementation, but `origin/main` does not yet contain that commit because the direct push requires explicit owner approval.
 
 ## Safe next sequence
 
-1. Obtain the remaining owner decisions listed in `BILLING_LAUNCH_DECISIONS.md`.
-2. Configure Stripe test mode and Vercel Preview variables without sharing values in chat or source control.
-3. Run Stripe Checkout, portal, signed webhook, decline, retry, cancellation, duplicate, and reconciliation tests in Preview.
-4. Add approved complimentary grants.
-5. Configure matching live resources and deploy with database enforcement still off.
-6. Deploy application enforcement first, verify health, then enable database enforcement.
-7. Run production smoke and rollback tests, then monitor the first 48 hours.
+1. After explicit owner approval, push local `main` to `origin/main` and verify the deployment from that commit.
+2. Obtain the remaining owner decisions listed in `BILLING_LAUNCH_DECISIONS.md`.
+3. Configure Stripe test mode and Vercel Preview variables without sharing values in chat or source control.
+4. Run Stripe Checkout, portal, signed webhook, decline, retry, cancellation, duplicate, and reconciliation tests in Preview.
+5. Add approved complimentary grants.
+6. Configure matching live resources and deploy with database enforcement still off.
+7. Deploy application enforcement first, verify health, then enable database enforcement.
+8. Run production smoke and rollback tests, then monitor the first 48 hours.
