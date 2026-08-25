@@ -6,6 +6,12 @@ test("public landing shows all five live core subject totals", async ({ page, co
   await page.goto("/");
   const subjects = page.getByRole("region", { name: /questions across five core subjects/i });
   await expect(subjects.getByRole("heading", { level: 3 })).toHaveCount(5);
+  await expect(page.getByText("$59", { exact: true })).toBeVisible();
+  await expect(page.getByText("$349", { exact: true })).toBeVisible();
+
+  await page.goto("/refund-policy");
+  await expect(page.getByRole("heading", { name: "Initial-purchase refunds" })).toBeVisible();
+  await expect(page.getByText(/no more than 25 questions/)).toBeVisible();
 });
 
 test("demo login, protected routes, and sign-out", async ({ page, consoleErrors }) => {
