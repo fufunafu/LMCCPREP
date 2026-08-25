@@ -54,7 +54,7 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [ ] Checkout success, decline, cancellation, renewal failure, duplicate event, and portal tests pass.
 - [ ] Complimentary grants are added for approved users.
 - [ ] Matching live product, prices, portal, and webhook are configured.
-- [ ] Production legal, support, tax, and business information is published.
+- [x] Production legal, support, tax, and business information is published and verified on the canonical site. Deployed and smoke-tested 2026-08-25.
 - [ ] An approved live transaction and refund test passes, if required.
 - [ ] Application enforcement is deployed first, then database enforcement is enabled and both are verified together.
 - [ ] Production smoke tests pass and rollback is verified.
