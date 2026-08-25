@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.BILLING_FIXTURE === "true" ? ".next-billing-fixture" : ".next",
   async headers() {
     return [
       {
@@ -20,7 +21,7 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
         ],
       },
-      ...["/dashboard/:path*", "/create/:path*", "/questions/:path*", "/stats/:path*", "/settings/:path*", "/session/:path*", "/author/:path*", "/auth/:path*", "/login", "/forgot-password"].map((source) => ({
+      ...["/dashboard/:path*", "/create/:path*", "/questions/:path*", "/stats/:path*", "/settings/:path*", "/billing/:path*", "/session/:path*", "/author/:path*", "/auth/:path*", "/login", "/forgot-password"].map((source) => ({
         source,
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
       })),

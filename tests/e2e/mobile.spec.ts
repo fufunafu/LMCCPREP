@@ -24,7 +24,7 @@ test("@mobile supports navigation and question controls at iPhone width", async 
 test("@mobile every public and private page fits a 375px viewport", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.setViewportSize({ width: 375, height: 812 });
-  for (const path of ["/", "/login", "/forgot-password"]) {
+  for (const path of ["/", "/login", "/forgot-password", "/terms", "/privacy", "/refund-policy", "/support"]) {
     await page.goto(path);
     await expectNoHorizontalOverflow(page);
   }
@@ -36,6 +36,7 @@ test("@mobile every public and private page fits a 375px viewport", async ({ pag
     "/questions",
     "/stats",
     "/settings",
+    "/billing",
     "/author",
     "/session/demo?mode=tutor",
     "/session/demo/review?mode=tutor",

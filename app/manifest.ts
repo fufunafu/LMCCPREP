@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "LMCC Prep",
-    short_name: "LMCC Prep",
+    name: "Montreal QBank",
+    short_name: "Montreal QBank",
     description: "Focused question bank practice for the MCCQE Part I.",
     start_url: "/dashboard",
     scope: "/",

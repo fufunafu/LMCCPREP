@@ -19,6 +19,7 @@ export function AuthorQuestion({ subjects }: { subjects: Subject[] }) {
   const [pending, start] = useTransition();
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? "");
   const [topicName, setTopicName] = useState("");
+  const [tags, setTags] = useState("");
   const [stem, setStem] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
   const [answer, setAnswer] = useState(0);
@@ -37,6 +38,7 @@ export function AuthorQuestion({ subjects }: { subjects: Subject[] }) {
         subjectId, topicName: topicName.trim(), stem: stem.trim(),
         options: options.map((o) => o.trim()).filter(Boolean),
         answerIdx: answer, explanation: explanation.split(/\n\n+/).map((p) => p.trim()).filter(Boolean),
+        tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       });
       toast.success("Question added", { description: "It's now in your bank and available in sessions." });
       router.push("/questions");
@@ -52,6 +54,7 @@ export function AuthorQuestion({ subjects }: { subjects: Subject[] }) {
         <Card><CardHeader><CardTitle className="text-base">Category</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2"><Label htmlFor="subject">Subject</Label><select id="subject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
           <div className="space-y-2"><Label htmlFor="topic">Topic</Label><Input id="topic" value={topicName} onChange={(e) => setTopicName(e.target.value)} placeholder="e.g. Preeclampsia" /></div>
+          <div className="space-y-2 sm:col-span-2"><Label htmlFor="tags">Search tags</Label><Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. hypertension, pregnancy, emergency management" /><p className="text-xs text-muted-foreground">Separate tags with commas. Subject, topic, and the correct answer are added automatically.</p></div>
         </CardContent></Card>
 
         <Card><CardHeader><CardTitle className="text-base">Question</CardTitle></CardHeader><CardContent className="space-y-4">

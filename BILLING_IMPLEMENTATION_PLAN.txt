@@ -1,0 +1,444 @@
+MONTREAL QBANK BILLING IMPLEMENTATION PLAN
+Version: 1.0
+Date: 2026-08-25
+
+OBJECTIVE
+
+Add secure subscription billing to Montreal QBank using Stripe Checkout, Stripe Billing,
+the Stripe customer portal, Supabase, Next.js, Vercel, and the existing authentication
+system. Preserve the invite-only beta and demo experience while billing is developed
+and tested. Enable the paywall only after test-mode and production checks pass.
+
+
+RECOMMENDED LAUNCH MODEL
+
+1. Keep account creation invite-only for the first billing release.
+2. Require an authenticated invited user to subscribe before entering the paid app.
+3. Offer one Montreal QBank product with two recurring prices:
+   - Monthly subscription in CAD
+   - Annual subscription in CAD
+4. Use Stripe-hosted Checkout for purchases.
+5. Use the Stripe-hosted customer portal for payment methods, invoices, and
+   cancellation.
+6. Allow active and trialing subscriptions to use the paid app.
+7. Let cancellations retain access until the paid period ends.
+8. Keep demo mode free and fully isolated from both Stripe and Supabase writes.
+9. Support explicit complimentary access grants for administrators, reviewers,
+   and selected beta users.
+10. Do not add multiple feature tiers in the first release.
+
+
+PRODUCT DECISIONS REQUIRED BEFORE IMPLEMENTATION
+
+The owner must decide and record these values before production configuration:
+
+1. Monthly price in CAD.
+2. Annual price in CAD.
+3. Whether to offer a free trial and its duration.
+4. Whether prices include or exclude applicable tax.
+5. Refund policy.
+6. Cancellation policy. Recommended: cancel at the end of the paid period.
+7. Grace period after a failed renewal. Recommended starting point: three days.
+8. Whether existing invited users receive complimentary access and for how long.
+9. Whether the public access-request form remains the only onboarding path.
+10. Support email, legal business name, statement descriptor, and business address.
+
+
+PHASE 0: MAKE DATABASE INFRASTRUCTURE REPRODUCIBLE
+
+Current issue:
+
+The GitHub repository is rooted at web/, while the existing Supabase migrations are
+stored in ../supabase and are not present in GitHub. Billing must not add another
+untracked production migration.
+
+Work:
+
+1. Add a supabase/migrations directory inside the GitHub repository.
+2. Copy the existing ordered migrations into that tracked directory.
+3. Add the billing migration after the current highest migration number.
+4. Update README commands so a fresh clone can apply the complete schema.
+5. Confirm seed files contain no credentials or private user data.
+6. Confirm Vercel continues to use the repository root as the Next.js project root.
+
+Exit criteria:
+
+- A fresh clone contains every migration needed to reproduce production.
+- README setup commands point to paths that exist in the GitHub repository.
+- No secrets, local database files, exports, or source PDFs are committed.
+
+
+PHASE 1: STRIPE ACCOUNT AND CATALOG SETUP
+
+Owner actions in Stripe test mode:
+
+1. Complete the Stripe business profile.
+2. Create one product named Montreal QBank.
+3. Create monthly and annual recurring CAD prices.
+4. Decide whether either price includes a trial.
+5. Configure Checkout branding and customer-facing business information.
+6. Enable and configure the customer portal.
+7. Allow customers to update payment methods, view invoices, and cancel at period end.
+8. Configure the statement descriptor and support contact.
+9. Decide whether to enable Stripe Tax.
+10. If Stripe Tax is enabled, configure registrations and the appropriate product tax
+    code before collecting tax.
+
+Outputs:
+
+- Test product ID
+- Test monthly price ID
+- Test annual price ID
+- Stripe test secret key
+- Test webhook signing secret, created later with the webhook endpoint
+
+Do not place any secret or live key in source control.
+
+
+PHASE 2: SUPABASE BILLING DATA MODEL
+
+Add a migration with the following tables.
+
+1. billing_customers
+
+   - user_id uuid primary key references auth.users(id) on delete cascade
+   - stripe_customer_id text unique not null
+   - created_at timestamptz not null default now()
+   - updated_at timestamptz not null default now()
+
+2. billing_subscriptions
+
+   - stripe_subscription_id text primary key
+   - user_id uuid not null references auth.users(id) on delete cascade
+   - stripe_customer_id text not null
+   - stripe_price_id text not null
+   - status text not null
+   - current_period_end timestamptz
+   - cancel_at_period_end boolean not null default false
+   - trial_end timestamptz
+   - created_at timestamptz not null default now()
+   - updated_at timestamptz not null default now()
+
+3. billing_access_grants
+
+   - user_id uuid primary key references auth.users(id) on delete cascade
+   - reason text not null
+   - expires_at timestamptz
+   - created_at timestamptz not null default now()
+
+4. stripe_webhook_events
+
+   - stripe_event_id text primary key
+   - event_type text not null
+   - received_at timestamptz not null default now()
+   - processed_at timestamptz
+   - processing_error text
+
+Database rules:
+
+1. Enable RLS on every billing table.
+2. Let an authenticated user select only their own customer and subscription summary.
+3. Do not let browser clients insert, update, or delete billing rows.
+4. Perform webhook writes with a server-only service-role client.
+5. Add indexes for user_id, stripe_customer_id, status, and current_period_end.
+6. Add a stable database function that determines whether auth.uid() has access.
+7. Treat active and trialing as entitled.
+8. Treat an unexpired access grant as entitled.
+9. Define the chosen failed-payment grace policy explicitly.
+10. Never rely only on a client-visible status or redirect parameter.
+
+Content protection:
+
+The current content policies allow every authenticated user to read all subjects,
+topics, and questions. Update those RLS policies so paid content is readable only when
+the entitlement function returns true. Keep the public aggregate subject-count RPC
+available to the marketing page. Demo content must continue to come from local mock
+data and must not require a Supabase query.
+
+
+PHASE 3: SERVER-SIDE STRIPE FOUNDATION
+
+Dependencies and modules:
+
+1. Add the official stripe Node.js package.
+2. Add lib/stripe/server.ts with a server-only Stripe client.
+3. Add lib/billing.ts for subscription normalization and access decisions.
+4. Add a server-only Supabase admin client used only by trusted webhook processing.
+5. Keep all secret-bearing modules protected by the server-only package boundary.
+
+Environment variables:
+
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- STRIPE_PRICE_MONTHLY
+- STRIPE_PRICE_ANNUAL
+- SUPABASE_SERVICE_ROLE_KEY
+- BILLING_REQUIRED
+- BILLING_GRACE_DAYS
+
+Rules:
+
+1. No Stripe secret may use a NEXT_PUBLIC_ prefix.
+2. Hosted Checkout does not require exposing a publishable key in the first release.
+3. Preview deployments must use Stripe test-mode keys and test price IDs.
+4. Production must use live-mode keys and live price IDs.
+5. BILLING_REQUIRED must default to false when absent.
+6. Validate required billing environment variables at server startup or first use and
+   return a clear configuration error without leaking secret values.
+
+
+PHASE 4: CHECKOUT, WEBHOOK, AND PORTAL ENDPOINTS
+
+Add these routes:
+
+1. POST /api/billing/checkout
+
+   - Require a real authenticated Supabase user.
+   - Reject demo sessions.
+   - Accept only a known monthly or annual plan identifier.
+   - Never accept an arbitrary Stripe price ID from the browser.
+   - Find or create exactly one Stripe customer for the user.
+   - Attach the Supabase user ID as trusted Stripe metadata.
+   - Set client_reference_id to the Supabase user ID.
+   - Create a subscription-mode Checkout Session.
+   - Enable automatic tax only if the account is configured for it.
+   - Use trusted success and cancellation URLs.
+   - Return or redirect to the Stripe-hosted Checkout URL.
+
+2. POST /api/billing/portal
+
+   - Require a real authenticated Supabase user.
+   - Reject demo sessions.
+   - Look up the stored Stripe customer ID on the server.
+   - Create a short-lived customer portal session on demand.
+   - Return or redirect to the hosted portal URL.
+
+3. POST /api/stripe/webhook
+
+   - Read the raw request body.
+   - Verify the Stripe-Signature header with STRIPE_WEBHOOK_SECRET.
+   - Reject invalid signatures.
+   - Insert the Stripe event ID before processing to make handling idempotent.
+   - Safely accept duplicate deliveries without duplicating state.
+   - Return a success response only after the event is safely recorded and handled.
+   - Log event IDs and event types, but never secrets or full payment details.
+
+Webhook events to handle:
+
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.paid
+- invoice.payment_failed
+
+Webhook behavior:
+
+1. Upsert customer and subscription identifiers.
+2. Store the authoritative Stripe subscription status and period end.
+3. Provision access only from verified webhook data.
+4. Remove access according to the cancellation and failed-payment policy.
+5. Keep cancellation access through current_period_end when appropriate.
+6. Record processing errors so failed events can be replayed.
+7. Add a reconciliation function that retrieves the current Stripe subscription when
+   local state is missing or clearly stale.
+
+
+PHASE 5: ENTITLEMENT ENFORCEMENT
+
+User experience enforcement:
+
+1. Add /billing as a signed-in subscription selection and status page.
+2. In the private app layout, redirect signed-in but unentitled users to /billing when
+   BILLING_REQUIRED is true.
+3. Allow /settings and the billing portal even when a subscription is past due or
+   canceled so users can repair or inspect billing.
+4. Keep demo mode working without Stripe or Supabase billing calls.
+5. Allow explicit access grants to bypass subscription checks.
+6. Prevent redirect loops between /billing, /settings, and private layouts.
+
+Server enforcement:
+
+1. Create requireEntitledUser() for paid server actions and route handlers.
+2. Apply it to session creation, attempts, notes, flags, reports, authoring, question
+   browsing, stats, and paid content retrieval as appropriate.
+3. Keep the database RLS entitlement check as the final enforcement layer.
+4. Do not trust plan names, subscription status, user IDs, or return URLs supplied by
+   the browser.
+5. Preserve the current safe-return-path protections.
+
+
+PHASE 6: BILLING USER INTERFACE
+
+Marketing and onboarding:
+
+1. Add a clear pricing section to the public landing page.
+2. Explain monthly and annual billing, cancellation timing, tax treatment, and any
+   trial in plain language.
+3. Keep Request access if onboarding remains invite-only.
+4. Add Terms, Privacy, Refund Policy, and support links before accepting live payment.
+5. Add a clear non-affiliation statement for the examination organization.
+
+Billing page:
+
+1. Show monthly and annual choices.
+2. Mark the annual savings only after prices are final.
+3. Disable repeated checkout submission while a request is pending.
+4. Show useful configuration, network, and Checkout errors.
+5. Show a post-Checkout waiting state while the webhook confirms access.
+6. Poll or refresh the server state for a short bounded period after successful
+   Checkout, then provide a manual refresh action.
+7. Never grant access solely because the success URL was reached.
+
+Settings page:
+
+1. Add a Billing card.
+2. Show plan, status, next renewal or access-end date, and cancellation state.
+3. Add Manage billing to open the Stripe customer portal.
+4. Show a clear recovery action for past-due subscriptions.
+5. In demo mode, show that billing is not required and do not render a live portal
+   action.
+
+
+PHASE 7: TESTING
+
+Unit tests:
+
+1. Entitlement decisions for active, trialing, past_due, canceled, unpaid, incomplete,
+   and expired records.
+2. Grace-period boundaries.
+3. Monthly and annual plan mapping.
+4. Safe return URL handling.
+5. Subscription event normalization.
+
+Webhook tests:
+
+1. Valid signature accepted.
+2. Invalid or missing signature rejected.
+3. Duplicate event handled once.
+4. Events delivered out of order do not overwrite newer subscription state.
+5. Checkout completion links the correct Supabase user.
+6. Paid invoice extends access.
+7. Failed invoice applies the chosen grace policy.
+8. Subscription cancellation removes access at the correct time.
+9. Unknown event types return safely.
+
+Browser tests:
+
+1. Signed-out user is sent to login.
+2. Signed-in unsubscribed user is sent to /billing.
+3. Active subscriber can enter the dashboard and create a session.
+4. Canceled subscriber retains access until period end.
+5. Expired subscriber returns to /billing.
+6. Manage billing opens a mocked portal session.
+7. Checkout initiation accepts only known plans.
+8. Demo mode never contacts Stripe or Supabase.
+9. Billing pages fit 375px and iPhone viewports.
+10. Billing pages pass serious and critical accessibility checks.
+11. Billing errors are useful and do not expose secrets.
+
+Quality gates:
+
+- npm run lint
+- npm run typecheck
+- npm run build
+- npx playwright test
+- Stripe CLI webhook forwarding tests in test mode
+- Production smoke tests after release
+
+
+PHASE 8: SAFE ROLLOUT
+
+1. Keep BILLING_REQUIRED=false while implementing.
+2. Apply and verify the tracked billing migration in the linked Supabase project.
+3. Create Stripe test products, prices, portal configuration, and webhook endpoint.
+4. Deploy a Vercel preview with test-mode Stripe environment variables.
+5. Test successful payment, required authentication, card decline, failed renewal,
+   cancellation, duplicate webhook delivery, and portal access.
+6. Confirm demo requests contact neither Stripe nor Supabase.
+7. Add complimentary grants for approved beta users before enabling the paywall.
+8. Create matching live-mode Stripe products and prices.
+9. Configure the live webhook endpoint:
+   https://lmcc-prep.vercel.app/api/stripe/webhook
+10. Add production Stripe variables to Vercel without exposing their values.
+11. Deploy with BILLING_REQUIRED=false and verify live webhook delivery.
+12. Perform one explicitly approved live transaction and refund test if desired.
+13. Set BILLING_REQUIRED=true only after the live state is confirmed.
+14. Deploy to production and run the complete production smoke suite.
+15. Monitor Stripe events, Vercel errors, and Supabase billing rows closely for the
+    first 48 hours.
+
+
+ROLLBACK PLAN
+
+If access or billing behavior is incorrect:
+
+1. Set BILLING_REQUIRED=false in Vercel and redeploy.
+2. Keep the webhook endpoint active so subscription state continues to synchronize.
+3. Do not delete Stripe customers, subscriptions, or billing rows during rollback.
+4. Restore the previous Vercel deployment if the issue is unrelated to the feature
+   flag.
+5. Reconcile affected subscriptions from Stripe before enabling billing again.
+6. Refund or correct any erroneous live transaction through the Stripe Dashboard
+   under the approved refund policy.
+
+
+SECURITY CHECKLIST
+
+- Stripe secret and webhook keys are server-only.
+- Service-role Supabase access is server-only.
+- Webhook signatures use the raw body and are always verified.
+- Webhook processing is idempotent.
+- Browser input cannot choose arbitrary prices or users.
+- Checkout and portal routes require the authenticated user from server claims.
+- Paid content RLS checks entitlement at the database layer.
+- Demo mode performs no Stripe or Supabase billing request.
+- Logs contain no keys, card data, full webhook payloads, or unnecessary personal data.
+- Preview uses test-mode keys only.
+- Production uses live-mode keys only.
+- Open redirects are prevented.
+- Billing pages and routes are excluded from indexing.
+- Cancellation, refund, privacy, and support information is visible before payment.
+
+
+SUCCESS CRITERIA
+
+Billing is ready when all of the following are true:
+
+1. A test user can subscribe through hosted Checkout.
+2. A verified webhook grants access without relying on the success redirect.
+3. An active or trialing subscriber can use all paid app features.
+4. An unsubscribed or expired user cannot read paid content through the UI or direct
+   Supabase API access.
+5. A user can manage payment methods, invoices, and cancellation through the portal.
+6. Duplicate and out-of-order webhooks do not corrupt subscription state.
+7. Failed payments and cancellations follow the documented policy.
+8. Demo mode remains isolated and functional.
+9. Mobile, accessibility, lint, TypeScript, build, and browser tests pass.
+10. GitHub contains the complete application and migration history.
+11. The production deployment is healthy and the rollback flag is tested.
+
+
+MANUAL INPUTS NEEDED TO START
+
+1. Monthly CAD price.
+2. Annual CAD price.
+3. Trial decision and duration.
+4. Failed-payment grace period.
+5. Refund and cancellation policy.
+6. Existing-user complimentary-access policy.
+7. Stripe account access and completed business profile.
+8. Test-mode Stripe secret key and price IDs, entered directly into local and Vercel
+   secret storage rather than shared in chat or committed to Git.
+
+
+REFERENCE DOCUMENTATION
+
+- Stripe subscription Checkout:
+  https://docs.stripe.com/payments/checkout/build-subscriptions
+- Stripe subscription webhooks:
+  https://docs.stripe.com/billing/subscriptions/webhooks
+- Stripe customer portal:
+  https://docs.stripe.com/customer-management
+- Stripe Tax with Checkout:
+  https://docs.stripe.com/tax/checkout

@@ -8,7 +8,7 @@ export function Logo({ className, compact = false }: { className?: string; compa
         <span className="h-3.5 w-1 rounded-full bg-white" />
         <span className="absolute h-1 w-3.5 rounded-full bg-white" />
       </span>
-      {!compact && <span>LMCC Prep</span>}
+      {!compact && <span>Montreal QBank</span>}
     </Link>
   );
 }

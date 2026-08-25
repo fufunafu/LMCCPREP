@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -54,6 +55,11 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
   const explanationRef = useRef<HTMLDivElement>(null);
   const timedExam = activeMode === "timed" && !reviewMode;
   const question = questions[index];
+  const figureUrls = question.figureUrls?.length
+    ? question.figureUrls
+    : question.figureUrl
+      ? [question.figureUrl]
+      : [];
   const selected = selections[index] ?? null;
   const submitted = reviewMode || answers[index] !== undefined;
   const subject = subjects.find((item) => item.id === question.subjectId);
@@ -233,7 +239,7 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
 
       <div className="mx-auto grid max-w-[1450px] gap-6 px-4 py-6 sm:px-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:py-8">
         <main className="min-w-0"><div className="mb-5 flex items-center justify-between sm:hidden"><p className="text-xs text-muted-foreground">{subject?.name} · {topic?.name}</p><Button variant="ghost" size="xs" onClick={endSession}>End</Button></div>
-          <Card className="border-0 shadow-none sm:border sm:shadow-sm"><CardContent className="p-0 sm:p-7 lg:p-9"><div className="flex items-start justify-between gap-4"><Badge variant="outline">Question ID {question.qid}</Badge>{reviewMode && <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">Review mode</Badge>}</div><p className="mt-7 whitespace-pre-line text-[17px] font-medium leading-8 tracking-[-0.01em] sm:text-lg">{question.stem}</p><div className="mt-7 space-y-3">{question.options.map((option, optionIndex) => {
+          <Card className="border-0 shadow-none sm:border sm:shadow-sm"><CardContent className="p-0 sm:p-7 lg:p-9"><div className="flex items-start justify-between gap-4"><Badge variant="outline">Question ID {question.qid}</Badge>{reviewMode && <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">Review mode</Badge>}</div><p className="mt-7 whitespace-pre-line text-[17px] font-medium leading-8 tracking-[-0.01em] sm:text-lg">{question.stem}</p>{figureUrls.map((figureUrl, figureIndex) => <div key={figureUrl} className="mt-6 overflow-hidden rounded-2xl border bg-white p-3 dark:bg-slate-950"><Image src={figureUrl} alt={`Clinical figure ${figureIndex + 1} for question ${question.qid}`} width={1024} height={768} unoptimized className="mx-auto max-h-[34rem] w-auto object-contain" /></div>)}<div className="mt-7 space-y-3">{question.options.map((option, optionIndex) => {
                 const isEliminated = eliminatedForQuestion.includes(optionIndex);
                 return <div key={option} className={cn("flex w-full items-stretch overflow-hidden rounded-xl border text-sm leading-6 transition-all", optionClass(optionIndex))}>
                   <button type="button" disabled={submitted || isEliminated} onClick={() => !submitted && setSelections((current) => ({ ...current, [index]: optionIndex }))} className="flex min-w-0 flex-1 items-start gap-3 p-3.5 text-left disabled:cursor-not-allowed sm:p-4">

@@ -7,9 +7,10 @@ async function expectNoSeriousViolations(page: import("@playwright/test").Page) 
 }
 
 test("public and private surfaces meet the serious accessibility gate", async ({ page, consoleErrors }) => {
+  test.setTimeout(90_000);
   void consoleErrors;
-  const publicPaths = ["/", "/login", "/forgot-password"];
-  const privatePaths = ["/dashboard", "/create", "/questions", "/stats", "/settings", "/author", "/session/demo?mode=tutor", "/session/demo/review?mode=tutor"];
+  const publicPaths = ["/", "/login", "/forgot-password", "/terms", "/privacy", "/refund-policy", "/support"];
+  const privatePaths = ["/dashboard", "/create", "/questions", "/stats", "/settings", "/billing", "/author", "/session/demo?mode=tutor", "/session/demo/review?mode=tutor"];
 
   for (const path of publicPaths) {
     await test.step(`light ${path}`, async () => {
@@ -54,7 +55,7 @@ test("PWA assets and private-route indexing headers are production-ready", async
   const manifestResponse = await page.request.get("/manifest.webmanifest");
   expect(manifestResponse.ok()).toBeTruthy();
   const manifest = await manifestResponse.json();
-  expect(manifest).toMatchObject({ name: "LMCC Prep", display: "standalone", start_url: "/dashboard" });
+  expect(manifest).toMatchObject({ name: "Montreal QBank", display: "standalone", start_url: "/dashboard" });
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ src: "/icon-192.png", sizes: "192x192" }),
     expect.objectContaining({ src: "/icon-512.png", sizes: "512x512" }),

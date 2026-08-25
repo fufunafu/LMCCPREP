@@ -21,7 +21,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Mail className="size-5" /></div>
             <h1 className="text-2xl font-semibold tracking-tight">Reset your password</h1>
-            <CardDescription>Enter the email address for your invited LMCC Prep account.</CardDescription>
+            <CardDescription>Enter the email address for your invited Montreal QBank account.</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={requestPasswordReset} className="space-y-5">

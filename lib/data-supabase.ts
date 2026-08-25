@@ -3,13 +3,16 @@ import { createClient, currentUserId } from "@/lib/supabase/server";
 import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats } from "@/lib/types";
 
 // Row shapes (subset of columns we read)
-type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; figure_url: string | null };
+type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null };
+type QuestionImageRow = { qid: number; image_index: number };
 type SessionRow = { id: string; mode: "tutor" | "timed"; question_ids: number[]; seconds_per_question: number | null; current_index: number; created_at: string; finished_at: string | null };
 type AttemptRow = { qid: number; session_id: string | null; chosen_index: number | null; correct: boolean; time_ms: number; created_at: string };
 
-const toQuestion = (r: QuestionRow): Question => ({
+const toQuestion = (r: QuestionRow, imageIndexes: number[] = []): Question => ({
   id: String(r.qid), qid: r.qid, subjectId: r.subject_id, topicId: r.topic_id, stem: r.stem,
-  options: r.options, answerIdx: r.answer_index, explanation: r.explanation, figureUrl: r.figure_url ?? undefined,
+  options: r.options, answerIdx: r.answer_index, explanation: r.explanation, tags: r.tags ?? [],
+  figureUrl: imageIndexes.length ? `/api/qbank-images/${r.qid}/${imageIndexes[0]}` : r.figure_url ?? undefined,
+  figureUrls: imageIndexes.map((imageIndex) => `/api/qbank-images/${r.qid}/${imageIndex}`),
 });
 const toSession = (r: SessionRow): Session => ({
   id: r.id, mode: r.mode, questionIds: r.question_ids.map(String), createdAt: r.created_at,
@@ -18,6 +21,33 @@ const toSession = (r: SessionRow): Session => ({
 const toAttempt = (r: AttemptRow): Attempt => ({
   questionId: String(r.qid), sessionId: r.session_id ?? "", chosenIdx: r.chosen_index, correct: r.correct, timeMs: r.time_ms, createdAt: r.created_at,
 });
+
+async function getQuestionImageIndexes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  qids?: number[],
+): Promise<Map<number, number[]>> {
+  const rows: QuestionImageRow[] = [];
+  if (qids && !qids.length) return new Map();
+  for (let from = 0; ; from += 1000) {
+    let query = supabase
+      .from("qbank_question_images")
+      .select("qid,image_index")
+      .order("qid")
+      .order("image_index")
+      .range(from, from + 999);
+    if (qids) query = query.in("qid", qids);
+    const { data } = await query;
+    rows.push(...((data ?? []) as QuestionImageRow[]));
+    if (!data || data.length < 1000) break;
+  }
+  const byQid = new Map<number, number[]>();
+  for (const row of rows) {
+    const indexes = byQid.get(row.qid) ?? [];
+    indexes.push(row.image_index);
+    byQid.set(row.qid, indexes);
+  }
+  return byQid;
+}
 
 // ---------- content ----------
 export async function getSubjects(): Promise<Subject[]> {
@@ -45,35 +75,40 @@ export async function getQuestions(): Promise<Question[]> {
   const supabase = await createClient();
   const rows: QuestionRow[] = [];
   for (let from = 0; ; from += 1000) {                     // PostgREST caps each response at 1000 rows
-    const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,figure_url").order("qid").range(from, from + 999);
+    const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").order("qid").range(from, from + 999);
     rows.push(...(data ?? []));
     if (!data || data.length < 1000) break;
   }
-  return rows.map(toQuestion);
+  const images = await getQuestionImageIndexes(supabase);
+  return rows.map((row) => toQuestion(row, images.get(row.qid)));
 }
 
 export async function getQuestionSummaries(): Promise<QuestionSummary[]> {
   const supabase = await createClient();
-  const rows: Array<{ qid: number; subject_id: string; topic_id: string; stem: string; options: string[] }> = [];
+  const rows: Array<{ qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; tags: string[] | null }> = [];
   for (let from = 0; ; from += 1000) {
-    const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options").order("qid").range(from, from + 999);
+    const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,tags").order("qid").range(from, from + 999);
     rows.push(...(data ?? []));
     if (!data || data.length < 1000) break;
   }
-  return rows.map((row) => ({ id: String(row.qid), qid: row.qid, subjectId: row.subject_id, topicId: row.topic_id, stem: row.stem, optionCount: row.options.length }));
+  return rows.map((row) => ({ id: String(row.qid), qid: row.qid, subjectId: row.subject_id, topicId: row.topic_id, stem: row.stem, optionCount: row.options.length, tags: row.tags ?? [] }));
 }
 
 export async function getQuestion(id: string): Promise<Question | undefined> {
   const supabase = await createClient();
-  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,figure_url").eq("qid", Number(id)).maybeSingle();
-  return data ? toQuestion(data) : undefined;
+  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").eq("qid", Number(id)).maybeSingle();
+  if (!data) return undefined;
+  const images = await getQuestionImageIndexes(supabase, [data.qid]);
+  return toQuestion(data, images.get(data.qid));
 }
 
 export async function getQuestionsByIds(ids: string[]): Promise<Question[]> {
   if (!ids.length) return [];
   const supabase = await createClient();
-  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,figure_url").in("qid", ids.map(Number));
-  const byId = new Map((data ?? []).map((r) => [String(r.qid), toQuestion(r)]));
+  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").in("qid", ids.map(Number));
+  const rows = (data ?? []) as QuestionRow[];
+  const images = await getQuestionImageIndexes(supabase, rows.map((row) => row.qid));
+  const byId = new Map(rows.map((r) => [String(r.qid), toQuestion(r, images.get(r.qid))]));
   return ids.map((id) => byId.get(id)).filter((q): q is Question => Boolean(q));
 }
 

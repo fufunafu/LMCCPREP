@@ -8,6 +8,7 @@ import { DEMO_COOKIE, DEMO_COOKIE_VALUE, DEMO_EMAIL, DEMO_PASSWORD } from "@/lib
 import { isDemoSession } from "@/lib/demo-session";
 import type { QuestionStatus, SessionMode } from "@/lib/types";
 import { configuredSiteOrigin, safeReturnPath } from "@/lib/urls";
+import { requireEntitledUserId } from "@/lib/billing";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -170,7 +171,7 @@ export async function createSession(input: {
   if (!(["tutor", "timed"] as const).includes(input.mode)) throw new Error("Choose a valid session mode.");
   if (!(["unused", "correct", "incorrect", "flagged", "all"] as const).includes(input.status)) throw new Error("Choose a valid question status.");
   const supabase = await createClient();
-  const userId = await requireUserId(supabase);
+  const userId = await requireEntitledUserId(supabase);
   const { data: qids, error } = await supabase.rpc("pick_questions", {
     p_subjects: input.subjectIds.length ? input.subjectIds : null,
     p_topics: input.topicIds.length ? input.topicIds : null,
@@ -191,7 +192,7 @@ export async function createSession(input: {
 export async function recordAttempt(input: { sessionId: string; qid: number; chosenIdx: number | null; timeMs: number }) {
   if (await isDemoSession()) return;
   const supabase = await createClient();
-  const userId = await requireUserId(supabase);
+  const userId = await requireEntitledUserId(supabase);
   const [{ data: session, error: sessionError }, { data: question, error: questionError }] = await Promise.all([
     supabase.from("sessions").select("question_ids").eq("id", input.sessionId).maybeSingle(),
     supabase.from("questions").select("answer_index,options").eq("qid", input.qid).maybeSingle(),
@@ -210,7 +211,7 @@ export async function recordAttempt(input: { sessionId: string; qid: number; cho
 export async function setSessionProgress(sessionId: string, currentIndex: number) {
   if (await isDemoSession()) return;
   const supabase = await createClient();
-  await requireUserId(supabase);
+  await requireEntitledUserId(supabase);
   const { error } = await supabase.from("sessions").update({ current_index: currentIndex }).eq("id", sessionId);
   if (error) throw new Error(error.message);
 }
@@ -218,7 +219,7 @@ export async function setSessionProgress(sessionId: string, currentIndex: number
 export async function finishSession(sessionId: string) {
   if (await isDemoSession()) return;
   const supabase = await createClient();
-  await requireUserId(supabase);
+  await requireEntitledUserId(supabase);
   const { error } = await supabase.from("sessions").update({ finished_at: new Date().toISOString() }).eq("id", sessionId);
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
@@ -229,7 +230,7 @@ export async function finishSession(sessionId: string) {
 export async function toggleFlag(qid: number, flagged: boolean) {
   if (await isDemoSession()) return;
   const supabase = await createClient();
-  const userId = await requireUserId(supabase);
+  const userId = await requireEntitledUserId(supabase);
   const { error } = flagged
     ? await supabase.from("flags").upsert({ user_id: userId, qid })
     : await supabase.from("flags").delete().eq("qid", qid);
@@ -240,7 +241,7 @@ export async function saveNote(qid: number, body: string) {
   if (await isDemoSession()) return;
   if (body.trim().length > 5000) throw new Error("Keep notes under 5,000 characters.");
   const supabase = await createClient();
-  const userId = await requireUserId(supabase);
+  const userId = await requireEntitledUserId(supabase);
   const { error } = body.trim()
     ? await supabase.from("notes").upsert({ user_id: userId, qid, body: body.trim(), updated_at: new Date().toISOString() })
     : await supabase.from("notes").delete().eq("qid", qid);
@@ -251,25 +252,27 @@ export async function reportTypo(qid: number, field: string, suggestion: string)
   if (await isDemoSession()) return;
   if (!suggestion.trim() || suggestion.trim().length > 2000) throw new Error("Enter a report under 2,000 characters.");
   const supabase = await createClient();
-  const userId = await requireUserId(supabase);
+  const userId = await requireEntitledUserId(supabase);
   const { error } = await supabase.from("question_edits").insert({ user_id: userId, qid, field, suggestion: suggestion.trim() });
   if (error) throw new Error(error.message);
 }
 
 // ---------- authoring ----------
-export async function addUserQuestion(input: { subjectId: string; topicName: string; stem: string; options: string[]; answerIdx: number; explanation: string[] }) {
+export async function addUserQuestion(input: { subjectId: string; topicName: string; stem: string; options: string[]; answerIdx: number; explanation: string[]; tags?: string[] }) {
   if (await isDemoSession()) return 9999;
   const topicName = input.topicName.trim();
   const stem = input.stem.trim();
   const options = input.options.map((option) => option.trim());
   const explanation = input.explanation.map((paragraph) => paragraph.trim()).filter(Boolean);
+  const tags = [...new Set((input.tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean))];
   if (!input.subjectId || !topicName || !stem || options.length < 2 || options.length > 6 || options.some((option) => !option) || !explanation.length) throw new Error("Complete every required question field.");
   if (!Number.isInteger(input.answerIdx) || input.answerIdx < 0 || input.answerIdx >= options.length) throw new Error("Choose a valid correct answer.");
+  if (tags.length > 12 || tags.some((tag) => tag.length > 80)) throw new Error("Use at most 12 tags, with no tag longer than 80 characters.");
   const supabase = await createClient();
-  await requireUserId(supabase);
+  await requireEntitledUserId(supabase);
   const { data, error } = await supabase.rpc("add_user_question", {
     p_subject_id: input.subjectId, p_topic_name: topicName, p_stem: stem,
-    p_options: options, p_answer_index: input.answerIdx, p_explanation: explanation,
+    p_options: options, p_answer_index: input.answerIdx, p_explanation: explanation, p_tags: tags,
   });
   if (error) throw new Error(error.message);
   revalidatePath("/questions");

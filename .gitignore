@@ -14,9 +14,11 @@
 /coverage
 /playwright-report
 /test-results
+/audit-output
 
 # next.js
 /.next/
+/.next-billing-fixture/
 /out/
 
 # production
@@ -45,3 +47,6 @@ next-env.d.ts
 
 # local env
 .env*.local
+
+# Supabase CLI link and runtime metadata
+/supabase/.temp/

@@ -46,9 +46,27 @@ test("demo app navigation makes no browser Supabase requests", async ({ page, co
   });
   await signInDemo(page);
   await page.goto("/create");
+  await page.goto("/billing");
   await page.goto("/settings");
   await page.goto("/session/demo?mode=tutor");
   expect(supabaseRequests).toEqual([]);
+});
+
+test("demo billing stays isolated from Stripe and live portal actions", async ({ page, consoleErrors }) => {
+  void consoleErrors;
+  const billingRequests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.hostname.includes("stripe") || url.hostname.endsWith(".supabase.co") || url.pathname.startsWith("/api/billing/")) {
+      billingRequests.push(request.url());
+    }
+  });
+  await signInDemo(page);
+  await page.goto("/billing");
+  await expect(page.getByRole("heading", { name: "Billing" })).toBeVisible();
+  await expect(page.getByText("Demo access", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Manage billing" })).toHaveCount(0);
+  expect(billingRequests).toEqual([]);
 });
 
 test("password recovery is discoverable and privacy-preserving", async ({ page, consoleErrors }) => {

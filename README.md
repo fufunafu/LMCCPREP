@@ -1,12 +1,12 @@
-# LMCC Prep
+# Montreal QBank
 
-LMCC Prep is a private, mobile-first question bank for Canadian medical learners preparing for the MCCQE Part I. It supports tutor and timed sessions, progress analytics, flags, notes, password recovery, profile settings, dark mode, and an installable PWA experience.
+Montreal QBank is a private, mobile-first question bank for Canadian medical learners preparing for the MCCQE Part I. It supports tutor and timed sessions, progress analytics, flags, notes, password recovery, profile settings, dark mode, and an installable PWA experience.
 
 ## Local setup
 
 1. Install dependencies with `npm install`.
 2. Copy `.env.example` to `.env.local` and provide the public Supabase project values.
-3. From the repository root, apply the Supabase migrations with `supabase db push`.
+3. For a local Supabase stack, run `supabase start` and `supabase db reset`. To use an existing hosted project, run `supabase link --project-ref <project-ref>` and then `supabase db push`.
 4. Start the app with `npm run dev`.
 
 The **Use demo login** button opens the demo in one click. The equivalent credentials are `demo@lmccprep.ca` and `practice` for direct form testing. Demo requests use mock data and never call or write to Supabase. Practice answers, flags, notes, and the current demo question are saved only in that browser so a refresh can restore the session. Signing out or resetting progress clears that browser-only state.
@@ -35,22 +35,69 @@ Do not expose the service-role key through a `NEXT_PUBLIC_` variable. Leave all 
 
 Before real accounts are used:
 
-1. Apply every migration in `../supabase/migrations`.
+1. Apply every tracked migration in `supabase/migrations` with `supabase db push`.
 2. In Supabase Authentication URL settings, set the production Site URL.
 3. Add `https://lmcc-prep.vercel.app/auth/callback` as an allowed redirect URL. Add the matching localhost callback while testing locally.
 4. Confirm that email invitations and password-recovery messages point to `/auth/callback`.
 5. Keep Row Level Security enabled. The checked-in policies restrict profiles, sessions, attempts, flags, and notes to the authenticated owner. Public access is limited to inserting an access request.
+
+The repository contains the complete ordered schema history, including the billing tables, entitlement function, Stripe event ledger, billing-aware content policies, and reconciliation hardening. Seed exports, source PDFs, local databases, and credentials must remain outside this repository.
+
+## Stripe billing setup
+
+Billing is fail-safe and disabled by default. Before enabling it, create one Montreal QBank product with monthly and annual recurring CAD prices in Stripe, configure the customer portal, approve the legal and commercial terms, and set these server-only variables:
+
+Review the requirement-by-requirement state in [`BILLING_IMPLEMENTATION_STATUS.md`](BILLING_IMPLEMENTATION_STATUS.md), and record and approve the outstanding commercial decisions in [`BILLING_LAUNCH_DECISIONS.md`](BILLING_LAUNCH_DECISIONS.md) before adding live configuration.
+
+```text
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+STRIPE_PRICE_MONTHLY
+STRIPE_PRICE_ANNUAL
+SUPABASE_SERVICE_ROLE_KEY
+BILLING_GRACE_DAYS
+BILLING_TERMS_READY
+```
+
+Optional billing settings are `STRIPE_TRIAL_DAYS`, `STRIPE_AUTOMATIC_TAX`, `NEXT_PUBLIC_BILLING_MONTHLY_CAD`, `NEXT_PUBLIC_BILLING_ANNUAL_CAD`, and `NEXT_PUBLIC_SUPPORT_EMAIL`. The public price values are display-only. Stripe Checkout remains authoritative for the amount charged.
+
+Create a Stripe webhook endpoint at `/api/stripe/webhook` and subscribe it to:
+
+```text
+checkout.session.completed
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+invoice.paid
+invoice.payment_failed
+```
+
+Use test keys and test prices in local and Preview environments. Use live keys and matching live prices only in Production. Keep `BILLING_REQUIRED=false`, `BILLING_TERMS_READY=false`, and `billing_settings.billing_required=false` until Checkout, portal, webhook, entitlement, cancellation, failure, and duplicate-delivery tests have passed.
+
+After test-mode variables and owner decisions are configured, run `npm run billing:verify`. The preflight validates key mode without printing keys, confirms the monthly and annual CAD catalog, proves displayed prices match Stripe, checks that both prices share the Montreal QBank product, validates the canonical site and support configuration, inspects portal cancellation behavior and the exact webhook URL and events, verifies Stripe Tax configuration when enabled, verifies the linked billing tables and functions, and confirms both enforcement switches remain off. Use `npm run billing:verify -- --allow-incomplete` while setup is still in progress.
+
+Enabling or rolling back the paywall requires changing both enforcement switches in a safe order. For activation, first deploy `BILLING_REQUIRED=true` while the database switch is still false. Existing invite access remains available during that deployment. After the deployment and billing routes are healthy, enable the database switch:
+
+```sql
+update billing_settings
+set billing_required = true, grace_days = 3, updated_at = now()
+where id = true;
+```
+
+Verify immediately that an entitled account enters the app and an unsubscribed account is redirected to Billing. For rollback, first set `billing_settings.billing_required=false` so database access reopens immediately, then set `BILLING_REQUIRED=false` and redeploy. Keep the webhook endpoint running throughout activation and rollback so subscription state continues to synchronize.
 
 ## Quality gates
 
 ```bash
 npm run lint
 npm run typecheck
+npm run test:unit
+npm run test:billing-e2e
 npm run build
 npm run test:e2e
 ```
 
-The browser suite covers the live public subject aggregate, one-click demo authentication, protected routes, sign-out, password recovery, dashboard navigation, tutor and timed sessions, refresh restoration, notes, flags, review links, reset confirmation, offline fallback, light and dark accessibility, 375px layouts, and an iPhone viewport. Real login failure and password-reset submission checks are opt-in because they contact the configured Supabase project:
+The dedicated billing browser suite uses local Supabase-compatible fixtures and does not contact Stripe or the linked Supabase project. It covers unsubscribed and expired redirects, active and canceled access, real session creation, Checkout plan submission, portal recovery, safe billing errors, mobile layout, and accessibility. The main browser suite covers the live public subject aggregate, one-click demo authentication, protected routes, sign-out, password recovery, dashboard navigation, billing isolation in demo mode, tutor and timed sessions, refresh restoration, notes, flags, review links, reset confirmation, offline fallback, light and dark accessibility, 375px layouts, and an iPhone viewport. Real login failure and password-reset submission checks are opt-in because they contact the configured Supabase project:
 
 ```bash
 RUN_SUPABASE_E2E=1 npm run test:e2e

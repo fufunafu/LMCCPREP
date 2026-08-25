@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getQuestions } from "@/lib/data";
 import { isDemoSession } from "@/lib/demo-session";
+import { requireEntitledUserId, SubscriptionRequiredError } from "@/lib/billing";
 
 /** GET /api/practice/:qid?review=1 opens a single question in a one-question tutor session. */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ qid: string }> }) {
@@ -12,9 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.redirect(new URL(`/session/demo?q=${index + 1}`, request.url));
   }
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
-  if (!userId) return NextResponse.redirect(new URL("/login", request.url));
+  let userId: string;
+  try {
+    userId = await requireEntitledUserId(supabase);
+  } catch (error) {
+    return NextResponse.redirect(new URL(error instanceof SubscriptionRequiredError ? "/billing?notice=subscription-required" : "/login", request.url));
+  }
 
   const { data: session, error } = await supabase
     .from("sessions")
