@@ -12,6 +12,10 @@ test("public landing shows all five live core subject totals", async ({ page, co
   await page.goto("/refund-policy");
   await expect(page.getByRole("heading", { name: "Initial-purchase refunds" })).toBeVisible();
   await expect(page.getByText(/no more than 25 questions/)).toBeVisible();
+
+  await page.goto("/terms");
+  await expect(page.getByText("Montreal QBank is operated by 15041074 Canada Inc.")).toBeVisible();
+  await expect(page.getByText("67 Westmore Dr, Unit 19, Etobicoke, ON M9V 3Y6, Canada")).toBeVisible();
 });
 
 test("demo login, protected routes, and sign-out", async ({ page, consoleErrors }) => {
