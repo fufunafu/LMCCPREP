@@ -6,7 +6,7 @@ Billing enforcement must remain disabled until every owner decision and launch g
 
 Last verified billing Preview: `https://lmcc-prep-7pyy1fp9p-fuannes-projects.vercel.app` (built and route-smoke-tested 2026-08-25; protected by Vercel authentication). The reconciliation hardening is deployed in Preview and migration `0010_billing_reconciliation.sql` is applied to the linked database with enforcement off.
 
-Latest readiness preflight: 19 of 27 checks passed on 2026-08-25. The linked database is reachable with enforcement off and a three-day grace period. Approved public prices, the legal business identity, business address, and local canonical site URL are configured or recorded. Stripe variables and support configuration remain absent. The `claim_stripe_webhook_event` RPC is available. Vercel has the Production canonical site URL plus approved non-secret price and safety values, but no Stripe secrets or price IDs.
+Latest readiness preflight: 21 of 27 checks passed on 2026-08-25. The linked database is reachable with enforcement off and a three-day grace period. Approved public prices, the legal business identity, business address, support email, completed legal terms, and local canonical site URL are configured or recorded. Stripe variables remain absent. The `claim_stripe_webhook_event` RPC is available. Vercel has the Production canonical site URL, approved support email, completed terms flag, public prices, and disabled enforcement values, but no Stripe secrets or price IDs.
 
 ## Owner decisions
 
@@ -22,7 +22,7 @@ Latest readiness preflight: 19 of 27 checks passed on 2026-08-25. The linked dat
 | Failed-payment grace period | Approved: 3 calendar days |
 | Existing-user complimentary access | Approved: existing invited users receive 90 days from activation, reviewers receive 180 days, and administrators receive explicit non-expiring grants |
 | Public onboarding path | Approved: remain invite-only for at least 60 days and until at least 50 paying customers, then review self-service onboarding |
-| Support email | Pending owner approval |
+| Support email | Approved: `fuanne_gm@hotmail.com` |
 | Legal business name | Approved: `15041074 Canada Inc.` |
 | Statement descriptor | Approved: `MONTREAL QBANK` |
 | Business address | Approved: `67 Westmore Dr, Unit 19, Etobicoke, ON M9V 3Y6, Canada` |
@@ -44,7 +44,7 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 
 ## Activation gates
 
-- [ ] Owner decisions above are approved and reflected in the legal pages.
+- [x] Owner decisions above are approved and reflected in the legal pages.
 - [x] Billing migration `0009_billing.sql` is applied and verified with enforcement off. Applied 2026-08-25; `billing_required=false`, `grace_days=3`.
 - [x] Reconciliation hardening migration `0010_billing_reconciliation.sql` is applied and verified with enforcement off.
 - [ ] Stripe test product and monthly and annual CAD prices exist.
