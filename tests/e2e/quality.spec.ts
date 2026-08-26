@@ -112,6 +112,8 @@ test("public counts are identical before and during demo, and private landmarks 
   const anonymousCounts = await page.locator("#subjects h3 + p").allTextContents();
   await signInDemo(page);
   await expect(page.getByRole("status").filter({ hasText: "Simulated demo data" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Daily accuracy for the last 28 calendar days" })).toBeAttached();
+  await expect(page.getByRole("table", { name: "Weekly study activity for the last 12 weeks" })).toBeAttached();
   const current = page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Dashboard" });
   await expect(current).toHaveAttribute("aria-current", "page");
   await page.goto("/session/demo?mode=tutor");

@@ -5,6 +5,7 @@
   "scripts": {
     "billing:grants": "node --env-file-if-exists=.env.local scripts/apply-billing-grants.mjs",
     "billing:verify": "node --env-file-if-exists=.env.local scripts/verify-billing-readiness.mjs",
+    "security:verify": "node --env-file-if-exists=.env.local scripts/verify-authorization.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",

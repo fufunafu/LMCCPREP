@@ -6,9 +6,9 @@ Billing enforcement must remain disabled until every owner decision and launch g
 
 Latest billing-only Preview: `https://lmcc-prep-494ye63zl-fuannes-projects.vercel.app` (deployment `dpl_5WAWeYbwooCLxY2VCnkZuH4BnLkJ`). It is protected by Vercel authentication and billing remains disabled.
 
-Latest expanded secure Preview preflight: 35 of 37 checks passed on 2026-08-26 using the protected test credentials. The two failures are the prepared but unsaved product descriptor and the Stripe destination URL still targeting the prior protected Preview. The restricted test key and webhook signing secret are stored in Vercel Preview and Development. Direct signed delivery and duplicate-event idempotency passed against the prior protected destination.
+Latest expanded secure Preview preflight: 37 of 37 checks passed on 2026-08-26 using the protected test credentials and the exact protected Preview origin. The restricted test key and webhook signing secret are stored in Vercel Preview and Development. Direct signed delivery and duplicate-event idempotency passed against the updated destination.
 
-Authenticated pre-payment checks also pass: the Preview rejects unknown plans, creates approved Stripe-hosted Checkout sessions, opens the customer portal, and returns safely from cancellation. The first Checkout displayed the shared account name `Glass Railing - RF Transparent`. On 2026-08-26, the owner explicitly approved using that shared account. The account-wide glass-railing identity will remain unchanged; Montreal QBank instead uses Stripe's per-Checkout display-name override and its product-specific `MONTREAL QBANK` subscription statement descriptor.
+Authenticated pre-payment checks also pass: the Preview rejects unknown plans, creates approved Stripe-hosted Checkout sessions, opens the customer portal, and returns safely from cancellation. Checkout displays `Montreal QBank` as the product heading and subscription title. Stripe's payment-authorization language identifies the shared account as `Glass Railing - RF Transparent`, which the owner explicitly approved on 2026-08-26. The account-wide identity remains unchanged, and the Montreal QBank product uses its own `MONTREAL QBANK` subscription statement descriptor.
 
 ## Owner decisions
 
@@ -53,7 +53,7 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [x] Stripe test customer portal is configured for invoice history, payment-method updates, and cancellation at the end of the billing period. Verified 2026-08-26.
 - [x] Test webhook endpoint is configured for all required events. Verified 2026-08-26 against the protected Preview.
 - [x] Preview contains only test-mode Stripe values, the webhook signing secret, and a Vercel automation bypass secret. The known-good Preview was redeployed and direct signed delivery was verified on 2026-08-26.
-- [ ] Checkout displays Montreal QBank through the session-specific override, and the product uses the approved `MONTREAL QBANK` subscription statement descriptor without changing shared account details.
+- [x] Checkout displays Montreal QBank through the session-specific override, and the product uses the approved `MONTREAL QBANK` subscription statement descriptor without changing shared account details. Verified 2026-08-26.
 - [ ] Checkout success, decline, cancellation, renewal failure, duplicate event, and portal tests pass.
 - [ ] Complimentary grants are added for approved users.
 - [ ] Matching live product, prices, portal, and webhook are configured.
