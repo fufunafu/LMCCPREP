@@ -1,0 +1,15 @@
+audit-output/
+coverage/
+node_modules/
+.next/
+.next-*/
+playwright-report/
+test-results/
+.git/
+.env*
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
