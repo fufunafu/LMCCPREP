@@ -37,6 +37,22 @@ function safeOrigin(raw) {
   }
 }
 
+function webhookEndpointMatches(raw, expectedOrigin, allowAutomationBypass) {
+  if (!raw || !expectedOrigin) return false;
+  try {
+    const endpoint = new URL(raw);
+    if (endpoint.origin !== expectedOrigin || endpoint.pathname !== "/api/stripe/webhook" || endpoint.hash) return false;
+    const query = [...endpoint.searchParams.entries()];
+    if (query.length === 0) return true;
+    return allowAutomationBypass
+      && query.length === 1
+      && query[0][0] === "x-vercel-protection-bypass"
+      && Boolean(query[0][1]);
+  } catch {
+    return false;
+  }
+}
+
 function positiveCadAmount(name) {
   const amount = Number(value(name));
   return Number.isFinite(amount) && amount > 0 ? amount : undefined;
@@ -157,8 +173,13 @@ async function verifyStripe() {
       return events.has("*") || [...requiredWebhookEvents].every((event) => events.has(event));
     });
     record("Stripe", Boolean(webhook), "An enabled webhook endpoint subscribes to every required billing event");
-    const expectedWebhookUrl = safeOrigin(value("NEXT_PUBLIC_SITE_URL"));
-    record("Stripe", Boolean(webhook && expectedWebhookUrl && webhook.url === `${expectedWebhookUrl}/api/stripe/webhook`), "Webhook endpoint URL matches the configured site");
+    const expectedWebhookOrigin = safeOrigin(value("NEXT_PUBLIC_SITE_URL"));
+    const allowAutomationBypass = (value("VERCEL_ENV") ?? "development") !== "production";
+    record(
+      "Stripe",
+      Boolean(webhook && webhookEndpointMatches(webhook.url, expectedWebhookOrigin, allowAutomationBypass)),
+      "Webhook endpoint URL matches the configured site",
+    );
   } catch {
     record("Stripe", false, "Stripe catalog, portal, or webhook configuration could not be verified");
   }
