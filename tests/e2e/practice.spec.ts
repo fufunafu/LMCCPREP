@@ -10,15 +10,15 @@ test("creates a tutor session and supports answer elimination", async ({ page, c
   await expect(page).toHaveURL(/\/session\/demo\?mode=tutor$/);
   await page.getByRole("button", { name: "Strike out answer B" }).click();
   await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: /B Radiation to the back/ })).toBeDisabled();
-  await page.getByRole("button", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await expect(page.getByRole("radio", { name: /B Radiation to the back/ })).toBeDisabled();
+  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
   await page.getByRole("button", { name: "Submit answer" }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await page.reload();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit answer" })).toHaveCount(0);
   await page.getByRole("button", { name: /Next question/ }).click();
-  await page.locator("aside").getByRole("button", { name: "1", exact: true }).click();
+  await page.locator("aside").getByRole("button", { name: /^Go to question 1(?:,|$)/ }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit answer" })).toHaveCount(0);
 });
@@ -31,7 +31,7 @@ test("timed mode records an answer and advances without showing feedback", async
   await expect(page).toHaveURL(/\/session\/demo\?mode=timed$/);
   await expect(page.getByText("01:30")).toBeVisible();
   await expect(page.getByText(/01:2[89]/)).toBeVisible({ timeout: 3_000 });
-  await page.getByRole("button", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
   await page.getByRole("button", { name: "Submit answer" }).click();
   await expect(page.getByText(/Answer saved/)).toBeVisible();
   await expect(page.getByText("Review the reasoning", { exact: true })).toHaveCount(0);

@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn, DEFAULT_SECONDS_PER_QUESTION } from "@/lib/utils";
+import { resolveInitialIndex } from "@/lib/session-utils";
 import { readDemoPractice, writeDemoPractice } from "@/lib/demo-practice";
 import type { Attempt, Question, Session, Subject, Topic } from "@/lib/types";
 
@@ -20,7 +21,7 @@ const letters = ["A", "B", "C", "D", "E"];
 export function QuestionPlayer({ session, questions, subjects, topics, initialFlags = [], initialNotes = {}, initialAttempts = [], showShortcuts = true, explanationAutoScroll = false }: { session: Session; questions: Question[]; subjects: Subject[]; topics: Topic[]; initialFlags?: string[]; initialNotes?: Record<string, string>; initialAttempts?: Attempt[]; showShortcuts?: boolean; explanationAutoScroll?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialIndex = Math.max(0, Math.min(questions.length - 1, Number(searchParams.get("q") ?? (session.currentIndex ?? 0) + 1) - 1));
+  const initialIndex = resolveInitialIndex(searchParams.get("q"), session, questions.length);
   const reviewMode = searchParams.get("review") === "1";
   const activeMode = searchParams.get("mode") === "timed" ? "timed" : session.mode;
   const isDemo = session.id === "demo";
@@ -54,6 +55,7 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
   const startedAt = useRef<number | null>(null);
   const explanationRef = useRef<HTMLDivElement>(null);
   const timedExam = activeMode === "timed" && !reviewMode;
+  const secondsPerQuestion = session.secondsPerQuestion ?? DEFAULT_SECONDS_PER_QUESTION;
   const question = questions[index];
   const figureUrls = question.figureUrls?.length
     ? question.figureUrls
@@ -69,7 +71,7 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
 
   useEffect(() => {
     startedAt.current = Date.now();
-  }, []);
+  }, [index]);
 
   useEffect(() => {
     if (!isDemo) return;
@@ -116,7 +118,6 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
   const goTo = useCallback((nextIndex: number) => {
     setIndex(nextIndex);
     setElapsed(0);
-    startedAt.current = Date.now();
     if (!reviewMode && !isDemo) setSessionProgress(session.id, nextIndex).catch(() => toast.error("Could not save your place"));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [isDemo, reviewMode, session.id]);
@@ -151,18 +152,20 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
   }, [activeMode, explanationAutoScroll, index, isDemo, next, question.answerIdx, question.id, question.qid, reviewMode, selected, session.id, submitted, timedExam]);
 
   useEffect(() => {
-    if (activeMode !== "timed") return;
-    const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+    if (!timedExam) return;
+    const tick = () => setElapsed(startedAt.current === null ? 0 : Math.floor((Date.now() - startedAt.current) / 1000));
+    tick();
+    const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
-  }, [activeMode]);
+  }, [index, timedExam]);
 
   // timed mode: auto-submit (as skipped) when the clock runs out
   useEffect(() => {
-    if (activeMode !== "timed" || submitted || reviewMode) return;
-    if (elapsed < (session.secondsPerQuestion ?? 90)) return;
+    if (!timedExam || submitted) return;
+    if (elapsed < secondsPerQuestion) return;
     const timer = window.setTimeout(() => submit(selected), 0);
     return () => window.clearTimeout(timer);
-  }, [activeMode, elapsed, reviewMode, selected, session.secondsPerQuestion, submit, submitted]);
+  }, [elapsed, secondsPerQuestion, selected, submit, submitted, timedExam]);
 
   const saveDemoSnapshot = (nextFlags = flagged) => {
     if (!isDemo) return;
@@ -181,7 +184,8 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
     setFlagged(nextFlagged);
     saveDemoSnapshot(nextFlagged);
     if (!isDemo) toggleFlag(question.qid, nowFlagged).catch(() => {
-      setFlagged(flagged);
+      // Roll back only this question's flag; other flags toggled meanwhile stay intact.
+      setFlagged((current) => (nowFlagged ? current.filter((value) => value !== index) : current.includes(index) ? current : [...current, index]));
       toast.error("Could not update flag");
     });
   };
@@ -210,7 +214,9 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).tagName === "TEXTAREA") return;
+      const target = event.target as HTMLElement | null;
+      if (target && (["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A"].includes(target.tagName) || target.closest('[role="dialog"]'))) return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
       const number = Number(event.key);
       if (!submitted && number >= 1 && number <= question.options.length && !eliminatedForQuestion.includes(number - 1)) setSelections((current) => ({ ...current, [index]: number - 1 }));
       if (event.key === "Enter") { event.preventDefault(); if (submitted) next(); else submit(selected); }
@@ -220,7 +226,7 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
     return () => window.removeEventListener("keydown", handler);
   }, [eliminatedForQuestion, index, next, question.options.length, selected, submit, submitted]);
 
-  const timerText = useMemo(() => { const remaining = Math.max(0, (session.secondsPerQuestion ?? 90) - elapsed); return `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`; }, [elapsed, session.secondsPerQuestion]);
+  const timerText = useMemo(() => { const remaining = Math.max(0, secondsPerQuestion - elapsed); return `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`; }, [elapsed, secondsPerQuestion]);
   const optionClass = (optionIndex: number) => {
     if (submitted && optionIndex === question.answerIdx) return "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100";
     if (submitted && optionIndex === selected && optionIndex !== question.answerIdx) return "border-red-500 bg-red-50 text-red-950 dark:bg-red-950/30 dark:text-red-100";
@@ -235,14 +241,14 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-background md:min-h-screen">
-      <div className="sticky top-16 z-20 border-b bg-background/95 backdrop-blur md:top-0"><div className="mx-auto flex h-16 max-w-[1450px] items-center justify-between gap-3 px-4 sm:px-6 md:px-8"><div className="flex min-w-0 items-center gap-3"><Badge variant="secondary" className="shrink-0">Q {index + 1} / {questions.length}</Badge><span className="hidden truncate text-sm text-muted-foreground sm:block">{subject?.name} · {topic?.name}</span></div><div className="flex items-center gap-1 sm:gap-2">{activeMode === "timed" && <div className="mr-1 flex items-center gap-2 rounded-lg bg-muted px-2.5 py-1.5 font-mono text-xs"><Clock3 className="size-3.5" />{timerText}</div>}<Button variant={flagged.includes(index) ? "secondary" : "ghost"} size="icon" aria-label="Flag question" aria-pressed={flagged.includes(index)} onClick={flagCurrent}><Flag className={cn(flagged.includes(index) && "fill-amber-400 text-amber-500")} /></Button><Sheet open={notesOpen} onOpenChange={setNotesOpen}><SheetTrigger render={<Button variant="ghost" size="icon" aria-label="Open notes" />}><StickyNote /></SheetTrigger><SheetContent side="right" className="w-full sm:max-w-md"><SheetHeader><SheetTitle>Question notes</SheetTitle><SheetDescription>Keep a short takeaway for your next review.</SheetDescription></SheetHeader><div className="px-4"><Textarea value={notes[index] ?? ""} onChange={(event) => setNotes((current) => ({ ...current, [index]: event.target.value }))} placeholder="Write a clinical pearl, distinction, or follow-up..." className="min-h-48" /></div><SheetFooter><Button className="bg-emerald-800 hover:bg-emerald-900" onClick={persistNote}>Save note</Button></SheetFooter></SheetContent></Sheet><ReportSheet onSubmit={submitReport} qid={question.qid} /><Button variant="ghost" size="sm" className="hidden sm:flex" onClick={endSession}><X />End session</Button></div></div></div>
+      <div className="sticky top-16 z-20 border-b bg-background/95 backdrop-blur md:top-0"><div className="mx-auto flex h-16 max-w-[1450px] items-center justify-between gap-3 px-4 sm:px-6 md:px-8"><div className="flex min-w-0 items-center gap-3"><Badge variant="secondary" className="shrink-0">Q {index + 1} / {questions.length}</Badge><span className="hidden truncate text-sm text-muted-foreground sm:block">{subject?.name} · {topic?.name}</span></div><div className="flex items-center gap-1 sm:gap-2">{timedExam && <div role="timer" aria-live="polite" aria-label="Time remaining" className="mr-1 flex items-center gap-2 rounded-lg bg-muted px-2.5 py-1.5 font-mono text-xs"><Clock3 className="size-3.5" />{timerText}</div>}<Button variant={flagged.includes(index) ? "secondary" : "ghost"} size="icon" aria-label="Flag question" aria-pressed={flagged.includes(index)} onClick={flagCurrent}><Flag className={cn(flagged.includes(index) && "fill-amber-400 text-amber-500")} /></Button><Sheet open={notesOpen} onOpenChange={setNotesOpen}><SheetTrigger render={<Button variant="ghost" size="icon" aria-label="Open notes" />}><StickyNote /></SheetTrigger><SheetContent side="right" className="w-full sm:max-w-md"><SheetHeader><SheetTitle>Question notes</SheetTitle><SheetDescription>Keep a short takeaway for your next review.</SheetDescription></SheetHeader><div className="px-4"><Textarea value={notes[index] ?? ""} onChange={(event) => setNotes((current) => ({ ...current, [index]: event.target.value }))} placeholder="Write a clinical pearl, distinction, or follow-up..." className="min-h-48" /></div><SheetFooter><Button className="bg-emerald-800 hover:bg-emerald-900" onClick={persistNote}>Save note</Button></SheetFooter></SheetContent></Sheet><ReportSheet onSubmit={submitReport} qid={question.qid} /><Button variant="ghost" size="sm" className="hidden sm:flex" onClick={endSession}><X />End session</Button></div></div></div>
 
       <div className="mx-auto grid max-w-[1450px] gap-6 px-4 py-6 sm:px-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:py-8">
         <main className="min-w-0"><div className="mb-5 flex items-center justify-between sm:hidden"><p className="text-xs text-muted-foreground">{subject?.name} · {topic?.name}</p><Button variant="ghost" size="xs" onClick={endSession}>End</Button></div>
-          <Card className="border-0 shadow-none sm:border sm:shadow-sm"><CardContent className="p-0 sm:p-7 lg:p-9"><div className="flex items-start justify-between gap-4"><Badge variant="outline">Question ID {question.qid}</Badge>{reviewMode && <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">Review mode</Badge>}</div><p className="mt-7 whitespace-pre-line text-[17px] font-medium leading-8 tracking-[-0.01em] sm:text-lg">{question.stem}</p>{figureUrls.map((figureUrl, figureIndex) => <div key={figureUrl} className="mt-6 overflow-hidden rounded-2xl border bg-white p-3 dark:bg-slate-950"><Image src={figureUrl} alt={`Clinical figure ${figureIndex + 1} for question ${question.qid}`} width={1024} height={768} unoptimized className="mx-auto max-h-[34rem] w-auto object-contain" /></div>)}<div className="mt-7 space-y-3">{question.options.map((option, optionIndex) => {
+          <Card className="border-0 shadow-none sm:border sm:shadow-sm"><CardContent className="p-0 sm:p-7 lg:p-9"><div className="flex items-start justify-between gap-4"><Badge variant="outline">Question ID {question.qid}</Badge>{reviewMode && <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">Review mode</Badge>}</div><p className="mt-7 whitespace-pre-line text-[17px] font-medium leading-8 tracking-[-0.01em] sm:text-lg">{question.stem}</p>{figureUrls.map((figureUrl, figureIndex) => <div key={figureUrl} className="mt-6 overflow-hidden rounded-2xl border bg-white p-3 dark:bg-slate-950"><Image src={figureUrl} alt={`Clinical figure ${figureIndex + 1} for question ${question.qid}`} width={1024} height={768} unoptimized className="mx-auto max-h-[34rem] w-auto object-contain" /></div>)}<div role="radiogroup" aria-label="Answer options" className="mt-7 space-y-3">{question.options.map((option, optionIndex) => {
                 const isEliminated = eliminatedForQuestion.includes(optionIndex);
-                return <div key={option} className={cn("flex w-full items-stretch overflow-hidden rounded-xl border text-sm leading-6 transition-all", optionClass(optionIndex))}>
-                  <button type="button" disabled={submitted || isEliminated} onClick={() => !submitted && setSelections((current) => ({ ...current, [index]: optionIndex }))} className="flex min-w-0 flex-1 items-start gap-3 p-3.5 text-left disabled:cursor-not-allowed sm:p-4">
+                return <div key={optionIndex} className={cn("flex w-full items-stretch overflow-hidden rounded-xl border text-sm leading-6 transition-all", optionClass(optionIndex))}>
+                  <button type="button" role="radio" aria-checked={selected === optionIndex} disabled={submitted || isEliminated} onClick={() => !submitted && setSelections((current) => ({ ...current, [index]: optionIndex }))} className="flex min-w-0 flex-1 items-start gap-3 p-3.5 text-left disabled:cursor-not-allowed sm:p-4">
                     <span className={cn("mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border text-xs font-semibold", selected === optionIndex && !submitted && "border-emerald-800 bg-emerald-800 text-white", submitted && optionIndex === question.answerIdx && "border-emerald-800 bg-emerald-800 text-white", submitted && optionIndex === selected && optionIndex !== question.answerIdx && "border-red-700 bg-red-700 text-white")}>{submitted && optionIndex === question.answerIdx ? <Check className="size-4" /> : letters[optionIndex]}</span>
                     <span className={cn("flex-1", isEliminated && "line-through decoration-2")}>{option}</span>
                     {submitted && optionIndex === selected && optionIndex !== question.answerIdx && <X className="mt-1 size-4 text-red-600" />}
@@ -250,13 +256,13 @@ export function QuestionPlayer({ session, questions, subjects, topics, initialFl
                   {!submitted && !reviewMode && <button type="button" aria-label={`${isEliminated ? "Restore" : "Strike out"} answer ${letters[optionIndex]}`} aria-pressed={isEliminated} title={`${isEliminated ? "Restore" : "Strike out"} answer ${letters[optionIndex]}`} onClick={() => toggleEliminated(optionIndex)} className={cn("grid w-12 shrink-0 place-items-center border-l text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-14", isEliminated && "bg-muted/70 text-destructive hover:text-destructive")}><X className="size-4" /></button>}
                 </div>;
               })}</div>
-              {timedExam && submitted ? <p className="mt-7 text-sm text-muted-foreground">Answer saved. Moving on…</p> : !submitted ? <div className="mt-7 flex items-center justify-between gap-3">{showShortcuts && <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><Keyboard className="size-4" />1-5 select · Enter submit</div>}<Button className="ml-auto h-10 min-w-28 bg-emerald-800 hover:bg-emerald-900" disabled={selected === null} onClick={() => submit(selected)}>Submit answer</Button></div> : <div ref={explanationRef} className="mt-7 scroll-mt-24"><div className={cn("rounded-2xl border p-5", selected === question.answerIdx ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/25" : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20")}><div className="flex items-center gap-2"><div className={cn("grid size-8 place-items-center rounded-lg text-white", selected === question.answerIdx ? "bg-emerald-700" : "bg-amber-600")}><Lightbulb className="size-4" /></div><div><p className="font-semibold">{selected === question.answerIdx ? "Correct" : "Review the reasoning"}</p><p className="text-xs text-muted-foreground">The best answer is {letters[question.answerIdx]}.</p></div></div><div className="mt-4 space-y-3 text-sm leading-6 text-foreground/85">{question.explanation.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></div><div className="mt-5 flex items-center justify-between"><Button variant="outline" disabled={index === 0} onClick={() => goTo(index - 1)}><ChevronLeft />Previous</Button><Button className="bg-emerald-800 hover:bg-emerald-900" onClick={next}>{isLast ? "See results" : "Next question"}<ChevronRight /></Button></div></div>}
+              {timedExam && submitted ? <p role="status" aria-live="polite" className="mt-7 text-sm text-muted-foreground">Answer saved. Moving on…</p> : !submitted ? <div className="mt-7 flex items-center justify-between gap-3">{showShortcuts && <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><Keyboard className="size-4" />1-5 select · Enter submit</div>}<Button className="ml-auto h-10 min-w-28 bg-emerald-800 hover:bg-emerald-900" disabled={selected === null} onClick={() => submit(selected)}>Submit answer</Button></div> : <div ref={explanationRef} className="mt-7 scroll-mt-24"><div className={cn("rounded-2xl border p-5", selected === question.answerIdx ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/25" : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20")}><div className="flex items-center gap-2"><div className={cn("grid size-8 place-items-center rounded-lg text-white", selected === question.answerIdx ? "bg-emerald-700" : "bg-amber-600")}><Lightbulb className="size-4" /></div><div><p className="font-semibold">{selected === question.answerIdx ? "Correct" : "Review the reasoning"}</p><p className="text-xs text-muted-foreground">The best answer is {letters[question.answerIdx]}.</p></div></div><div className="mt-4 space-y-3 text-sm leading-6 text-foreground/85">{question.explanation.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}</div></div><div className="mt-5 flex items-center justify-between"><Button variant="outline" disabled={index === 0} onClick={() => goTo(index - 1)}><ChevronLeft />Previous</Button><Button className="bg-emerald-800 hover:bg-emerald-900" onClick={next}>{isLast ? "See results" : "Next question"}<ChevronRight /></Button></div></div>}
             </CardContent></Card>
         </main>
 
-        <aside className="hidden lg:block"><Card className="sticky top-24"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Question navigator</p><p className="text-xs text-muted-foreground">{Object.keys(answers).length} of {questions.length} answered</p></div><MenuSquare className="size-4 text-muted-foreground" /></div><div className="mt-5 grid grid-cols-5 gap-2">{questions.map((item, itemIndex) => <button key={item.id} onClick={() => goTo(itemIndex)} className={cn("relative grid aspect-square place-items-center rounded-lg border text-xs font-medium", itemIndex === index && "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-background", timedExam && answers[itemIndex] && "border-slate-400 bg-slate-100 dark:bg-slate-800", !timedExam && answers[itemIndex] === "correct" && "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300", !timedExam && answers[itemIndex] === "incorrect" && "border-red-400 bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300", !answers[itemIndex] && itemIndex !== index && "bg-muted/40")}>{itemIndex + 1}{flagged.includes(itemIndex) && <Bookmark className="absolute -right-1 -top-1 size-3 fill-amber-400 text-amber-500" />}</button>)}</div><div className="mt-5 grid grid-cols-2 gap-y-2 text-[11px] text-muted-foreground">{[["bg-emerald-500", "Correct"], ["bg-red-500", "Incorrect"], ["bg-muted", "Unanswered"], ["bg-amber-400", "Flagged"]].map(([color, label]) => <span key={label} className="flex items-center gap-2"><i className={`size-2 rounded-full ${color}`} />{label}</span>)}</div><div className="mt-5 rounded-xl bg-muted/60 p-3 text-[11px] leading-5 text-muted-foreground"><FileText className="mb-1 size-4" />Every answer, flag and note is saved to your account as you go.</div></CardContent></Card></aside>
+        <aside className="hidden lg:block"><Card className="sticky top-24"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Question navigator</p><p className="text-xs text-muted-foreground">{Object.keys(answers).length} of {questions.length} answered</p></div><MenuSquare className="size-4 text-muted-foreground" /></div><div className="mt-5 grid grid-cols-5 gap-2">{questions.map((item, itemIndex) => <button type="button" key={item.id} aria-label={`Go to question ${itemIndex + 1}${answers[itemIndex] ? `, ${timedExam ? "answered" : answers[itemIndex]}` : ""}${flagged.includes(itemIndex) ? ", flagged" : ""}`} aria-current={itemIndex === index ? "step" : undefined} onClick={() => goTo(itemIndex)} className={cn("relative grid aspect-square place-items-center rounded-lg border text-xs font-medium", itemIndex === index && "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-background", timedExam && answers[itemIndex] && "border-slate-400 bg-slate-100 dark:bg-slate-800", !timedExam && answers[itemIndex] === "correct" && "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300", !timedExam && answers[itemIndex] === "incorrect" && "border-red-400 bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300", !answers[itemIndex] && itemIndex !== index && "bg-muted/40")}>{itemIndex + 1}{flagged.includes(itemIndex) && <Bookmark className="absolute -right-1 -top-1 size-3 fill-amber-400 text-amber-500" />}</button>)}</div><div className="mt-5 grid grid-cols-2 gap-y-2 text-[11px] text-muted-foreground">{[["bg-emerald-500", "Correct"], ["bg-red-500", "Incorrect"], ["bg-muted", "Unanswered"], ["bg-amber-400", "Flagged"]].map(([color, label]) => <span key={label} className="flex items-center gap-2"><i className={`size-2 rounded-full ${color}`} />{label}</span>)}</div><div className="mt-5 rounded-xl bg-muted/60 p-3 text-[11px] leading-5 text-muted-foreground"><FileText className="mb-1 size-4" />Every answer, flag and note is saved to your account as you go.</div></CardContent></Card></aside>
       </div>
-      <div className="border-t bg-muted/30 px-4 py-4 lg:hidden"><div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto pb-1">{questions.map((item, itemIndex) => <button key={item.id} onClick={() => goTo(itemIndex)} className={cn("grid size-9 shrink-0 place-items-center rounded-lg border bg-background text-xs font-medium", itemIndex === index && "border-emerald-500 bg-emerald-50 text-emerald-700", answers[itemIndex] === "correct" && "bg-emerald-100", answers[itemIndex] === "incorrect" && "bg-red-100")}>{itemIndex + 1}</button>)}</div></div>
+      <div className="border-t bg-muted/30 px-4 py-4 lg:hidden"><div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto pb-1">{questions.map((item, itemIndex) => <button type="button" key={item.id} aria-label={`Go to question ${itemIndex + 1}`} aria-current={itemIndex === index ? "step" : undefined} onClick={() => goTo(itemIndex)} className={cn("grid size-9 shrink-0 place-items-center rounded-lg border bg-background text-xs font-medium", itemIndex === index && "border-emerald-500 bg-emerald-50 text-emerald-700", answers[itemIndex] === "correct" && "bg-emerald-100", answers[itemIndex] === "incorrect" && "bg-red-100")}>{itemIndex + 1}</button>)}</div></div>
     </div>
   );
 }

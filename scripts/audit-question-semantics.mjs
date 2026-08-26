@@ -8,15 +8,18 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectDirectory = resolve(scriptDirectory, "..");
 const snapshotPath = resolve(projectDirectory, "audit-output", "question-review-snapshot.json");
 const adjudicationPath = resolve(projectDirectory, "audit-output", "semantic-pair-adjudications-v1.json");
-const batchFlagIndex = process.argv.indexOf("--batch");
-const batchPath = batchFlagIndex >= 0 && process.argv[batchFlagIndex + 1]
-  ? resolve(process.cwd(), process.argv[batchFlagIndex + 1])
-  : null;
-if (batchFlagIndex >= 0 && !batchPath) throw new Error("--batch requires a JSON file path.");
+const batchPaths = [];
+for (let index = 0; index < process.argv.length; index += 1) {
+  if (process.argv[index] !== "--batch") continue;
+  const argument = process.argv[index + 1];
+  if (!argument || argument.startsWith("--")) throw new Error("--batch requires a JSON file path.");
+  batchPaths.push(resolve(process.cwd(), argument));
+  index += 1;
+}
 const outputPath = resolve(
   projectDirectory,
   "audit-output",
-  batchPath ? "question-semantic-audit-preview.json" : "question-semantic-audit.json",
+  batchPaths.length ? "question-semantic-audit-preview.json" : "question-semantic-audit.json",
 );
 
 const STOP_WORDS = new Set([
@@ -54,7 +57,7 @@ function compact(value) {
 }
 
 function canonicalAnswer(value) {
-  return normalize(value)
+  return canonicalMedical(value)
     .replace(/\bcomputed tomography(?: scan)?\b/gu, "ct")
     .replace(/\bmagnetic resonance imaging\b/gu, "mri")
     .replace(/\bkaryotyp(?:e|ing)(?: analysis)?\b/gu, "karyotype")
@@ -63,6 +66,47 @@ function canonicalAnswer(value) {
     .split(" ")
     .filter((token) => token && !ANSWER_NOISE_WORDS.has(token))
     .join(" ");
+}
+
+function canonicalMedical(value) {
+  return normalize(value)
+    .replace(/\bbehaviour\b/gu, "behavior")
+    .replace(/\bbehavioural\b/gu, "behavioral")
+    .replace(/\bpaediatric\b/gu, "pediatric")
+    .replace(/\bhaemoglobin\b/gu, "hemoglobin")
+    .replace(/\banaemia\b/gu, "anemia")
+    .replace(/\b(?:dialectical behavior therapy|dbt)\b/gu, "dbt")
+    .replace(/\b(?:cobalamin|vitamin b ?12)\b/gu, "vitamin b12")
+    .replace(/\bpernicious anemia\b/gu, "vitamin b12 deficiency")
+    .replace(/\b(?:heroin|morphine|oxycodone|hydromorphone|fentanyl|codeine|methadone|opiate|opioids?)\b/gu, "opioid")
+    .replace(/\bopioid (?:overdose|toxicity|intoxication)\b/gu, "opioid toxicity")
+    .replace(/\b(?:pinpoint pupils?|pupillary miosis|miosis)\b/gu, "miosis")
+    .replace(/\b(?:staph(?:ylococcal)?|staphylococcus aureus)\b/gu, "staphylococcus aureus")
+    .replace(/\b(?:complete blood count|cbc)\b/gu, "cbc")
+    .replace(/\b(?:absolute neutrophil count|anc)\b/gu, "anc")
+    .replace(/\b(?:restless legs syndrome|restless leg syndrome|rls)\b/gu, "restless legs syndrome")
+    .replace(/\b(?:electrocardiogram|ekg|ecg)\b/gu, "ecg")
+    .replace(/\b(?:ultrasound|ultrasonography|sonography)\b/gu, "ultrasound")
+    .replace(/\b(?:computed tomography|ct)(?: scan)?\b/gu, "ct")
+    .replace(/\b(?:magnetic resonance imaging|mri)(?: scan)?\b/gu, "mri")
+    .replace(/\b(?:cerebrovascular accident|cva|stroke)\b/gu, "stroke")
+    .replace(/\b(?:myocardial infarction|heart attack)\b/gu, "myocardial infarction")
+    .replace(/\b(?:down syndrome|trisomy 21)\b/gu, "down syndrome")
+    .replace(/\b(?:intravenous|intramuscular|subcutaneous|iv|im|sc)\b/gu, " ")
+    .replace(/\b\d+(?:\.\d+)?\s*(?:micrograms?|mcg|milligrams?|mg|grams?|g|millilitres?|milliliters?|ml)\b/gu, " ")
+    .trim()
+    .replace(/\s+/gu, " ");
+}
+
+function taskClass(stem) {
+  const task = normalize(taskText(stem));
+  if (/\b(?:diagnosis|cause|etiology|organism|responsible|most likely)\b/u.test(task)) return "identify";
+  if (/\b(?:treat|treatment|therapy|manage|management|medication|drug|intervention|next step)\b/u.test(task)) return "manage";
+  if (/\b(?:test|investigation|imaging|study|screen|monitor|confirm)\b/u.test(task)) return "investigate";
+  if (/\b(?:finding|sign|symptom|feature|associated|complication)\b/u.test(task)) return "finding";
+  if (/\b(?:risk factor|prevent|prevention|prophylaxis|counsel|advice)\b/u.test(task)) return "prevent";
+  if (/\b(?:mechanism|pathophysiology|physiology)\b/u.test(task)) return "mechanism";
+  return "other";
 }
 
 function tokens(value) {
@@ -161,37 +205,60 @@ for (const adjudication of adjudicationFile.adjudications) {
   adjudicationByPair.set(key, adjudication);
 }
 let questions = snapshot.questions;
-let appliedBatchId = null;
-if (batchPath) {
-  const batch = JSON.parse(await readFile(batchPath, "utf8"));
-  const updateByQid = new Map((batch.updates ?? []).map((update) => [update.qid, update.patch ?? {}]));
-  const removedQids = new Set((batch.deletions ?? []).map((deletion) => deletion.remove_qid));
+const appliedBatchIds = [];
+if (batchPaths.length) {
+  const updateByQid = new Map();
+  const removedQids = new Set();
+  for (const batchPath of batchPaths) {
+    const batch = JSON.parse(await readFile(batchPath, "utf8"));
+    appliedBatchIds.push(batch.batch_id ?? null);
+    for (const update of batch.updates ?? []) {
+      if (updateByQid.has(update.qid)) throw new Error(`Question ${update.qid} is updated by more than one batch.`);
+      if (removedQids.has(update.qid)) throw new Error(`Question ${update.qid} is both updated and removed across batches.`);
+      updateByQid.set(update.qid, update.patch ?? {});
+    }
+    for (const deletion of batch.deletions ?? []) {
+      if (removedQids.has(deletion.remove_qid)) throw new Error(`Question ${deletion.remove_qid} is removed by more than one batch.`);
+      if (updateByQid.has(deletion.remove_qid)) throw new Error(`Question ${deletion.remove_qid} is both updated and removed across batches.`);
+      removedQids.add(deletion.remove_qid);
+    }
+  }
   questions = questions
     .filter((question) => !removedQids.has(question.qid))
     .map((question) => ({ ...question, ...(updateByQid.get(question.qid) ?? {}) }));
-  appliedBatchId = batch.batch_id ?? null;
 }
 const byQid = new Map(questions.map((question) => [question.qid, question]));
 const tokenSets = new Map();
 const answerSets = new Map();
 const answerConceptSets = new Map();
+const medicalConceptSets = new Map();
 const taskSets = new Map();
+const taskClasses = new Map();
 const featureLists = new Map();
+const medicalFeatureLists = new Map();
 const documentFrequency = new Map();
+const medicalDocumentFrequency = new Map();
 
 for (const question of questions) {
   const list = features(question.stem);
+  const medicalList = features(`${canonicalMedical(question.stem)} ${canonicalMedical(question.topic_id)} ${canonicalAnswer(answerText(question))}`);
   const unique = new Set(list);
+  const uniqueMedical = new Set(medicalList);
   featureLists.set(question.qid, list);
+  medicalFeatureLists.set(question.qid, medicalList);
   tokenSets.set(question.qid, new Set(tokens(question.stem)));
   answerSets.set(question.qid, new Set(tokens(answerText(question))));
   answerConceptSets.set(question.qid, new Set(tokens(canonicalAnswer(answerText(question)))));
+  medicalConceptSets.set(question.qid, new Set(tokens(canonicalMedical(`${question.stem} ${question.topic_id} ${answerText(question)}`))));
   taskSets.set(question.qid, new Set(tokens(taskText(question.stem))));
+  taskClasses.set(question.qid, taskClass(question.stem));
   for (const feature of unique) documentFrequency.set(feature, (documentFrequency.get(feature) ?? 0) + 1);
+  for (const feature of uniqueMedical) medicalDocumentFrequency.set(feature, (medicalDocumentFrequency.get(feature) ?? 0) + 1);
 }
 
 const vectors = new Map();
 const inverted = new Map();
+const medicalInverted = new Map();
 for (const question of questions) {
   const counts = new Map();
   for (const feature of featureLists.get(question.qid)) counts.set(feature, (counts.get(feature) ?? 0) + 1);
@@ -209,6 +276,15 @@ for (const question of questions) {
   vectors.set(question.qid, vector);
 }
 
+for (const question of questions) {
+  for (const feature of new Set(medicalFeatureLists.get(question.qid))) {
+    if ((medicalDocumentFrequency.get(feature) ?? Infinity) > 140) continue;
+    const ids = medicalInverted.get(feature) ?? [];
+    ids.push(question.qid);
+    medicalInverted.set(feature, ids);
+  }
+}
+
 const candidatePairs = new Set();
 for (const question of questions) {
   const rareFeatures = [...new Set(featureLists.get(question.qid))]
@@ -220,22 +296,33 @@ for (const question of questions) {
       if (candidateQid !== question.qid) candidatePairs.add(pairKey(question.qid, candidateQid));
     }
   }
+
+  const rareMedicalFeatures = [...new Set(medicalFeatureLists.get(question.qid))]
+    .filter((feature) => (medicalDocumentFrequency.get(feature) ?? Infinity) <= 140)
+    .sort((left, right) => (medicalDocumentFrequency.get(left) ?? 0) - (medicalDocumentFrequency.get(right) ?? 0))
+    .slice(0, 24);
+  for (const feature of rareMedicalFeatures) {
+    for (const candidateQid of medicalInverted.get(feature) ?? []) {
+      if (candidateQid !== question.qid) candidatePairs.add(pairKey(question.qid, candidateQid));
+    }
+  }
 }
 
 const answerGroups = new Map();
 const canonicalAnswerGroups = new Map();
 const topicGroups = new Map();
+const topicLeafGroups = new Map();
 for (const question of questions) {
   const normalizedAnswer = normalize(answerText(question));
   if (normalizedAnswer.length >= 3) {
-    const key = `${question.subject_id}|${normalizedAnswer}`;
+    const key = normalizedAnswer;
     const group = answerGroups.get(key) ?? [];
     group.push(question.qid);
     answerGroups.set(key, group);
   }
   const normalizedConcept = canonicalAnswer(answerText(question));
   if (normalizedConcept.length >= 3) {
-    const key = `${question.subject_id}|${normalizedConcept}`;
+    const key = normalizedConcept;
     const group = canonicalAnswerGroups.get(key) ?? [];
     group.push(question.qid);
     canonicalAnswerGroups.set(key, group);
@@ -243,9 +330,15 @@ for (const question of questions) {
   const topicGroup = topicGroups.get(question.topic_id) ?? [];
   topicGroup.push(question.qid);
   topicGroups.set(question.topic_id, topicGroup);
+  const topicLeaf = normalize(String(question.topic_id ?? "").split("/").at(-1));
+  if (topicLeaf && topicLeaf !== "other") {
+    const topicLeafGroup = topicLeafGroups.get(topicLeaf) ?? [];
+    topicLeafGroup.push(question.qid);
+    topicLeafGroups.set(topicLeaf, topicLeafGroup);
+  }
 }
 
-for (const group of [...answerGroups.values(), ...canonicalAnswerGroups.values(), ...topicGroups.values()]) {
+for (const group of [...answerGroups.values(), ...canonicalAnswerGroups.values(), ...topicGroups.values(), ...topicLeafGroups.values()]) {
   if (group.length > 180) continue;
   for (let left = 0; left < group.length; left += 1) {
     for (let right = left + 1; right < group.length; right += 1) {
@@ -259,16 +352,20 @@ for (const key of candidatePairs) {
   const [leftQid, rightQid] = key.split(":").map(Number);
   const left = byQid.get(leftQid);
   const right = byQid.get(rightQid);
-  if (!left || !right || left.subject_id !== right.subject_id) continue;
+  if (!left || !right) continue;
 
   const stemCosine = cosine(vectors.get(leftQid), vectors.get(rightQid));
   const stemJaccard = setJaccard(tokenSets.get(leftQid), tokenSets.get(rightQid));
   const answerSimilarity = setJaccard(answerSets.get(leftQid), answerSets.get(rightQid));
   const answerConceptSimilarity = setJaccard(answerConceptSets.get(leftQid), answerConceptSets.get(rightQid));
+  const medicalConceptSimilarity = setJaccard(medicalConceptSets.get(leftQid), medicalConceptSets.get(rightQid));
   const taskSimilarity = setJaccard(taskSets.get(leftQid), taskSets.get(rightQid));
+  const sameTaskClass = taskClasses.get(leftQid) === taskClasses.get(rightQid) && taskClasses.get(leftQid) !== "other";
   const answerExact = normalize(answerText(left)) === normalize(answerText(right));
   const answerConceptExact = canonicalAnswer(answerText(left)) === canonicalAnswer(answerText(right));
   const sameTopic = left.topic_id === right.topic_id;
+  const sameTopicLeaf = normalize(String(left.topic_id ?? "").split("/").at(-1)) === normalize(String(right.topic_id ?? "").split("/").at(-1));
+  const sameSubject = left.subject_id === right.subject_id;
   const exactStem = compact(left.stem) === compact(right.stem);
   const optionSimilarity = setJaccard(
     new Set(left.options.map(normalize)),
@@ -282,17 +379,30 @@ for (const key of candidatePairs) {
     + answerConceptSimilarity * 0.06
     + taskSimilarity * 0.1
     + optionSimilarity * 0.1
+    + medicalConceptSimilarity * 0.08
     + (answerExact ? 0.03 : 0)
     + (answerConceptExact ? 0.01 : 0)
     + (sameTopic ? 0.02 : 0)
+    + (sameTaskClass ? 0.01 : 0)
   );
   const include = exactStem
     || stemCosine >= 0.76
-    || (sameTopic && stemCosine >= 0.42 && stemJaccard >= 0.18)
-    || (answerExact && stemCosine >= 0.46 && (stemJaccard >= 0.23 || taskSimilarity >= 0.5))
-    || (answerConceptExact && stemCosine >= 0.3 && (stemJaccard >= 0.12 || taskSimilarity >= 0.25 || optionSimilarity >= 0.35))
+    // Questions in the same curriculum leaf can use different demographic filler
+    // while still testing the same objective. The former thresholds missed clear
+    // repeats such as three versions of long-term antidepressant maintenance.
+    || (sameTopic && stemCosine >= 0.28 && stemJaccard >= 0.12)
+    || (sameTopic && stemJaccard >= 0.28)
+    || (sameTopicLeaf && stemCosine >= 0.3 && medicalConceptSimilarity >= 0.16)
+    // An identical keyed answer plus a moderately similar vignette deserves
+    // review even when the source rewrote most of the surrounding prose.
+    || (answerExact && stemCosine >= 0.3 && (stemJaccard >= 0.12 || taskSimilarity >= 0.34 || sameTopic || sameTopicLeaf))
+    || (answerExact && stemJaccard >= 0.25)
+    || (answerConceptExact && stemCosine >= 0.26 && (stemJaccard >= 0.1 || taskSimilarity >= 0.2 || optionSimilarity >= 0.3 || medicalConceptSimilarity >= 0.34))
     || (answerConceptSimilarity >= 0.65 && stemCosine >= 0.34 && (sameTopic || stemJaccard >= 0.16))
-    || (answerSimilarity >= 0.8 && optionSimilarity >= 0.6 && stemCosine >= 0.4);
+    || (answerSimilarity >= 0.8 && optionSimilarity >= 0.6 && stemCosine >= 0.4)
+    || (medicalConceptSimilarity >= 0.34 && stemCosine >= 0.3 && (sameTaskClass || sameTopic || sameTopicLeaf))
+    || (sameTaskClass && stemJaccard >= 0.36 && medicalConceptSimilarity >= 0.3)
+    || (!sameSubject && answerConceptExact && medicalConceptSimilarity >= 0.42 && stemCosine >= 0.2);
   if (!include) continue;
 
   semanticCandidates.push({
@@ -304,9 +414,13 @@ for (const key of candidatePairs) {
     stem_jaccard: Number(stemJaccard.toFixed(4)),
     answer_similarity: Number(answerSimilarity.toFixed(4)),
     answer_concept_similarity: Number(answerConceptSimilarity.toFixed(4)),
+    medical_concept_similarity: Number(medicalConceptSimilarity.toFixed(4)),
     task_similarity: Number(taskSimilarity.toFixed(4)),
+    task_class_match: sameTaskClass,
     option_similarity: Number(optionSimilarity.toFixed(4)),
     same_topic: sameTopic,
+    same_topic_leaf: sameTopicLeaf,
+    same_subject: sameSubject,
     answer_exact: answerExact,
     answer_concept_exact: answerConceptExact,
     left_topic: left.topic_id,
@@ -362,7 +476,8 @@ for (const question of questions) {
 const report = {
   schema_version: 1,
   generated_at: new Date().toISOString(),
-  applied_batch_id: appliedBatchId,
+  applied_batch_id: appliedBatchIds.length === 1 ? appliedBatchIds[0] : null,
+  applied_batch_ids: appliedBatchIds,
   adjudication_set_id: adjudicationFile.adjudication_set_id ?? null,
   question_count: questions.length,
   semantic_candidate_count: annotatedSemanticCandidates.length,

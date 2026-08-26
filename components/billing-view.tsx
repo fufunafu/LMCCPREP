@@ -10,11 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import type { BillingPlan, BillingPlanKey, BillingSummary } from "@/lib/types";
-import { cn } from "@/lib/utils";
-
-function dateLabel(value?: string) {
-  return value ? new Intl.DateTimeFormat("en-CA", { dateStyle: "long" }).format(new Date(value)) : undefined;
-}
+import { cn, dateLabel } from "@/lib/utils";
 
 function statusLabel(status?: string) {
   if (!status) return "No subscription";

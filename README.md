@@ -2,6 +2,12 @@
 
 Montreal QBank is a private, mobile-first question bank for Canadian medical learners preparing for the MCCQE Part I. It supports tutor and timed sessions, progress analytics, flags, notes, password recovery, profile settings, dark mode, and an installable PWA experience.
 
+## LMCC question-bank audit status
+
+The full LMCC question review is complete for the authoritative 4,972-question snapshot. The verified output contains 4,036 nonduplicate survivors after 1,397 corrections and 936 confirmed duplicate removals. Do not repeat the general LMCC question review unless the source snapshot changes, the strict verifier fails, or a new review is explicitly requested.
+
+See [`audit-output/LMCC_QUESTION_BANK_AUDIT_COMPLETE.md`](audit-output/LMCC_QUESTION_BANK_AUDIT_COMPLETE.md) for the durable completion record, final checksums, artifacts, and rerun conditions.
+
 ## Local setup
 
 1. Install dependencies with `npm install`.

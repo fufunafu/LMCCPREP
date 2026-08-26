@@ -19,6 +19,25 @@ if (!supabaseUrl || !serviceRoleKey) {
 }
 
 const applyChanges = process.argv.includes("--apply");
+
+// Safety: writes require --project <ref> matching the Supabase project in the environment.
+const projectFlagIndex = process.argv.indexOf("--project");
+const requestedProject = projectFlagIndex >= 0 ? process.argv[projectFlagIndex + 1]?.trim() : undefined;
+const configuredProject = (() => {
+  try {
+    return new URL(supabaseUrl).hostname.split(".")[0];
+  } catch {
+    return undefined;
+  }
+})();
+if (!requestedProject || requestedProject.startsWith("--")) {
+  console.error(`Refusing to run: pass --project <ref> (the environment points at project "${configuredProject ?? "unknown"}").`);
+  process.exit(1);
+}
+if (requestedProject !== configuredProject) {
+  console.error(`Refusing to run: --project ${requestedProject} does not match the configured Supabase project "${configuredProject ?? "unknown"}".`);
+  process.exit(1);
+}
 const apiHeaders = {
   apikey: serviceRoleKey,
   Authorization: `Bearer ${serviceRoleKey}`,

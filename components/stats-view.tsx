@@ -9,14 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DailyActivity, Question, Subject, Topic, TopicStats } from "@/lib/types";
+import { torontoDateKey } from "@/lib/utils";
 
 export function StatsView({ subjects, topics, stats, activity, flagged }: { subjects: Subject[]; topics: Topic[]; stats: TopicStats[]; activity: DailyActivity[]; flagged: Question[] }) {
   const lineData = activity.reduce<{ week: string; accuracy: number; attempted: number }[]>((weeks, day, index) => { if (index % 7 === 6) { const slice = activity.slice(index - 6, index + 1); const attempted = slice.reduce((sum, item) => sum + item.attempted, 0); const correct = slice.reduce((sum, item) => sum + item.correct, 0); weeks.push({ week: `W${weeks.length + 1}`, accuracy: attempted ? Math.round(correct / attempted * 100) : 0, attempted }); } return weeks; }, []);
   const totals = stats.reduce((acc, item) => ({ attempted: acc.attempted + item.attempted, correct: acc.correct + item.correct, time: acc.time + item.avgTimeMs * item.attempted }), { attempted: 0, correct: 0, time: 0 });
   const overall = totals.attempted ? Math.round((totals.correct / totals.attempted) * 100) : 0;
   const avgSec = totals.attempted ? Math.round(totals.time / totals.attempted / 1000) : 0;
-  const monthKey = new Date().toISOString().slice(0, 7);
-  const lastMonthKey = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().slice(0, 7);
+  const todayKey = torontoDateKey();
+  const monthKey = todayKey.slice(0, 7);
+  const lastMonthKey = torontoDateKey(new Date(`${todayKey.slice(0, 7)}-01T12:00:00Z`).getTime() - 86_400_000).slice(0, 7);
   const thisMonth = activity.filter((day) => day.date.startsWith(monthKey)).reduce((sum, day) => sum + day.attempted, 0);
   const lastMonth = activity.filter((day) => day.date.startsWith(lastMonthKey)).reduce((sum, day) => sum + day.attempted, 0);
   const last30 = activity.slice(-30), prev30 = activity.slice(-60, -30);

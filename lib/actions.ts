@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_COOKIE, DEMO_COOKIE_VALUE, DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/demo-auth";
 import { isDemoSession } from "@/lib/demo-session";
 import type { QuestionStatus, SessionMode } from "@/lib/types";
 import { configuredSiteOrigin, safeReturnPath } from "@/lib/urls";
+import { DEFAULT_SECONDS_PER_QUESTION } from "@/lib/utils";
 import { requireEntitledUserId } from "@/lib/billing";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -28,20 +29,12 @@ function authErrorMessage(message: string) {
   return "We could not sign you in. Try again or reset your password.";
 }
 
-async function applicationOrigin() {
+function applicationOrigin() {
+  // Only configured origins are trusted for auth links: NEXT_PUBLIC_SITE_URL, then
+  // VERCEL_PROJECT_PRODUCTION_URL, then VERCEL_URL. Request headers are never used.
   const configured = configuredSiteOrigin();
-  if (configured) return configured;
-  const requestHeaders = await headers();
-  const origin = requestHeaders.get("origin");
-  const host = (requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"))?.split(",")[0].trim();
-  try {
-    const parsed = origin ? new URL(origin) : null;
-    if (parsed && parsed.host === host) return parsed.origin;
-  } catch {
-    // Continue to the trusted production fallback.
-  }
-  if (host?.startsWith("localhost") || host?.startsWith("127.0.0.1")) return `http://${host}`;
-  return "https://lmcc-prep.vercel.app";
+  if (!configured) throw new Error("NEXT_PUBLIC_SITE_URL is not configured; password reset links cannot be generated.");
+  return configured;
 }
 
 async function enterDemo(next: string) {
@@ -94,7 +87,7 @@ export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email) redirect("/forgot-password?error=Enter+your+email+address.");
   const supabase = await createClient();
-  const redirectTo = `${await applicationOrigin()}/auth/callback?next=${encodeURIComponent("/auth/set-password")}`;
+  const redirectTo = `${applicationOrigin()}/auth/callback?next=${encodeURIComponent("/auth/set-password")}`;
   let message: string | null = null;
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
@@ -170,6 +163,8 @@ export async function createSession(input: {
   if (await isDemoSession()) redirect(`/session/demo?mode=${input.mode}`);
   if (!(["tutor", "timed"] as const).includes(input.mode)) throw new Error("Choose a valid session mode.");
   if (!(["unused", "correct", "incorrect", "flagged", "all"] as const).includes(input.status)) throw new Error("Choose a valid question status.");
+  if (!Number.isFinite(input.count)) throw new Error("Choose a valid number of questions.");
+  if (!Array.isArray(input.subjectIds) || !Array.isArray(input.topicIds) || [...input.subjectIds, ...input.topicIds].some((id) => typeof id !== "string")) throw new Error("Choose valid subjects and topics.");
   const supabase = await createClient();
   const userId = await requireEntitledUserId(supabase);
   const { data: qids, error } = await supabase.rpc("pick_questions", {
@@ -182,7 +177,7 @@ export async function createSession(input: {
   if (!qids?.length) return { error: "No questions match those filters." } as const;
   const { data: session, error: sErr } = await supabase.from("sessions").insert({
     user_id: userId, mode: input.mode, question_ids: qids,
-    seconds_per_question: input.mode === "timed" ? Math.max(15, Math.min(600, input.secondsPerQuestion ?? 75)) : null,
+    seconds_per_question: input.mode === "timed" ? Math.max(15, Math.min(600, input.secondsPerQuestion ?? DEFAULT_SECONDS_PER_QUESTION)) : null,
     filters: { subjectIds: input.subjectIds, topicIds: input.topicIds, status: input.status },
   }).select("id").single();
   if (sErr) throw new Error(sErr.message);
@@ -191,6 +186,9 @@ export async function createSession(input: {
 
 export async function recordAttempt(input: { sessionId: string; qid: number; chosenIdx: number | null; timeMs: number }) {
   if (await isDemoSession()) return;
+  if (typeof input.sessionId !== "string" || !input.sessionId) throw new Error("This question is not part of the session.");
+  if (!Number.isInteger(input.qid)) throw new Error("This question is no longer available.");
+  if (!Number.isFinite(input.timeMs)) throw new Error("Choose a valid answer.");
   const supabase = await createClient();
   const userId = await requireEntitledUserId(supabase);
   const [{ data: session, error: sessionError }, { data: question, error: questionError }] = await Promise.all([
@@ -210,9 +208,13 @@ export async function recordAttempt(input: { sessionId: string; qid: number; cho
 
 export async function setSessionProgress(sessionId: string, currentIndex: number) {
   if (await isDemoSession()) return;
+  if (!Number.isInteger(currentIndex) || currentIndex < 0) throw new Error("Choose a valid question position.");
   const supabase = await createClient();
   await requireEntitledUserId(supabase);
-  const { error } = await supabase.from("sessions").update({ current_index: currentIndex }).eq("id", sessionId);
+  const { data: session, error: sessionError } = await supabase.from("sessions").select("question_ids").eq("id", sessionId).maybeSingle();
+  if (sessionError || !session) throw new Error(sessionError?.message ?? "This session is no longer available.");
+  const clamped = Math.min(currentIndex, Math.max(0, session.question_ids.length - 1));
+  const { error } = await supabase.from("sessions").update({ current_index: clamped }).eq("id", sessionId);
   if (error) throw new Error(error.message);
 }
 

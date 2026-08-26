@@ -9,13 +9,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { DashboardStats, Session, Subject, Topic } from "@/lib/types";
+import { torontoDateKey } from "@/lib/utils";
 
 const pctOf = (correct: number, attempted: number) => (attempted ? Math.round((correct / attempted) * 100) : 0);
-const torontoDateKey = (iso: string) => {
-  const parts = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "America/Toronto" }).formatToParts(new Date(iso));
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
-};
 const relativeDay = (iso: string, referenceDate: string) => {
   const days = Math.round((Date.parse(`${referenceDate}T12:00:00Z`) - Date.parse(`${torontoDateKey(iso)}T12:00:00Z`)) / 86400000);
   return days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`;
@@ -28,7 +24,7 @@ export function DashboardView({ stats, subjects, topics, recentSessions, userNam
   const recentTotal = last12Weeks.reduce((sum, day) => sum + day.attempted, 0);
   const byWeekday = last12Weeks.reduce((acc, day) => { const d = new Date(day.date + "T12:00:00").getDay(); acc[d] = (acc[d] ?? 0) + day.attempted; return acc; }, {} as Record<number, number>);
   const bestDay = recentTotal ? ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"][Number(Object.entries(byWeekday).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0)] : null;
-  const referenceDate = stats.activity.at(-1)?.date ?? "2026-01-01";
+  const referenceDate = stats.activity.at(-1)?.date ?? torontoDateKey();
   const today = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${referenceDate}T12:00:00Z`));
   const firstName = (userName ?? "").split(" ")[0];
   const topicName = (id: string) => topics.find((topic) => topic.id === id)?.name ?? id;

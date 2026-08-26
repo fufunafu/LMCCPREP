@@ -1,5 +1,6 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient as createAdminClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * POST /api/capture saves one question that is currently displayed on a qbank page.
@@ -36,9 +37,23 @@ function mapSubject(category: string): string | null {
   return null;
 }
 
-function corsHeaders(origin: string | null) {
+/** Only the qbank site (apex or any subdomain, https only) may call this endpoint from a browser. */
+function allowedOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "https:" || url.origin !== origin) return null;
+    const host = url.hostname.toLowerCase();
+    return host === "qbank.md" || host.endsWith(".qbank.md") ? origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed = allowedOrigin(origin);
   return {
-    "Access-Control-Allow-Origin": origin || "*",
+    ...(allowed ? { "Access-Control-Allow-Origin": allowed } : {}),
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "content-type, x-capture-token",
     "Access-Control-Max-Age": "86400",
@@ -46,19 +61,25 @@ function corsHeaders(origin: string | null) {
   };
 }
 
+function tokenMatches(expected: string, provided: string | null) {
+  if (!provided) return false;
+  const a = Buffer.from(expected, "utf8");
+  const b = Buffer.from(provided, "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(request.headers.get("origin")) });
 }
 
 let cachedOwnerId: string | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function resolveOwnerId(admin: any): Promise<string | null> {
+async function resolveOwnerId(admin: SupabaseClient): Promise<string | null> {
   if (cachedOwnerId) return cachedOwnerId;
   const email = (process.env.CAPTURE_OWNER_EMAIL || "").toLowerCase();
   if (!email) return null;
   // The user base is invite-only, so the first page is enough.
   const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  const user = data?.users?.find((u: { email?: string }) => (u.email || "").toLowerCase() === email);
+  const user = data?.users?.find((u) => (u.email || "").toLowerCase() === email);
   cachedOwnerId = user?.id ?? null;
   return cachedOwnerId;
 }
@@ -68,7 +89,7 @@ export async function POST(request: NextRequest) {
   const headers = corsHeaders(origin);
 
   const token = process.env.CAPTURE_TOKEN;
-  if (!token || request.headers.get("x-capture-token") !== token) {
+  if (!token || !tokenMatches(token, request.headers.get("x-capture-token"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
   }
 
@@ -132,17 +153,19 @@ export async function POST(request: NextRequest) {
 
   // Topic id mirrors add_user_question(): subject/slug(topic)
   const topicId = `${subjectId}/${topicName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-  await admin.from("topics").upsert({ id: topicId, subject_id: subjectId, name: topicName }, { onConflict: "id" });
+  const { error: topicError } = await admin.from("topics").upsert({ id: topicId, subject_id: subjectId, name: topicName }, { onConflict: "id" });
+  if (topicError) {
+    console.error("capture: topic upsert failed", topicError);
+    return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
+  }
 
-  // Next user qid (>= 1,000,000). Single-user sequential capture → max+1 is safe.
-  const { data: maxRow } = await admin
-    .from("questions")
-    .select("qid")
-    .gte("qid", 1000000)
-    .order("qid", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const qid = Math.max(maxRow?.qid ?? 999999, 999999) + 1;
+  // Next user qid (>= 1,000,000), allocated atomically by a service-role-only function.
+  const { data: nextQid, error: qidError } = await admin.rpc("next_user_question_qid");
+  const qid = Number(nextQid);
+  if (qidError || !Number.isInteger(qid) || qid < 1_000_000) {
+    console.error("capture: qid allocation failed", qidError ?? nextQid);
+    return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
+  }
 
   const { error } = await admin.from("questions").insert({
     qid,
@@ -157,7 +180,12 @@ export async function POST(request: NextRequest) {
     needs_review: true,
     review_note: reviewTag,
   });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers });
+  if (error) {
+    // 23505: unique_violation (normalized-stem index) — the same question is already in the bank.
+    if (error.code === "23505") return NextResponse.json({ duplicate: true }, { status: 409, headers });
+    console.error("capture: insert failed", error);
+    return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
+  }
 
   return NextResponse.json({ qid, deduped: false }, { status: 200, headers });
 }

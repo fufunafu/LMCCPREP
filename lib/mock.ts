@@ -69,7 +69,7 @@ export const recentSessions: Session[] = [
   { id: "session-104", mode: "tutor", questionIds: questions.slice(0, 20).map((q) => q.id), createdAt: "2026-08-23T18:10:00Z", finishedAt: "2026-08-23T18:38:00Z" },
   { id: "session-103", mode: "timed", questionIds: questions.slice(4, 19).map((q) => q.id), createdAt: "2026-08-22T13:30:00Z", finishedAt: "2026-08-22T13:49:00Z", secondsPerQuestion: 90 },
   { id: "session-102", mode: "tutor", questionIds: questions.slice(10, 20).map((q) => q.id), createdAt: "2026-08-20T21:00:00Z", finishedAt: "2026-08-20T21:19:00Z" },
-  { id: "session-101", mode: "timed", questionIds: questions.slice(20, 30).map((q) => q.id), createdAt: "2026-08-18T16:15:00Z", finishedAt: "2026-08-18T16:28:00Z", secondsPerQuestion: 75 },
+  { id: "session-101", mode: "timed", questionIds: questions.slice(20, 30).map((q) => q.id), createdAt: "2026-08-18T16:15:00Z", finishedAt: "2026-08-18T16:28:00Z", secondsPerQuestion: 90 },
 ];
 
 export const demoAttempts: Attempt[] = demoSession.questionIds.map((questionId, index) => ({

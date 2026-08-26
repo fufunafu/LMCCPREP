@@ -15,7 +15,7 @@ loadEnvConfig(projectDirectory);
 
 const batchArgument = process.argv.find((argument) => argument.endsWith(".json"));
 if (!batchArgument) {
-  throw new Error("Usage: node scripts/apply-question-review-corrections.mjs <batch.json> [--apply]");
+  throw new Error("Usage: node scripts/apply-question-review-corrections.mjs <batch.json> --project <ref> [--apply]");
 }
 const batchPath = resolve(process.cwd(), batchArgument);
 const applyChanges = process.argv.includes("--apply");
@@ -23,6 +23,25 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
+}
+
+// Safety: writes require --project <ref> matching the Supabase project in the environment.
+const projectFlagIndex = process.argv.indexOf("--project");
+const requestedProject = projectFlagIndex >= 0 ? process.argv[projectFlagIndex + 1]?.trim() : undefined;
+const configuredProject = (() => {
+  try {
+    return new URL(supabaseUrl).hostname.split(".")[0];
+  } catch {
+    return undefined;
+  }
+})();
+if (!requestedProject || requestedProject.startsWith("--")) {
+  console.error(`Refusing to run: pass --project <ref> (the environment points at project "${configuredProject ?? "unknown"}").`);
+  process.exit(1);
+}
+if (requestedProject !== configuredProject) {
+  console.error(`Refusing to run: --project ${requestedProject} does not match the configured Supabase project "${configuredProject ?? "unknown"}".`);
+  process.exit(1);
 }
 const apiHeaders = {
   apikey: serviceRoleKey,
@@ -77,6 +96,41 @@ function parseAnswerKeyOption(answerKey) {
   return match ? Number(match[1]) - 1 : null;
 }
 
+function completeRedundantSupportFields(snapshotQuestion, patch) {
+  const rewritesQuestionContent = ["stem", "options", "answer_index", "explanation"]
+    .some((field) => Object.hasOwn(patch, field));
+  if (!rewritesQuestionContent) return patch;
+
+  const mergedQuestion = { ...snapshotQuestion, ...patch };
+  const options = Array.isArray(mergedQuestion.options) ? mergedQuestion.options : [];
+  const answerIndex = mergedQuestion.answer_index;
+  const answerText = Number.isInteger(answerIndex) ? options[answerIndex] : null;
+  const paragraphs = Array.isArray(mergedQuestion.explanation)
+    ? mergedQuestion.explanation.map((paragraph) => paragraph?.trim()).filter(Boolean)
+    : [];
+  if (!answerText || paragraphs.length === 0) return patch;
+
+  const supportParagraphs = paragraphs.length > 1 ? paragraphs.slice(1) : paragraphs;
+  const primarySupport = supportParagraphs[0];
+  const distractorSupport = supportParagraphs.at(-1);
+  const completedPatch = { ...patch };
+  if (!Object.hasOwn(completedPatch, "answer_key")) {
+    completedPatch.answer_key = `The correct answer is Option ${answerIndex + 1}: ${answerText}. ${primarySupport}`;
+  }
+  if (!Object.hasOwn(completedPatch, "key_points")) {
+    completedPatch.key_points = supportParagraphs.join("\n\n");
+  }
+  if (!Object.hasOwn(completedPatch, "option_explanations")) {
+    completedPatch.option_explanations = Object.fromEntries(options.map((option, index) => [
+      String(index),
+      index === answerIndex
+        ? `Correct. ${primarySupport}`
+        : `Incorrect. The best answer is ${answerText}. ${distractorSupport}`,
+    ]));
+  }
+  return completedPatch;
+}
+
 function validateQuestion(question) {
   const failures = [];
   if (!question.stem || question.stem.trim().length < 12) failures.push("short or empty stem");
@@ -124,8 +178,14 @@ async function api(path, options = {}) {
 
 async function fetchQuestions(qids, includeTags) {
   const fields = ["qid", ...Object.keys(reviewFields({}, includeTags))].join(",");
-  const filter = encodeURIComponent(`(${qids.join(",")})`);
-  return api(`questions?select=${fields}&qid=in.${filter}&order=qid.asc`);
+  const rows = [];
+  const chunkSize = 250;
+  for (let start = 0; start < qids.length; start += chunkSize) {
+    const chunk = qids.slice(start, start + chunkSize);
+    const filter = encodeURIComponent(`(${chunk.join(",")})`);
+    rows.push(...await api(`questions?select=${fields}&qid=in.${filter}&order=qid.asc`));
+  }
+  return rows.sort((left, right) => left.qid - right.qid);
 }
 
 async function fetchRows(table, query) {
@@ -205,6 +265,12 @@ if (!batch.batch_id || (!updates.length && !deletions.length)) {
 }
 const snapshotById = new Map(snapshot.questions.map((question) => [question.qid, question]));
 const includeTags = snapshot.questions.some((question) => Object.hasOwn(question, "tags"));
+for (const update of updates) {
+  const snapshotQuestion = snapshotById.get(update.qid);
+  if (snapshotQuestion && update.patch) {
+    update.patch = completeRedundantSupportFields(snapshotQuestion, update.patch);
+  }
+}
 const seenQids = new Set();
 const preconditionFailures = [];
 for (const update of updates) {
@@ -230,6 +296,9 @@ for (const deletion of deletions) {
   }
   if (deletion.remove_qid === deletion.keep_qid) {
     preconditionFailures.push(`Question ${deletion.remove_qid} cannot be its own survivor.`);
+  }
+  if (deletion.allow_image_asset_deletion !== undefined && deletion.allow_image_asset_deletion !== true) {
+    preconditionFailures.push(`Question ${deletion.remove_qid} has an invalid allow_image_asset_deletion value.`);
   }
   if (seenQids.has(deletion.remove_qid)) {
     preconditionFailures.push(`Question ${deletion.remove_qid} occurs in more than one operation.`);
@@ -290,7 +359,7 @@ const hierarchyBackup = removalQids.length ? {
   ),
 } : { categories: [], topics: [], images: [] };
 for (const deletion of deletions) {
-  if (hierarchyBackup.images.some(({ qid }) => qid === deletion.remove_qid)) {
+  if (hierarchyBackup.images.some(({ qid }) => qid === deletion.remove_qid) && !deletion.allow_image_asset_deletion) {
     preconditionFailures.push(`Question ${deletion.remove_qid} has image assets that require manual migration.`);
   }
 }
@@ -337,6 +406,7 @@ const deletionResults = [];
 for (const deletion of deletions) {
   const categoryLinks = hierarchyBackup.categories.filter(({ qid }) => qid === deletion.remove_qid);
   const topicLink = hierarchyBackup.topics.find(({ qid }) => qid === deletion.remove_qid);
+  const imageLinks = hierarchyBackup.images.filter(({ qid }) => qid === deletion.remove_qid);
   if (applyChanges) {
     for (const link of categoryLinks) {
       await insertIgnore(
@@ -367,6 +437,8 @@ for (const deletion of deletions) {
     ...deletion,
     migrated_category_links: categoryLinks.map(({ category_id: categoryId }) => categoryId),
     source_topic_link: topicLink?.topic_id ?? null,
+    backed_up_image_rows: imageLinks,
+    storage_objects_retained: imageLinks.length > 0,
   });
 }
 await writeFile(reportPath, `${JSON.stringify({

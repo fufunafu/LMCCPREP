@@ -35,6 +35,8 @@ export async function proxy(request: NextRequest) {
   const isPublic = PUBLIC_PATHS.includes(pathname) || PUBLIC_ASSET.test(pathname) || pathname.startsWith("/_next") || pathname.startsWith("/api/public") || pathname.startsWith("/auth/");
 
   if (!signedIn && !isPublic) {
+    // API routes get a machine-readable 401 instead of a login redirect.
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);

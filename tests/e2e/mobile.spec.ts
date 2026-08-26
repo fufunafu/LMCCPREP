@@ -17,7 +17,7 @@ test("@mobile supports navigation and question controls at iPhone width", async 
   await page.getByRole("button", { name: /Start session/ }).click();
   await expect(page.getByRole("button", { name: "Strike out answer A" })).toBeVisible();
   await page.getByRole("button", { name: "Strike out answer A" }).click();
-  await expect(page.getByRole("button", { name: /A A diastolic component/ })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /A A diastolic component/ })).toBeDisabled();
   await expectNoHorizontalOverflow(page);
 });
 

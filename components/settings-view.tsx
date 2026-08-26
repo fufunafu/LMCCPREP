@@ -13,20 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { cn, dateLabel } from "@/lib/utils";
 import type { BillingSummary, Profile } from "@/lib/types";
 import { clearDemoPractice } from "@/lib/demo-practice";
 import { BillingPortalButton } from "@/components/billing-portal-button";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-
-function billingDateLabel(value?: string) {
-  if (!value) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? undefined
-    : new Intl.DateTimeFormat("en-CA", { dateStyle: "long" }).format(date);
-}
 
 export function SettingsView({ profile, billing }: { profile?: Profile; billing: BillingSummary }) {
   const { theme, setTheme } = useTheme();
@@ -37,7 +29,7 @@ export function SettingsView({ profile, billing }: { profile?: Profile; billing:
   const [resetOpen, setResetOpen] = useState(false);
   const [saving, startSaving] = useTransition();
   const [resetting, startResetting] = useTransition();
-  const billingDate = billingDateLabel(billing.accessUntil ?? billing.currentPeriodEnd ?? billing.grantExpiresAt);
+  const billingDate = dateLabel(billing.accessUntil ?? billing.currentPeriodEnd ?? billing.grantExpiresAt);
   const billingDescription = billing.mode === "demo"
     ? "The demo does not contact Stripe."
     : billing.paymentFailedAt || billing.status === "past_due"
@@ -85,7 +77,7 @@ export function SettingsView({ profile, billing }: { profile?: Profile; billing:
 
         <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"><CreditCard className="size-5" /></div><div><CardTitle className="text-lg">Billing</CardTitle><CardDescription>Subscription and invoices</CardDescription></div></div></CardHeader><CardContent><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">{billing.mode === "demo" ? "Demo access" : billing.subscriptionId ? billing.plan ? `${billing.plan === "annual" ? "Annual" : "Monthly"} subscription` : "Montreal QBank subscription" : billing.hasAccess ? "Access included" : "Subscription required"}</p><p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">{billingDescription}</p></div><div className="flex flex-wrap gap-2">{billing.customerId && billing.mode !== "demo" ? <BillingPortalButton label={billing.paymentFailedAt || billing.status === "past_due" || billing.status === "unpaid" ? "Update payment method" : "Manage billing"} /> : <Link href="/billing" className={buttonVariants({ variant: "outline" })}>View billing</Link>}</div></div></CardContent></Card>
 
-        <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"><Shield className="size-5" /></div><div><CardTitle className="text-lg">Account</CardTitle><CardDescription>Session and progress controls</CardDescription></div></div></CardHeader><CardContent><div className="flex flex-col justify-between gap-4 py-2 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">Sign out</p><p className="mt-1 text-xs text-muted-foreground">Return to the private access screen.</p></div><Button variant="outline" onClick={() => { clearDemoPractice(); signOut(); }}><LogOut />Sign out</Button></div><Separator className="my-4" /><div className="flex flex-col justify-between gap-4 py-2 sm:flex-row sm:items-center"><div><p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertTriangle className="size-4" />Reset all progress</p><p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">Permanently remove attempts, flags, notes, and practice sessions while keeping your account.</p></div><Dialog open={resetOpen} onOpenChange={(open) => { setResetOpen(open); if (!open) setResetText(""); }}><DialogTrigger render={<Button variant="destructive" />}>Reset progress</DialogTrigger><DialogContent><DialogHeader><DialogTitle>Reset all study progress?</DialogTitle><DialogDescription>This cannot be undone. Your account and profile will remain, but all attempts, flags, notes, and sessions will be removed.</DialogDescription></DialogHeader><div className="space-y-2"><Label htmlFor="reset-confirmation">Type RESET to confirm</Label><Input id="reset-confirmation" value={resetText} onChange={(event) => setResetText(event.target.value)} autoComplete="off" /></div><DialogFooter><DialogClose render={<Button variant="outline" />}>Cancel</DialogClose><Button variant="destructive" disabled={resetText !== "RESET" || resetting} onClick={confirmReset}>{resetting ? "Resetting…" : "Reset everything"}</Button></DialogFooter></DialogContent></Dialog></div></CardContent></Card>
+        <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"><Shield className="size-5" /></div><div><CardTitle className="text-lg">Account</CardTitle><CardDescription>Session and progress controls</CardDescription></div></div></CardHeader><CardContent><div className="flex flex-col justify-between gap-4 py-2 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">Sign out</p><p className="mt-1 text-xs text-muted-foreground">Return to the private access screen.</p></div><Button variant="outline" onClick={() => { clearDemoPractice(); signOut().catch(() => toast.error("Could not sign you out. Check your connection and try again.")); }}><LogOut />Sign out</Button></div><Separator className="my-4" /><div className="flex flex-col justify-between gap-4 py-2 sm:flex-row sm:items-center"><div><p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertTriangle className="size-4" />Reset all progress</p><p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">Permanently remove attempts, flags, notes, and practice sessions while keeping your account.</p></div><Dialog open={resetOpen} onOpenChange={(open) => { setResetOpen(open); if (!open) setResetText(""); }}><DialogTrigger render={<Button variant="destructive" />}>Reset progress</DialogTrigger><DialogContent><DialogHeader><DialogTitle>Reset all study progress?</DialogTitle><DialogDescription>This cannot be undone. Your account and profile will remain, but all attempts, flags, notes, and sessions will be removed.</DialogDescription></DialogHeader><div className="space-y-2"><Label htmlFor="reset-confirmation">Type RESET to confirm</Label><Input id="reset-confirmation" value={resetText} onChange={(event) => setResetText(event.target.value)} autoComplete="off" /></div><DialogFooter><DialogClose render={<Button variant="outline" />}>Cancel</DialogClose><Button variant="destructive" disabled={resetText !== "RESET" || resetting} onClick={confirmReset}>{resetting ? "Resetting…" : "Reset everything"}</Button></DialogFooter></DialogContent></Dialog></div></CardContent></Card>
       </div>
     </div>
   );
