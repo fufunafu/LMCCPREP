@@ -1,7 +1,8 @@
 "use server";
 
+import { createHmac } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_COOKIE, DEMO_COOKIE_VALUE, DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/demo-auth";
@@ -10,6 +11,7 @@ import type { QuestionStatus, SessionMode } from "@/lib/types";
 import { configuredSiteOrigin, safeReturnPath } from "@/lib/urls";
 import { DEFAULT_SECONDS_PER_QUESTION } from "@/lib/utils";
 import { requireEntitledUserId } from "@/lib/billing";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -75,11 +77,12 @@ export async function signIn(formData: FormData) {
 export async function signOut() {
   if (await isDemoSession()) {
     (await cookies()).delete(DEMO_COOKIE);
-    redirect("/login?notice=signed-out");
+    return { redirectTo: "/login?notice=signed-out" } as const;
   }
   const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login?notice=signed-out");
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error("Could not sign you out. Check your connection and try again.");
+  return { redirectTo: "/login?notice=signed-out" } as const;
 }
 
 export async function requestPasswordReset(formData: FormData) {
@@ -112,18 +115,32 @@ export async function setPassword(formData: FormData) {
 
 export async function requestAccess(formData: FormData) {
   if (await isDemoSession()) return { demo: true };
+  // A visually hidden honeypot lets ordinary visitors through and silently drops bots.
+  if (String(formData.get("website") ?? "").trim()) return { demo: false };
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const name = String(formData.get("name") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
   if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address.");
   if (name.length > 120 || message.length > 2000) throw new Error("The request is too long.");
-  const supabase = await createClient();
-  const { error } = await supabase.from("access_requests").insert({
+  const requestHeaders = await headers();
+  const address = requestHeaders.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    || requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || `email:${email}`;
+  const fingerprintKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!fingerprintKey) throw new Error("Access requests are temporarily unavailable.");
+  const requestFingerprint = createHmac("sha256", fingerprintKey).update(address).digest("hex");
+  const now = new Date();
+  const requestWindow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours())).toISOString();
+  const { error } = await createAdminClient().from("access_requests").insert({
     email,
     name: name || null,
     message: message || null,
+    request_fingerprint: requestFingerprint,
+    request_window: requestWindow,
   });
-  if (error) throw new Error(error.message);
+  // Duplicate email and one-request-per-address-per-hour limits are intentionally
+  // indistinguishable from success, which prevents account and throttling probes.
+  if (error && error.code !== "23505") throw new Error("Could not submit the access request.");
   return { demo: false };
 }
 
@@ -160,7 +177,7 @@ export async function resetProgress() {
 export async function createSession(input: {
   mode: SessionMode; subjectIds: string[]; topicIds: string[]; status: QuestionStatus | "all"; count: number; secondsPerQuestion?: number;
 }) {
-  if (await isDemoSession()) redirect(`/session/demo?mode=${input.mode}`);
+  if (await isDemoSession()) return { redirectTo: `/session/demo?mode=${input.mode}` } as const;
   if (!(["tutor", "timed"] as const).includes(input.mode)) throw new Error("Choose a valid session mode.");
   if (!(["unused", "correct", "incorrect", "flagged", "all"] as const).includes(input.status)) throw new Error("Choose a valid question status.");
   if (!Number.isFinite(input.count)) throw new Error("Choose a valid number of questions.");
@@ -171,7 +188,7 @@ export async function createSession(input: {
     p_subjects: input.subjectIds.length ? input.subjectIds : null,
     p_topics: input.topicIds.length ? input.topicIds : null,
     p_status: input.status,
-    p_limit: Math.max(1, Math.min(200, input.count)),
+    p_limit: Math.max(1, Math.min(115, input.count)),
   });
   if (error) throw new Error(error.message);
   if (!qids?.length) return { error: "No questions match those filters." } as const;
@@ -181,7 +198,7 @@ export async function createSession(input: {
     filters: { subjectIds: input.subjectIds, topicIds: input.topicIds, status: input.status },
   }).select("id").single();
   if (sErr) throw new Error(sErr.message);
-  redirect(`/session/${session.id}`);
+  return { redirectTo: `/session/${session.id}` } as const;
 }
 
 export async function recordAttempt(input: { sessionId: string; qid: number; chosenIdx: number | null; timeMs: number }) {

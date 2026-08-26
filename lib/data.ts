@@ -8,6 +8,14 @@ import * as mock from "@/lib/data-mock";
 import * as supabase from "@/lib/data-supabase";
 import type { Attempt, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, Topic, TopicStats } from "@/lib/types";
 
+const PUBLIC_SUBJECT_FALLBACK: Subject[] = [
+  { id: "medicine", name: "Internal Medicine", questionCount: 2033 },
+  { id: "pediatrics", name: "Pediatrics", questionCount: 894 },
+  { id: "pmch", name: "Population Health & Community Medicine (PMCH)", questionCount: 603 },
+  { id: "psychiatry", name: "Psychiatry", questionCount: 710 },
+  { id: "surgery", name: "Surgery", questionCount: 305 },
+];
+
 async function accountSource() {
   return await isDemoSession() ? mock : supabase;
 }
@@ -27,12 +35,11 @@ const paidSource = cache(async () => {
 
 export async function getSubjects(): Promise<Subject[]> { return (await paidSource()).getSubjects(); }
 export async function getPublicSubjects(): Promise<Subject[]> {
-  if (await isDemoSession()) return mock.getSubjects();
   try {
     return await supabase.getPublicSubjects();
   } catch (error) {
     console.error("Public subject counts are temporarily unavailable; using the local fallback.", error);
-    return mock.getSubjects();
+    return PUBLIC_SUBJECT_FALLBACK;
   }
 }
 export async function getTopics(subjectId?: string): Promise<Topic[]> { return (await paidSource()).getTopics(subjectId); }

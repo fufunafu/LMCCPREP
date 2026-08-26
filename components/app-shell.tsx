@@ -20,7 +20,7 @@ function activePath(pathname: string, href: string) {
   return pathname.startsWith(href) || (href === "/create" && pathname.startsWith("/session"));
 }
 
-export function AppShell({ children, user }: { children: React.ReactNode; user?: { name: string; email: string; streakDays?: number } }) {
+export function AppShell({ children, user, demo = false }: { children: React.ReactNode; user?: { name: string; email: string; streakDays?: number }; demo?: boolean }) {
   const initials = (user?.name ?? "LP").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const pathname = usePathname();
   return (
@@ -29,7 +29,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user?:
         <div className="flex h-20 items-center px-6"><Logo className="text-lg" /></div>
         <nav aria-label="Main navigation" className="flex-1 space-y-1 px-3">
           {items.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={cn("flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground", activePath(pathname, href) && "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300")}>
+            <Link key={href} href={href} aria-current={activePath(pathname, href) ? "page" : undefined} className={cn("flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground", activePath(pathname, href) && "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300")}>
               <Icon className="size-[18px]" />{label}
             </Link>
           ))}
@@ -46,10 +46,10 @@ export function AppShell({ children, user }: { children: React.ReactNode; user?:
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">
         <Logo className="text-base" /><div className="flex items-center gap-1"><ThemeToggle /><Link href="/#faq" aria-label="Help" className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><CircleHelp className="size-4" /></Link></div>
       </header>
-      <main className="pb-[calc(6rem+env(safe-area-inset-bottom))] md:ml-[248px] md:pb-0">{children}</main>
+      <main id="main-content" tabIndex={-1} className="pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none md:ml-[248px] md:pb-0">{demo && <div role="status" className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-center text-xs font-medium text-blue-950 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-100">Simulated demo data. Changes are temporary and remain only in this browser.</div>}{children}</main>
       <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-50 grid min-h-[76px] grid-cols-5 border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {items.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} className={cn("flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground", activePath(pathname, href) && "text-emerald-800 dark:text-emerald-400")}>
+          <Link key={href} href={href} aria-current={activePath(pathname, href) ? "page" : undefined} className={cn("flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground", activePath(pathname, href) && "text-emerald-800 dark:text-emerald-400")}>
             <Icon className="size-5" />{label === "New session" ? "Practice" : label}
           </Link>
         ))}

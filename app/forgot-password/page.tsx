@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Reset password", robots: { index: fa
 export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ email?: string; error?: string }> }) {
   const { email, error } = await searchParams;
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f7faf9] px-5 py-10 dark:bg-[#07110e]">
+    <main id="main-content" tabIndex={-1} className="grid min-h-screen place-items-center bg-[#f7faf9] px-5 py-10 outline-none dark:bg-[#07110e]">
       <div className="w-full max-w-md">
         <Logo className="mb-8 text-lg" />
         <Link href="/login" className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />Back to sign in</Link>

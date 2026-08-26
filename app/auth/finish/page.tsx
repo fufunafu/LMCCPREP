@@ -25,7 +25,7 @@ function Finish() {
       window.location.replace(next);
     });
   }, [params, router]);
-  return <main className="grid min-h-screen place-items-center text-sm text-muted-foreground">{message}</main>;
+  return <main id="main-content" tabIndex={-1} className="grid min-h-screen place-items-center text-sm text-muted-foreground outline-none">{message}</main>;
 }
 
 export default function FinishPage() {

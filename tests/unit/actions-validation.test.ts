@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/demo-session", () => ({ isDemoSession: async () => mocks.demo }));
 vi.mock("@/lib/billing", () => ({ requireEntitledUserId: async () => "00000000-0000-4000-8000-000000000001" }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/headers", () => ({ cookies: async () => ({ set: vi.fn(), delete: vi.fn(), get: vi.fn() }) }));
+vi.mock("next/headers", () => ({ cookies: async () => ({ set: vi.fn(), delete: vi.fn(), get: vi.fn() }), headers: async () => new Headers() }));
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
@@ -102,15 +103,15 @@ describe("createSession validation", () => {
     expect(mocks.insert).not.toHaveBeenCalled();
   });
 
-  it("clamps the count and seconds per question and redirects to the new session", async () => {
-    await expect(createSession({ mode: "timed", subjectIds: ["medicine"], topicIds: [], status: "unused", count: 5000, secondsPerQuestion: 5 })).rejects.toThrow("NEXT_REDIRECT:/session/session-new");
-    expect(mocks.rpc).toHaveBeenCalledWith("pick_questions", expect.objectContaining({ p_subjects: ["medicine"], p_topics: null, p_status: "unused", p_limit: 200 }));
+  it("clamps the count and seconds per question and returns the new session location", async () => {
+    await expect(createSession({ mode: "timed", subjectIds: ["medicine"], topicIds: [], status: "unused", count: 5000, secondsPerQuestion: 5 })).resolves.toEqual({ redirectTo: "/session/session-new" });
+    expect(mocks.rpc).toHaveBeenCalledWith("pick_questions", expect.objectContaining({ p_subjects: ["medicine"], p_topics: null, p_status: "unused", p_limit: 115 }));
     expect(mocks.insert).toHaveBeenCalledWith("sessions", expect.objectContaining({ mode: "timed", question_ids: [101, 102], seconds_per_question: 15 }));
   });
 
-  it("defaults timed sessions to 90 seconds per question", async () => {
-    await expect(createSession({ mode: "timed", subjectIds: [], topicIds: [], status: "all", count: 10 })).rejects.toThrow("NEXT_REDIRECT");
-    expect(mocks.insert).toHaveBeenCalledWith("sessions", expect.objectContaining({ seconds_per_question: 90 }));
+  it("defaults timed sessions to the current 83-second exam pace", async () => {
+    await expect(createSession({ mode: "timed", subjectIds: [], topicIds: [], status: "all", count: 10 })).resolves.toEqual({ redirectTo: "/session/session-new" });
+    expect(mocks.insert).toHaveBeenCalledWith("sessions", expect.objectContaining({ seconds_per_question: 83 }));
   });
 
   it("returns an error instead of creating an empty session", async () => {
@@ -121,7 +122,7 @@ describe("createSession validation", () => {
 
   it("sends demo users to the demo session", async () => {
     mocks.demo = true;
-    await expect(createSession({ mode: "timed", subjectIds: [], topicIds: [], status: "all", count: 10 })).rejects.toThrow("NEXT_REDIRECT:/session/demo?mode=timed");
+    await expect(createSession({ mode: "timed", subjectIds: [], topicIds: [], status: "all", count: 10 })).resolves.toEqual({ redirectTo: "/session/demo?mode=timed" });
   });
 });
 

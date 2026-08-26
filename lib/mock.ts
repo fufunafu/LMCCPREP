@@ -1,29 +1,30 @@
 import type { Attempt, DashboardStats, Question, QuestionStatus, Session, Subject, Topic, TopicStats } from "@/lib/types";
+import { DEFAULT_SECONDS_PER_QUESTION, torontoDateKey } from "@/lib/utils";
 
 export const subjects: Subject[] = [
-  { id: "pediatrics", name: "Pediatrics", questionCount: 591 },
-  { id: "psychiatry", name: "Psychiatry", questionCount: 406 },
-  { id: "medicine", name: "Medicine", questionCount: 335 },
-  { id: "pmch", name: "PMCH", questionCount: 321 },
-  { id: "surgery", name: "Surgery", questionCount: 30 },
+  { id: "pediatrics", name: "Pediatrics", questionCount: 6 },
+  { id: "psychiatry", name: "Psychiatry", questionCount: 6 },
+  { id: "medicine", name: "Medicine", questionCount: 6 },
+  { id: "pmch", name: "PMCH", questionCount: 6 },
+  { id: "surgery", name: "Surgery", questionCount: 6 },
 ];
 
 export const topics: Topic[] = [
-  { id: "ped-cardio", subjectId: "pediatrics", name: "Cardiology", questionCount: 82 },
-  { id: "ped-infectious", subjectId: "pediatrics", name: "Infectious Disease", questionCount: 104 },
-  { id: "ped-development", subjectId: "pediatrics", name: "Development", questionCount: 71 },
-  { id: "psych-mood", subjectId: "psychiatry", name: "Mood Disorders", questionCount: 94 },
-  { id: "psych-psychosis", subjectId: "psychiatry", name: "Psychotic Disorders", questionCount: 68 },
-  { id: "psych-substance", subjectId: "psychiatry", name: "Substance Use", questionCount: 52 },
-  { id: "med-cardio", subjectId: "medicine", name: "Cardiology", questionCount: 79 },
-  { id: "med-resp", subjectId: "medicine", name: "Respirology", questionCount: 62 },
-  { id: "med-endo", subjectId: "medicine", name: "Endocrinology", questionCount: 55 },
-  { id: "pmch-screening", subjectId: "pmch", name: "Screening", questionCount: 63 },
-  { id: "pmch-epi", subjectId: "pmch", name: "Epidemiology", questionCount: 72 },
-  { id: "pmch-ethics", subjectId: "pmch", name: "Ethics", questionCount: 58 },
-  { id: "surg-trauma", subjectId: "surgery", name: "Trauma", questionCount: 11 },
-  { id: "surg-abdo", subjectId: "surgery", name: "Acute Abdomen", questionCount: 10 },
-  { id: "surg-postop", subjectId: "surgery", name: "Perioperative Care", questionCount: 9 },
+  { id: "ped-cardio", subjectId: "pediatrics", name: "Cardiology", questionCount: 2 },
+  { id: "ped-infectious", subjectId: "pediatrics", name: "Infectious Disease", questionCount: 2 },
+  { id: "ped-development", subjectId: "pediatrics", name: "Development", questionCount: 2 },
+  { id: "psych-mood", subjectId: "psychiatry", name: "Mood Disorders", questionCount: 2 },
+  { id: "psych-psychosis", subjectId: "psychiatry", name: "Psychotic Disorders", questionCount: 2 },
+  { id: "psych-substance", subjectId: "psychiatry", name: "Substance Use", questionCount: 2 },
+  { id: "med-cardio", subjectId: "medicine", name: "Cardiology", questionCount: 2 },
+  { id: "med-resp", subjectId: "medicine", name: "Respirology", questionCount: 2 },
+  { id: "med-endo", subjectId: "medicine", name: "Endocrinology", questionCount: 2 },
+  { id: "pmch-screening", subjectId: "pmch", name: "Screening", questionCount: 2 },
+  { id: "pmch-epi", subjectId: "pmch", name: "Epidemiology", questionCount: 2 },
+  { id: "pmch-ethics", subjectId: "pmch", name: "Ethics", questionCount: 2 },
+  { id: "surg-trauma", subjectId: "surgery", name: "Trauma", questionCount: 2 },
+  { id: "surg-abdo", subjectId: "surgery", name: "Acute Abdomen", questionCount: 2 },
+  { id: "surg-postop", subjectId: "surgery", name: "Perioperative Care", questionCount: 2 },
 ];
 
 export const questions: Question[] = [
@@ -60,52 +61,63 @@ export const questions: Question[] = [
 ];
 
 export const questionStatuses: Record<string, QuestionStatus> = Object.fromEntries(
-  questions.map((question, index) => [question.id, index % 7 === 0 ? "flagged" : index % 4 === 0 ? "incorrect" : index < 18 ? "correct" : "unused"])
+  questions.map((question, index) => [question.id, index >= 20 ? "unused" : index % 7 === 0 ? "flagged" : index % 4 === 0 ? "incorrect" : "correct"])
 );
 
-export const demoSession: Session = { id: "demo", mode: "tutor", questionIds: questions.slice(0, 20).map((q) => q.id), createdAt: "2026-08-24T15:00:00Z" };
+const todayNoon = Date.parse(`${torontoDateKey()}T12:00:00Z`);
+const dateDaysAgo = (days: number, hour = 15) => {
+  const key = new Date(todayNoon - days * 86_400_000).toISOString().slice(0, 10);
+  return `${key}T${String(hour).padStart(2, "0")}:00:00Z`;
+};
+
+export const demoSession: Session = { id: "demo", mode: "tutor", questionIds: questions.slice(0, 20).map((q) => q.id), createdAt: dateDaysAgo(0) };
 
 export const recentSessions: Session[] = [
-  { id: "session-104", mode: "tutor", questionIds: questions.slice(0, 20).map((q) => q.id), createdAt: "2026-08-23T18:10:00Z", finishedAt: "2026-08-23T18:38:00Z" },
-  { id: "session-103", mode: "timed", questionIds: questions.slice(4, 19).map((q) => q.id), createdAt: "2026-08-22T13:30:00Z", finishedAt: "2026-08-22T13:49:00Z", secondsPerQuestion: 90 },
-  { id: "session-102", mode: "tutor", questionIds: questions.slice(10, 20).map((q) => q.id), createdAt: "2026-08-20T21:00:00Z", finishedAt: "2026-08-20T21:19:00Z" },
-  { id: "session-101", mode: "timed", questionIds: questions.slice(20, 30).map((q) => q.id), createdAt: "2026-08-18T16:15:00Z", finishedAt: "2026-08-18T16:28:00Z", secondsPerQuestion: 90 },
+  { id: "session-104", mode: "tutor", questionIds: questions.slice(0, 20).map((q) => q.id), createdAt: dateDaysAgo(1, 18), finishedAt: dateDaysAgo(1, 19), attempted: 20, correct: 15, durationMs: 1_680_000 },
+  { id: "session-103", mode: "timed", questionIds: questions.slice(4, 19).map((q) => q.id), createdAt: dateDaysAgo(2, 13), finishedAt: dateDaysAgo(2, 14), secondsPerQuestion: DEFAULT_SECONDS_PER_QUESTION, attempted: 15, correct: 11, durationMs: 1_140_000 },
+  { id: "session-102", mode: "tutor", questionIds: questions.slice(10, 20).map((q) => q.id), createdAt: dateDaysAgo(4, 20), finishedAt: dateDaysAgo(4, 21), attempted: 10, correct: 8, durationMs: 1_140_000 },
+  { id: "session-101", mode: "timed", questionIds: questions.slice(20, 30).map((q) => q.id), createdAt: dateDaysAgo(7, 16), finishedAt: dateDaysAgo(7, 17), secondsPerQuestion: DEFAULT_SECONDS_PER_QUESTION, attempted: 10, correct: 7, durationMs: 780_000 },
 ];
 
-export const demoAttempts: Attempt[] = demoSession.questionIds.map((questionId, index) => ({
+export const demoAttempts: Attempt[] = demoSession.questionIds.map((questionId, index) => {
+  const question = questions[index];
+  const correct = index < 15;
+  return {
   questionId,
   sessionId: "demo",
-  chosenIdx: index % 5 === 0 ? null : index % 4,
-  correct: index % 4 !== 0 && index % 5 !== 0,
+  chosenIdx: correct ? question.answerIdx : (question.answerIdx + 1) % question.options.length,
+  correct,
   timeMs: 46000 + index * 2400,
-  createdAt: `2026-08-24T15:${String(index).padStart(2, "0")}:00Z`,
-}));
-
-const subjectStats = [
-  { subjectId: "pediatrics", attempted: 162, correct: 127, avgTimeMs: 71000 },
-  { subjectId: "psychiatry", attempted: 111, correct: 88, avgTimeMs: 64000 },
-  { subjectId: "medicine", attempted: 104, correct: 71, avgTimeMs: 79000 },
-  { subjectId: "pmch", attempted: 93, correct: 72, avgTimeMs: 61000 },
-  { subjectId: "surgery", attempted: 17, correct: 11, avgTimeMs: 84000 },
-];
+  createdAt: dateDaysAgo(1, 18),
+};
+});
 
 export const topicStats: TopicStats[] = topics.map((topic, index) => ({
   topicId: topic.id,
-  attempted: 15 + ((index * 11) % 42),
-  correct: 8 + ((index * 7) % 25),
+  attempted: index % 3 === 0 ? 2 : 1,
+  correct: index % 3 === 0 ? (index === 0 ? 2 : index === 12 ? 0 : 1) : 1,
   avgTimeMs: 54000 + ((index * 5900) % 42000),
 }));
 
+const subjectStats = subjects.map((subject) => {
+  const childIds = new Set(topics.filter((topic) => topic.subjectId === subject.id).map((topic) => topic.id));
+  const childStats = topicStats.filter((topic) => childIds.has(topic.topicId));
+  const attempted = childStats.reduce((sum, topic) => sum + topic.attempted, 0);
+  const correct = childStats.reduce((sum, topic) => sum + topic.correct, 0);
+  const avgTimeMs = Math.round(childStats.reduce((sum, topic) => sum + topic.avgTimeMs * topic.attempted, 0) / attempted);
+  return { subjectId: subject.id, attempted, correct, avgTimeMs };
+});
+
 export const dashboardStats: DashboardStats = {
   totalQuestions: subjects.reduce((sum, subject) => sum + subject.questionCount, 0),
-  attempted: 487,
-  correct: 369,
-  streakDays: 9,
+  attempted: 20,
+  correct: 15,
+  streakDays: 10,
   subjects: subjectStats,
   weakestTopics: [topicStats[14], topicStats[8], topicStats[12], topicStats[6]],
-  activity: Array.from({ length: 84 }, (_, index) => {
-    const date = new Date(Date.UTC(2026, 5, 2 + index));
-    const attempted = index % 7 === 0 ? 0 : (index * 7) % 26;
-    return { date: date.toISOString().slice(0, 10), attempted, correct: Math.round(attempted * (0.62 + (index % 4) * 0.05)) };
-  }),
+  activity: Array.from({ length: 84 }, (_, index) => ({
+    date: new Date(todayNoon - (83 - index) * 86_400_000).toISOString().slice(0, 10),
+    attempted: index >= 74 ? 2 : 0,
+    correct: index >= 74 ? (index % 2 === 0 ? 2 : 1) : 0,
+  })),
 };

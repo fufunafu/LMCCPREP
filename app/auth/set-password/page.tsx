@@ -14,7 +14,7 @@ export default async function SetPasswordPage({ searchParams }: { searchParams: 
   const [profile, { error }] = await Promise.all([getProfile(), searchParams]);
   if (!profile) redirect("/login");
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f7faf9] px-5 dark:bg-[#07110e]">
+    <main id="main-content" tabIndex={-1} className="grid min-h-screen place-items-center bg-[#f7faf9] px-5 outline-none dark:bg-[#07110e]">
       <div className="w-full max-w-md">
         <Logo className="mb-8 text-lg" />
         <Card className="border-slate-200/80 shadow-xl shadow-slate-900/5 dark:border-white/10">

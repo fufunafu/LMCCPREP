@@ -5,29 +5,34 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { siteOrigin } from "@/lib/site";
+
+const origin = siteOrigin();
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lmcc-prep.vercel.app"),
+  metadataBase: new URL(origin),
   title: {
-    default: "Montreal QBank | Master the MCCQE Part I",
+    default: "Montreal QBank | Focused MCCQE Practice",
     template: "%s | Montreal QBank",
   },
-  description: "Focused question bank practice for Canadian medical students preparing for the MCCQE Part I.",
+  description: "Focused question bank practice for Canadian medical students and graduates preparing for the current MCCQE.",
+  alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   applicationName: "Montreal QBank",
   appleWebApp: { capable: true, title: "Montreal QBank", statusBarStyle: "default" },
   manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
-    title: "Montreal QBank | Master the MCCQE Part I",
-    description: "Practice with purpose. Walk in prepared for the MCCQE Part I.",
+    title: "Montreal QBank | Focused MCCQE Practice",
+    description: "Practice with purpose for the current MCCQE.",
+    url: origin,
     siteName: "Montreal QBank",
     images: [{ url: "/og.png", width: 1672, height: 941, alt: "Montreal QBank question bank" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Montreal QBank | Master the MCCQE Part I",
-    description: "Practice with purpose. Walk in prepared for the MCCQE Part I.",
+    title: "Montreal QBank | Focused MCCQE Practice",
+    description: "Practice with purpose for the current MCCQE.",
     images: ["/og.png"],
   },
 };
@@ -46,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased">
       <body className="min-h-full bg-background text-foreground">
+        <a href="#main-content" className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 dark:bg-white dark:text-slate-950">Skip to main content</a>
         <ThemeProvider>
           <ServiceWorkerRegistration />
           <TooltipProvider><AuthHashRedirect />{children}</TooltipProvider>

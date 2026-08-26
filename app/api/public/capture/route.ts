@@ -28,6 +28,16 @@ const SUBJECT_MAP: Record<string, string> = {
   phelo: "pmch",
 };
 
+const MAX_CAPTURE_BYTES = 128 * 1024;
+
+function captureEnabled() {
+  return process.env.CAPTURE_ENABLED === "true";
+}
+
+function disabledResponse(headers: Record<string, string>) {
+  return NextResponse.json({ error: "not found" }, { status: 404, headers: { ...headers, "Cache-Control": "no-store" } });
+}
+
 function mapSubject(category: string): string | null {
   const key = (category || "").trim().toLowerCase();
   if (SUBJECT_MAP[key]) return SUBJECT_MAP[key];
@@ -69,7 +79,9 @@ function tokenMatches(expected: string, provided: string | null) {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(request.headers.get("origin")) });
+  const headers = corsHeaders(request.headers.get("origin"));
+  if (!captureEnabled()) return disabledResponse(headers);
+  return new NextResponse(null, { status: 204, headers: { ...headers, "Cache-Control": "no-store" } });
 }
 
 let cachedOwnerId: string | null = null;
@@ -87,6 +99,12 @@ async function resolveOwnerId(admin: SupabaseClient): Promise<string | null> {
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   const headers = corsHeaders(origin);
+  if (!captureEnabled()) return disabledResponse(headers);
+
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_CAPTURE_BYTES) {
+    return NextResponse.json({ error: "request too large" }, { status: 413, headers });
+  }
 
   const token = process.env.CAPTURE_TOKEN;
   if (!token || !tokenMatches(token, request.headers.get("x-capture-token"))) {
@@ -109,7 +127,11 @@ export async function POST(request: NextRequest) {
     explanation?: string[];
   };
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (Buffer.byteLength(raw, "utf8") > MAX_CAPTURE_BYTES) {
+      return NextResponse.json({ error: "request too large" }, { status: 413, headers });
+    }
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400, headers });
   }
@@ -155,7 +177,7 @@ export async function POST(request: NextRequest) {
   const topicId = `${subjectId}/${topicName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
   const { error: topicError } = await admin.from("topics").upsert({ id: topicId, subject_id: subjectId, name: topicName }, { onConflict: "id" });
   if (topicError) {
-    console.error("capture: topic upsert failed", topicError);
+    console.error("capture: topic upsert failed", topicError.code);
     return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
   }
 
@@ -163,7 +185,7 @@ export async function POST(request: NextRequest) {
   const { data: nextQid, error: qidError } = await admin.rpc("next_user_question_qid");
   const qid = Number(nextQid);
   if (qidError || !Number.isInteger(qid) || qid < 1_000_000) {
-    console.error("capture: qid allocation failed", qidError ?? nextQid);
+    console.error("capture: qid allocation failed", qidError?.code ?? "invalid result");
     return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
   }
 
@@ -183,7 +205,7 @@ export async function POST(request: NextRequest) {
   if (error) {
     // 23505: unique_violation (normalized-stem index) — the same question is already in the bank.
     if (error.code === "23505") return NextResponse.json({ duplicate: true }, { status: 409, headers });
-    console.error("capture: insert failed", error);
+    console.error("capture: insert failed", error.code);
     return NextResponse.json({ error: "insert failed" }, { status: 500, headers });
   }
 

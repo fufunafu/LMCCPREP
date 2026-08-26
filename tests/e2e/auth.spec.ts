@@ -1,10 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, signInDemo, test } from "./fixtures";
 
-test("public landing shows all five live core subject totals", async ({ page, consoleErrors }) => {
+test("public landing shows all five available discipline totals", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  const subjects = page.getByRole("region", { name: /questions across five core subjects/i });
+  const subjects = page.getByRole("region", { name: /questions across five available disciplines/i });
   await expect(subjects.getByRole("heading", { level: 3 })).toHaveCount(5);
   await expect(page.getByText("$59", { exact: true })).toBeVisible();
   await expect(page.getByText("$349", { exact: true })).toBeVisible();

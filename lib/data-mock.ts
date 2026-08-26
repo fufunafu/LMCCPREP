@@ -4,7 +4,7 @@ import { dashboardStats, demoAttempts, demoSession, questionStatuses, questions,
 export function getSubjects() { return subjects; }
 export function getTopics(subjectId?: string) { return subjectId ? topics.filter((topic) => topic.subjectId === subjectId) : topics; }
 export function getQuestions() { return questions; }
-export function getQuestionSummaries() { return questions.map(({ id, qid, subjectId, topicId, stem, options, answerIdx }) => ({ id, qid, subjectId, topicId, stem, optionCount: options.length, tags: [subjects.find((subject) => subject.id === subjectId)?.name.toLowerCase() ?? subjectId, topics.find((topic) => topic.id === topicId)?.name.toLowerCase() ?? topicId, options[answerIdx].toLowerCase()] })); }
+export function getQuestionSummaries() { return questions.map(({ id, qid, subjectId, topicId, stem, options }) => ({ id, qid, subjectId, topicId, stem, optionCount: options.length, tags: [subjects.find((subject) => subject.id === subjectId)?.name.toLowerCase() ?? subjectId, topics.find((topic) => topic.id === topicId)?.name.toLowerCase() ?? topicId] })); }
 export function getQuestion(id: string) { return questions.find((question) => question.id === id || String(question.qid) === id); }
 export function getQuestionsByIds(ids: string[]) { return ids.map((id) => getQuestion(id)).filter((question): question is Question => Boolean(question)); }
 export function getQuestionStatus(id: string) { return questionStatuses[id] ?? "unused"; }

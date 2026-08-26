@@ -6,7 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /** Default seconds per question for timed sessions (server, mock and player all share this). */
-export const DEFAULT_SECONDS_PER_QUESTION = 90
+/** Current MCCQE pace: 115 questions in 160 minutes, rounded to 83 seconds each. */
+export const DEFAULT_SECONDS_PER_QUESTION = 83
 
 /** Calendar date key (YYYY-MM-DD) for a moment in America/Toronto, the app's reporting timezone. */
 export function torontoDateKey(date: Date | string | number = new Date()) {

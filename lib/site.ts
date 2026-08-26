@@ -1,0 +1,14 @@
+export const DEFAULT_SITE_ORIGIN = "https://lmcc-prep.vercel.app";
+
+export function siteOrigin() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!configured) return DEFAULT_SITE_ORIGIN;
+  try {
+    const url = new URL(configured);
+    return url.origin;
+  } catch {
+    return DEFAULT_SITE_ORIGIN;
+  }
+}
+
+export const publicRoutes = ["/", "/terms", "/privacy", "/refund-policy", "/support"] as const;

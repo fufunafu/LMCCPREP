@@ -8,6 +8,7 @@ test("creates a tutor session and supports answer elimination", async ({ page, c
   await page.goto("/create");
   await page.getByRole("button", { name: /Start session/ }).click();
   await expect(page).toHaveURL(/\/session\/demo\?mode=tutor$/);
+  await expect(page.getByText(/Could not create the session/)).toHaveCount(0);
   await page.getByRole("button", { name: "Strike out answer B" }).click();
   await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("radio", { name: /B Radiation to the back/ })).toBeDisabled();
@@ -29,8 +30,8 @@ test("timed mode records an answer and advances without showing feedback", async
   await page.getByRole("button", { name: /Timed mode/ }).click();
   await page.getByRole("button", { name: /Start session/ }).click();
   await expect(page).toHaveURL(/\/session\/demo\?mode=timed$/);
-  await expect(page.getByText("01:30")).toBeVisible();
-  await expect(page.getByText(/01:2[89]/)).toBeVisible({ timeout: 3_000 });
+  await expect(page.getByText("01:23")).toBeVisible();
+  await expect(page.getByText(/01:2[12]/)).toBeVisible({ timeout: 3_000 });
   await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
   await page.getByRole("button", { name: "Submit answer" }).click();
   await expect(page.getByText(/Answer saved/)).toBeVisible();

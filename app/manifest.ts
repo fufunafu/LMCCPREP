@@ -4,13 +4,12 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Montreal QBank",
     short_name: "Montreal QBank",
-    description: "Focused question bank practice for the MCCQE Part I.",
-    start_url: "/dashboard",
+    description: "Focused question bank practice for the current MCCQE.",
+    start_url: "/login?next=/dashboard",
     scope: "/",
     display: "standalone",
     background_color: "#07110e",
     theme_color: "#059669",
-    orientation: "portrait-primary",
     categories: ["education", "medical"],
     shortcuts: [
       { name: "Dashboard", short_name: "Dashboard", url: "/dashboard", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },

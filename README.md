@@ -1,6 +1,6 @@
 # Montreal QBank
 
-Montreal QBank is a private, mobile-first question bank for Canadian medical learners preparing for the MCCQE Part I. It supports tutor and timed sessions, progress analytics, flags, notes, password recovery, profile settings, dark mode, and an installable PWA experience.
+Montreal QBank is a private, mobile-first question bank for Canadian medical learners preparing for the MCCQE. It supports tutor and timed sessions, progress analytics, flags, notes, password recovery, profile settings, dark mode, and an installable PWA experience.
 
 ## LMCC question-bank audit status
 

@@ -1,11 +1,13 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { createClient as createPublicClient } from "@supabase/supabase-js";
 import { createClient, currentUserId } from "@/lib/supabase/server";
 import { torontoDateKey } from "@/lib/utils";
 import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats } from "@/lib/types";
 
 // Row shapes (subset of columns we read)
-type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null };
+type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null; references_text: string | null; editorial_status: "pending" | "reviewed" | "stale" | "personal"; last_reviewed_at: string | null; reviewer_role: string | null; reference_exception: string | null; source: string };
 type QuestionImageRow = { qid: number; image_index: number };
 type SessionRow = { id: string; mode: "tutor" | "timed"; question_ids: number[]; seconds_per_question: number | null; current_index: number; created_at: string; finished_at: string | null };
 type AttemptRow = { qid: number; session_id: string | null; chosen_index: number | null; correct: boolean; time_ms: number; created_at: string };
@@ -13,6 +15,12 @@ type AttemptRow = { qid: number; session_id: string | null; chosen_index: number
 const toQuestion = (r: QuestionRow, imageIndexes: number[] = []): Question => ({
   id: String(r.qid), qid: r.qid, subjectId: r.subject_id, topicId: r.topic_id, stem: r.stem,
   options: r.options, answerIdx: r.answer_index, explanation: r.explanation, tags: r.tags ?? [],
+  references: (r.references_text ?? "").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
+  editorialStatus: r.editorial_status,
+  lastReviewedAt: r.last_reviewed_at ?? undefined,
+  reviewerRole: r.reviewer_role ?? undefined,
+  referenceException: r.reference_exception ?? undefined,
+  isPersonal: r.source === "user",
   figureUrl: imageIndexes.length ? `/api/qbank-images/${r.qid}/${imageIndexes[0]}` : r.figure_url ?? undefined,
   figureUrls: imageIndexes.map((imageIndex) => `/api/qbank-images/${r.qid}/${imageIndex}`),
 });
@@ -64,12 +72,15 @@ export async function getSubjects(): Promise<Subject[]> {
   return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
 }
 
-export async function getPublicSubjects(): Promise<Subject[]> {
-  const supabase = await createClient();
+export const getPublicSubjects = unstable_cache(async (): Promise<Subject[]> => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !key) throw new Error("Public catalog configuration is unavailable.");
+  const supabase = createPublicClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await supabase.rpc("get_public_subject_counts");
   if (error) throw new Error(error.message);
   return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
-}
+}, ["public-subject-counts"], { revalidate: 3600, tags: ["public-subject-counts"] });
 
 export async function getTopics(subjectId?: string): Promise<Topic[]> {
   const supabase = await createClient();
@@ -79,9 +90,11 @@ export async function getTopics(subjectId?: string): Promise<Topic[]> {
   return (data ?? []).map((r: { id: string; subject_id: string; name: string; question_count: number }) => ({ id: r.id, subjectId: r.subject_id, name: r.name, questionCount: r.question_count }));
 }
 
+const QUESTION_SELECT = "qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url,references_text,editorial_status,last_reviewed_at,reviewer_role,reference_exception,source";
+
 export async function getQuestions(): Promise<Question[]> {
   const supabase = await createClient();
-  const rows = await fetchAll<QuestionRow>(() => supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").order("qid"));
+  const rows = await fetchAll<QuestionRow>(() => supabase.from("questions").select(QUESTION_SELECT).order("qid"));
   const images = await getQuestionImageIndexes(supabase);
   return rows.map((row) => toQuestion(row, images.get(row.qid)));
 }
@@ -95,7 +108,7 @@ export async function getQuestionSummaries(): Promise<QuestionSummary[]> {
 
 export async function getQuestion(id: string): Promise<Question | undefined> {
   const supabase = await createClient();
-  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").eq("qid", Number(id)).maybeSingle();
+  const { data } = await supabase.from("questions").select(QUESTION_SELECT).eq("qid", Number(id)).maybeSingle();
   if (!data) return undefined;
   const images = await getQuestionImageIndexes(supabase, [data.qid]);
   return toQuestion(data, images.get(data.qid));
@@ -104,7 +117,7 @@ export async function getQuestion(id: string): Promise<Question | undefined> {
 export async function getQuestionsByIds(ids: string[]): Promise<Question[]> {
   if (!ids.length) return [];
   const supabase = await createClient();
-  const { data } = await supabase.from("questions").select("qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url").in("qid", ids.map(Number));
+  const { data } = await supabase.from("questions").select(QUESTION_SELECT).in("qid", ids.map(Number));
   const rows = (data ?? []) as QuestionRow[];
   const images = await getQuestionImageIndexes(supabase, rows.map((row) => row.qid));
   const byId = new Map(rows.map((r) => [String(r.qid), toQuestion(r, images.get(r.qid))]));
