@@ -59,8 +59,12 @@ test("PWA assets and private-route indexing headers are production-ready", async
   expect(manifest.orientation).toBeUndefined();
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ src: "/icon-192.png", sizes: "192x192" }),
-    expect.objectContaining({ src: "/icon-512.png", sizes: "512x512" }),
+    expect.objectContaining({ src: "/icon", sizes: "512x512", purpose: "maskable" }),
   ]));
+
+  const maskableIcon = await page.request.get("/icon");
+  expect(maskableIcon.ok()).toBeTruthy();
+  expect(maskableIcon.headers()["content-type"]).toContain("image/png");
 
   const worker = await page.request.get("/sw.js");
   expect(worker.ok()).toBeTruthy();

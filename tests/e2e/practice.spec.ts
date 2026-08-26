@@ -14,11 +14,16 @@ test("creates a tutor session and supports answer elimination", async ({ page, c
   await expect(page.getByRole("radio", { name: /B Radiation to the back/ })).toBeDisabled();
   await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
   await page.getByRole("button", { name: "Submit answer" }).click();
+  const feedback = page.locator('[role="status"]').filter({ hasText: "Correct. The best answer is C." });
+  await expect(feedback).toBeFocused();
+  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
+  await expect(page.locator("aside").getByRole("button", { name: "Go to question 1, correct, current" })).toHaveAttribute("aria-current", "step");
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await page.reload();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit answer" })).toHaveCount(0);
   await page.getByRole("button", { name: /Next question/ }).click();
+  await expect(page.getByRole("heading", { name: "Question 2 of 20" })).toBeFocused();
   await page.locator("aside").getByRole("button", { name: /^Go to question 1(?:,|$)/ }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit answer" })).toHaveCount(0);
