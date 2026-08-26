@@ -4,17 +4,19 @@ Last verified: 2026-08-26
 
 ## Release decision
 
-The private beta is operational and billing enforcement remains off. A paid public launch is not approved. The remaining blockers require content-owner, editorial, legal, branding, and live-billing decisions that cannot be satisfied by application code alone.
+The private beta is operational and billing enforcement remains off. A paid public launch is not approved. The remaining blockers require content-owner, editorial, legal, branding, accessibility, and live-billing decisions that cannot be satisfied by application code alone.
 
-The next reviewed release candidate also contains migration `0019_enforce_paid_content_approval.sql`. It makes public counts include only rights-approved, editorially reviewed questions and makes paid access fail closed for unapproved questions and images. The migration passed a linked dry run but has not been applied because production policy changes require explicit owner approval.
+Migration `0019_enforce_paid_content_approval.sql` was explicitly approved and applied to production on 2026-08-26. It makes public counts include only rights-approved, editorially reviewed questions and makes paid access fail closed for unapproved questions and images. The exact release candidate at commit `25d717a` is Ready in Preview and reports zero approved questions, matching the current inventory. Production still serves commit `6331f1e`; its cached homepage was observed showing the pre-migration total as approved content, so the candidate must be promoted and smoke-tested before production is considered aligned.
 
 ## Production baseline
 
 - Canonical public origin: `https://lmcc-prep.vercel.app`
-- Baseline deployment before the final accessibility and PWA delta: `dpl_Gq1hajW4xPKNM81xFakZh7nXAnRu`
-- Baseline source commit: `c9e3efd`
-- Deployment state: Ready and promoted to Production
-- Supabase migration ledger: migrations `0001_schema` through `0018_enforce_answer_safe_tags` are applied in order; candidate migration `0019_enforce_paid_content_approval` is pending explicit production approval
+- Current Production deployment: `dpl_9CDyDhxqKzYLqtTNkuu82rWM3nhU`
+- Current Production source commit: `6331f1e`
+- Current Production state: Ready, but not aligned with the approved-count release candidate
+- Reviewed release-candidate Preview: `dpl_GF3ctwKhh2ECE7QBLCeFWjn6U6qc` at `https://lmcc-prep-83ls1imp6-fuannes-projects.vercel.app`
+- Release-candidate source commit: `25d717a315fffe52203c7913ee0665eaf571ae53`
+- Supabase migration ledger: migrations `0001_schema` through `0019_enforce_paid_content_approval` are applied in order and match the tracked files
 - Database billing setting: `billing_required=false`, `grace_days=3`
 - Application billing setting: disabled for the private beta
 - Production capture route: disabled unless `CAPTURE_ENABLED=true` is explicitly configured
@@ -49,12 +51,13 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - `npm run test:unit`: 89 passed
 - `npm run build`: passed
 - Standard browser suite: 22 passed and 2 intentionally skipped live-Supabase checks
+- Canonical Production browser suite after migration `0019`: 22 passed and 2 intentionally skipped live-Supabase checks. The suite verifies cross-state equality but does not assert the expected zero approved total, so the direct aggregate and page checks remain required.
 - Billing browser suite: 5 passed
 - Billing rollback browser gate: 1 passed
-- Production-like authorization verifier before the new public-count assertion: passed 4,972 answer-safe rows, anonymous access, service-only RPC, cross-user study data, and cross-user billing data checks; temporary users were deleted afterward
-- The updated authorization verifier also compares every public discipline total with the rights-approved and editorially reviewed corpus. That new assertion remains pending until migration `0019` is approved and applied.
+- Local billing readiness rerun: 24 of 27 checks passed, with the three expected local failures caused by intentionally absent Stripe secret and webhook values. The previously recorded protected-Preview preflight remains 37 of 37.
+- Post-migration production authorization verifier: passed approved public counts, 4,972 answer-safe tag rows, anonymous access, service-only RPC, cross-user study data, and cross-user billing data checks; temporary users were deleted afterward
 - Production schema probes confirmed the provenance and access-request columns
-- A local-only, mode-0600 provenance inventory now contains all 4,972 production questions and 89 clinical images without question text, answer text, or secret values. Current result: 4,972 rights-unverified and editorially pending questions, plus 89 rights-unverified images. The candidate schema adds structured author, license or permission, evidence, transformation-history, and provenance-review fields to question and image records.
+- A local-only, mode-0600 provenance inventory generated after migration `0019` contains all 4,972 production questions and 89 clinical images without question text, answer text, or secret values. It reports `schema_complete: true`, 4,972 rights-unverified and editorially pending questions, plus 89 rights-unverified images. The schema includes structured author, license or permission, evidence, transformation-history, and provenance-review fields for questions and images.
 - Production aggregate audit: 4,972 questions total, 4,972 rights-unverified, 0 rights-approved, 0 editorially reviewed, 3,826 with reference text, and 0 with a reference exception
 - Maskable-icon render check: 512 by 512, 0 non-opaque pixels, foreground bounds 121 through 390 on both axes, maximum foreground radius 134.77 px inside the 204.8 px safe radius
 - Manual browser keyboard smoke: the skip link is the first focus target on public and private shells, Enter moves focus to `main-content`, focus indication is visible, and the active mobile Dashboard destination exposes `aria-current="page"`.
@@ -62,23 +65,49 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - The public-link crawl passes, every indexable route has a unique title, description, Open Graph title and description, canonical URL, and Open Graph URL, and structured data has the required Organization, WebSite, SoftwareApplication, Offer, and FAQ shapes.
 - Header verification passes for HTML, the disabled capture API, the service worker, and the generated PNG icon. Tablet landscape plus 1,280 px and 1,920 px desktop layout checks pass without page overflow; the existing suite also covers 375 by 812 and 390 by 844 mobile viewports.
 - Production response check confirmed the enforced CSP and the promoted deployment identifier
+- The exact `25d717a` Preview reports zero approved questions, has one main landmark, no horizontal overflow, a visible simulated-data disclosure, active navigation state, and successful demo session creation without a false failure toast.
+- The current Production homepage was observed showing 4,545 approved questions from its pre-migration cached render. This contradicts the post-migration inventory and must be cleared by the reviewed candidate promotion and production smoke test.
+
+## Final launch checklist audit
+
+| Plan requirement | Status | Authoritative evidence |
+| --- | --- | --- |
+| Content rights and provenance approved | Not met | The post-migration inventory reports 4,972 unverified questions and 89 unverified images. |
+| Current MCCQE name and scope used throughout | Met in the candidate | Public copy, metadata, and the browser suite use the current name and five-discipline scope. |
+| Obstetrics and Gynecology included or limitation clearly disclosed | Met by disclosure | The homepage, sign-in, and Billing surfaces state that Obstetrics and Gynecology is not included. |
+| Migration `0013` tracked and applied | Met | The tracked migration matches the production ledger, which now runs through `0019`. |
+| Cross-user authorization tests passing | Met | The post-migration production authorization verifier passed study-data and billing isolation checks. |
+| Session creation produces no false error | Met in the candidate | Regression coverage passes, and the exact Preview opens a demo session without the failure toast. |
+| Public counts independent of login and demo state | Candidate verified, Production pending | Local regression coverage passes and the Preview reports zero approved questions. Production still serves the stale cached pre-migration count until promotion. |
+| Demo metrics and dates consistent | Met | The shared fixture tests pass, and the Preview dashboard reconciles 20 completed plus 10 remaining with 30 total on the current Toronto date. |
+| Correct answers absent from pre-attempt tags | Met | Unit coverage and the production authorization verifier pass all 4,972 answer-safe rows. |
+| Medical references and review status visible | Implementation met, content gate not met | The UI and schema support references and review status, but only 3,826 questions have reference text, none has an approved exception, and none is editorially reviewed. |
+| Sticky marketing navigation repaired | Met | The targeted anchor and sticky-header browser regression passes. |
+| Robots, sitemap, canonical URLs, and structured data live | Met | Production response checks and the public metadata and link crawl pass. |
+| Site-wide CSP and public-endpoint abuse controls live | Met | Production header checks pass, and access-request abuse controls are tracked and tested. |
+| Capture endpoint disabled by default in production | Met | The deployed endpoint returns HTTP 404 without permissive cross-origin access. |
+| Accessibility remediation and manual testing complete | Not met | Automated serious-issue gates, keyboard checks, reflow, responsive layouts, and icon review pass. A human screen-reader smoke record is still missing. |
+| Branded domain and support email live | Not met | The canonical origin remains a Vercel hostname and support uses an approved personal address rather than a branded address. |
+| Legal and privacy pages approved | Not met | Draft disclosures are implemented, but qualified counsel has not approved the launch versions or licensing model. |
+| Full automated and manual release gates passing | Not met | Current automated code gates pass, but candidate Production smoke, the human screen-reader check, and remaining Stripe lifecycle work are outstanding. |
+| Production rollback procedure verified | Partially met | The isolated rollback browser gate passes and a known baseline deployment is recorded, but a Production rollback rehearsal has not been completed. |
 
 ## Paid-launch blockers
 
-1. Migration `0019` requires explicit approval before it can change the production content policies and public counts. Until it is applied, the live aggregate still counts unapproved content, so this candidate must not be deployed as though those totals were approved.
-2. Every one of the 4,972 questions and all 89 clinical images remain rights-unverified. Written permission, completed structured provenance fields, transformation history, and item-level disposition are required before paid distribution.
-3. No question is currently marked editorially reviewed. References alone do not establish medical approval or Canadian guideline currency.
-4. Qualified counsel has not approved the Terms, Privacy notice, Refund policy, paid subscription flow, or content-licensing model.
-5. The product still uses a Vercel hostname and a personal support address. A branded domain, monitored branded support address, and approved response-time commitment are required.
-6. A real reviewed and referenced sample explanation cannot be marketed until at least one item passes the editorial and rights gates.
-7. A human screen-reader smoke test still requires a verification record. The keyboard, 200 percent equivalent reflow, and maskable-icon safe-zone checks are complete.
-8. Full Stripe payment lifecycle testing, matching live resources, staged enforcement, rollback rehearsal, and 48-hour monitoring remain tracked in the billing launch documents.
+1. Every one of the 4,972 questions and all 89 clinical images remain rights-unverified. Written permission, completed structured provenance fields, transformation history, and item-level disposition are required before paid distribution.
+2. No question is currently marked editorially reviewed. References alone do not establish medical approval or Canadian guideline currency.
+3. Qualified counsel has not approved the Terms, Privacy notice, Refund policy, paid subscription flow, or content-licensing model.
+4. The product still uses a Vercel hostname and a personal support address. A branded domain, monitored branded support address, and approved response-time commitment are required.
+5. A real reviewed and referenced sample explanation cannot be marketed until at least one item passes the editorial and rights gates.
+6. A human screen-reader smoke test still requires a verification record. The keyboard, 200 percent equivalent reflow, and maskable-icon safe-zone checks are complete.
+7. Full Stripe payment lifecycle testing, matching live resources, staged enforcement, rollback rehearsal, and 48-hour monitoring remain tracked in the billing launch documents.
+8. Production must be promoted from the reviewed `25d717a` candidate and smoke-tested so the public page no longer serves the stale pre-migration approved-count claim.
 
 ## Release and rollback procedure
 
 1. Keep both application and database billing enforcement off until every paid-launch blocker is closed.
-2. Obtain explicit approval, apply migration `0019`, rerun `npm run content:inventory` until it reports `schema_complete: true`, and rerun `npm run security:verify`.
-3. Deploy only a clean reviewed commit and record its deployment ID here.
+2. Migration `0019` is applied. `npm run content:inventory` reports `schema_complete: true`, and `npm run security:verify` passes the post-migration approved-count assertion.
+3. Promote only the clean reviewed candidate from commit `25d717a` and record its Production deployment ID here.
 4. Run the complete local browser suite and the canonical Production public, demo, metadata, header, capture, and authorization smoke checks.
 5. If a regression appears, keep `billing_required=false`, promote baseline deployment `dpl_Gq1hajW4xPKNM81xFakZh7nXAnRu`, and repair forward. With billing off, migration `0019` preserves current private-beta question access.
 6. Re-run the smoke suite after any promotion or rollback.
