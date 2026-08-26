@@ -55,6 +55,8 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - A local-only, mode-0600 provenance inventory now contains all 4,972 production questions and 89 clinical images without question text, answer text, or secret values. Current result: 4,972 rights-unverified and editorially pending questions, plus 89 rights-unverified images. The candidate schema adds structured author, license or permission, evidence, transformation-history, and provenance-review fields to question and image records.
 - Production aggregate audit: 4,972 questions total, 4,972 rights-unverified, 0 rights-approved, 0 editorially reviewed, 3,826 with reference text, and 0 with a reference exception
 - Maskable-icon render check: 512 by 512, 0 non-opaque pixels, foreground bounds 121 through 390 on both axes, maximum foreground radius 134.77 px inside the 204.8 px safe radius
+- Manual browser keyboard smoke: the skip link is the first focus target on public and private shells, Enter moves focus to `main-content`, focus indication is visible, and the active mobile Dashboard destination exposes `aria-current="page"`.
+- 200 percent equivalent reflow check: the homepage and demo dashboard were inspected at a 640 CSS px viewport, equivalent to 200 percent zoom on a 1,280 px desktop viewport. Both had `scrollWidth === clientWidth` and retained readable, operable layouts without horizontal page overflow.
 - Production response check confirmed the enforced CSP and the promoted deployment identifier
 
 ## Paid-launch blockers
@@ -65,7 +67,7 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 4. Qualified counsel has not approved the Terms, Privacy notice, Refund policy, paid subscription flow, or content-licensing model.
 5. The product still uses a Vercel hostname and a personal support address. A branded domain, monitored branded support address, and approved response-time commitment are required.
 6. A real reviewed and referenced sample explanation cannot be marketed until at least one item passes the editorial and rights gates.
-7. Manual keyboard, screen-reader, and 200 percent zoom checks still require a human verification record. The maskable-icon safe-zone check is complete.
+7. A human screen-reader smoke test still requires a verification record. The keyboard, 200 percent equivalent reflow, and maskable-icon safe-zone checks are complete.
 8. Full Stripe payment lifecycle testing, matching live resources, staged enforcement, rollback rehearsal, and 48-hour monitoring remain tracked in the billing launch documents.
 
 ## Release and rollback procedure
