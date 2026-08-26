@@ -1,7 +1,9 @@
 import "server-only";
 
+import { cache } from "react";
 import { isDemoSession } from "@/lib/demo-session";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { billingPlan, billingRequired, billingServerConfigured, hasCurrentEntitlement, planForPrice } from "@/lib/billing-core";
 import type { BillingPlanKey, BillingSubscriptionStatus, BillingSummary } from "@/lib/types";
 
@@ -26,6 +28,30 @@ export class SubscriptionRequiredError extends Error {
   }
 }
 
+/**
+ * Whether paid access is enforced. Reads `billing_settings.billing_required`
+ * once per request (React cache) with the service-role client. The
+ * `BILLING_REQUIRED` env var only forces enforcement ON, and is the fallback
+ * when the database cannot be read.
+ */
+export const isBillingRequired = cache(async (): Promise<boolean> => {
+  // Demo mode must stay completely isolated from live billing services.
+  if (await isDemoSession()) return false;
+  if (billingRequired()) return true;
+  try {
+    const { data, error } = await createAdminClient()
+      .from("billing_settings")
+      .select("billing_required")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw error;
+    return Boolean(data?.billing_required);
+  } catch (error) {
+    console.error("billing: could not read billing_settings; falling back to BILLING_REQUIRED", error);
+    return billingRequired();
+  }
+});
+
 export async function authenticatedBillingUser(supabase?: ServerSupabaseClient) {
   const client = supabase ?? await createClient();
   const { data, error } = await client.auth.getClaims();
@@ -38,19 +64,19 @@ export async function authenticatedBillingUser(supabase?: ServerSupabaseClient) 
 export async function requireEntitledUserId(supabase?: ServerSupabaseClient) {
   const client = supabase ?? await createClient();
   const { userId } = await authenticatedBillingUser(client);
-  if (!billingRequired()) return userId;
+  if (!(await isBillingRequired())) return userId;
   const { data, error } = await client.rpc("has_billing_access");
   if (error) throw new Error("Billing access could not be verified. Try again shortly.");
   if (!data) throw new SubscriptionRequiredError();
   return userId;
 }
 
-export async function getBillingSummary(): Promise<BillingSummary> {
-  const required = billingRequired();
+export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
   const configured = billingServerConfigured();
   if (await isDemoSession()) {
-    return { mode: "demo", configured, required, hasAccess: true, subscriptionHasAccess: false };
+    return { mode: "demo", configured, required: false, hasAccess: true, subscriptionHasAccess: false };
   }
+  const required = await isBillingRequired();
 
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
@@ -115,7 +141,7 @@ export async function getBillingSummary(): Promise<BillingSummary> {
     grantExpiresAt,
     error: !configured && required ? "Stripe billing is not fully configured." : undefined,
   };
-}
+});
 
 export function checkoutPrice(plan: BillingPlanKey) {
   const selected = billingPlan(plan);

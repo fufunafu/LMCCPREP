@@ -26,7 +26,15 @@ const paidSource = cache(async () => {
 });
 
 export async function getSubjects(): Promise<Subject[]> { return (await paidSource()).getSubjects(); }
-export async function getPublicSubjects(): Promise<Subject[]> { return await isDemoSession() ? mock.getSubjects() : supabase.getPublicSubjects(); }
+export async function getPublicSubjects(): Promise<Subject[]> {
+  if (await isDemoSession()) return mock.getSubjects();
+  try {
+    return await supabase.getPublicSubjects();
+  } catch (error) {
+    console.error("Public subject counts are temporarily unavailable; using the local fallback.", error);
+    return mock.getSubjects();
+  }
+}
 export async function getTopics(subjectId?: string): Promise<Topic[]> { return (await paidSource()).getTopics(subjectId); }
 export async function getQuestions(): Promise<Question[]> { return (await paidSource()).getQuestions(); }
 export async function getQuestionSummaries(): Promise<QuestionSummary[]> { return (await paidSource()).getQuestionSummaries(); }

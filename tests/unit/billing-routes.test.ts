@@ -141,6 +141,7 @@ describe("billing route security", () => {
     expect(mocks.checkoutPrice).toHaveBeenCalledWith("monthly");
     expect(mocks.priceRetrieve).toHaveBeenCalledWith("price_trusted_monthly");
     expect(mocks.checkoutCreate).toHaveBeenCalledWith(expect.objectContaining({
+      branding_settings: { display_name: "Montreal QBank" },
       customer: "cus_existing",
       client_reference_id: "00000000-0000-4000-8000-000000000001",
       line_items: [{ price: "price_trusted_monthly", quantity: 1 }],

@@ -76,6 +76,16 @@ Use test keys and test prices in local and Preview environments. Use live keys a
 
 After test-mode variables and owner decisions are configured, run `npm run billing:verify`. The preflight validates key mode without printing keys, confirms the monthly and annual CAD catalog, proves displayed prices match Stripe, checks that both prices share the Montreal QBank product, validates the canonical site and support configuration, inspects portal cancellation behavior and the exact webhook URL and events, verifies Stripe Tax configuration when enabled, verifies the linked billing tables and functions, and confirms both enforcement switches remain off. Use `npm run billing:verify -- --allow-incomplete` while setup is still in progress.
 
+Prepare complimentary access from a private manifest based on `scripts/billing-grants.example.json`. Keep the real manifest outside the repository. The command is a dry run unless the explicit apply confirmation is present, rejects billing-test accounts, and never shortens an existing grant:
+
+```bash
+npm run billing:grants -- --prepare /private/path/billing-grants.json
+npm run billing:grants -- --file /private/path/billing-grants.json --activation 2026-09-01T04:00:00Z
+npm run billing:grants -- --file /private/path/billing-grants.json --activation 2026-09-01T04:00:00Z --apply --confirm APPLY_BILLING_GRANTS
+```
+
+Preparation classifies `CAPTURE_OWNER_EMAIL` as an administrator, excludes billing-test accounts, and classifies other current accounts as existing invited users. Review the private file and change any reviewer classifications before the dry run. Use `existing_user` for 90 days, `reviewer` for 180 days, and `administrator` for non-expiring access. The activation timestamp is mandatory for temporary grants so their periods begin at the approved paywall activation time rather than the day the manifest is prepared.
+
 Enabling or rolling back the paywall requires changing both enforcement switches in a safe order. For activation, first deploy `BILLING_REQUIRED=true` while the database switch is still false. Existing invite access remains available during that deployment. After the deployment and billing routes are healthy, enable the database switch:
 
 ```sql

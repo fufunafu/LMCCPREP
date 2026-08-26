@@ -6,6 +6,13 @@ const ENTITLED_STATUSES = new Set<BillingSubscriptionStatus>(["active", "trialin
 
 type BillingEnvironment = Readonly<Record<string, string | undefined>>;
 
+/**
+ * Environment override for billing enforcement. The database row
+ * `billing_settings.billing_required` is the single authority (see
+ * `isBillingRequired()` in lib/billing.ts); `BILLING_REQUIRED=true` can only
+ * force enforcement ON (never off), and is also the fallback when the database
+ * read fails, so a misconfigured environment cannot silently unlock paid content.
+ */
 export function billingRequired(env: BillingEnvironment = process.env) {
   return env.BILLING_REQUIRED?.trim().toLowerCase() === "true";
 }

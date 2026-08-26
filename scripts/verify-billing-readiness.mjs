@@ -151,6 +151,7 @@ async function verifyStripe() {
     if (productId) {
       product = await stripe.products.retrieve(productId);
       record("Stripe", !product.deleted && product.active && product.name === "Montreal QBank", "The shared active product is named Montreal QBank");
+      record("Stripe", !product.deleted && product.statement_descriptor === "MONTREAL QBANK", "The product uses the approved subscription statement descriptor");
     }
 
     if (taxEnabled) {

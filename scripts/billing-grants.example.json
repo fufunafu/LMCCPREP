@@ -1,0 +1,16 @@
+{
+  "grants": [
+    {
+      "email": "invited-user@example.com",
+      "category": "existing_user"
+    },
+    {
+      "email": "reviewer@example.com",
+      "category": "reviewer"
+    },
+    {
+      "email": "administrator@example.com",
+      "category": "administrator"
+    }
+  ]
+}
