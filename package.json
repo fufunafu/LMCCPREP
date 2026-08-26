@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test:unit": "vitest run",
     "test:billing-e2e": "playwright test --config playwright.billing.config.ts",
     "test:billing-rollback": "playwright test --config playwright.billing-rollback.config.ts",
