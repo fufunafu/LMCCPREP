@@ -30,6 +30,7 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - Demo totals, accuracy, remaining counts, activity dates, topic statistics, and session summaries derive from one consistent fixture.
 - Learner-visible tags no longer receive correct-answer text. Migration `0018` also removes the normalized answer tag after inserts and edits to options or answer indexes.
 - Rights, editorial status, references, reviewer role, review date, and documented exceptions are modeled and shown after answer submission.
+- `CONTENT_GOVERNANCE.md` defines the item-level rights evidence, separate image review, transformation history, Canadian editorial standard, re-review cadence, and release record required before any item becomes paid-distributable.
 - The capture route fails closed by default, limits requests to 128 KiB, and avoids logging database messages or payloads.
 - Access requests use a honeypot, normalized-email deduplication, and a one-request-per-network-fingerprint-per-hour limit. Public database inserts are revoked.
 - CSP, HSTS, frame denial, MIME protection, referrer policy, permissions policy, `robots.txt`, `sitemap.xml`, canonical metadata, route metadata, and structured data are implemented.

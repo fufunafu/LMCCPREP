@@ -49,6 +49,8 @@ Before real accounts are used:
 
 The repository contains the complete ordered schema history, including the billing tables, entitlement function, Stripe event ledger, billing-aware content policies, and reconciliation hardening. Seed exports, source PDFs, local databases, and credentials must remain outside this repository.
 
+Question and clinical-image rights, provenance, editorial review, and the paid-distribution gate are governed by [`CONTENT_GOVERNANCE.md`](CONTENT_GOVERNANCE.md). Run `npm run content:inventory` to create the ignored local inventory used by that review process.
+
 ## Stripe billing setup
 
 Billing is fail-safe and disabled by default. Before enabling it, create one Montreal QBank product with monthly and annual recurring CAD prices in Stripe, configure the customer portal, approve the legal and commercial terms, and set these server-only variables:
