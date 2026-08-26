@@ -50,7 +50,7 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [x] Stripe test product and monthly and annual CAD prices exist. Verified 2026-08-26: CA$59 monthly, CA$349 annually, recurring CAD, no trial.
 - [x] Stripe test customer portal is configured for invoice history, payment-method updates, and cancellation at the end of the billing period. Verified 2026-08-26.
 - [ ] Test webhook endpoint is configured for all required events.
-- [ ] Preview contains only test-mode Stripe values.
+- [ ] Preview contains only test-mode Stripe values and a Vercel automation bypass secret. The current protected Preview returns an SSO redirect to unauthenticated webhook requests.
 - [ ] Checkout success, decline, cancellation, renewal failure, duplicate event, and portal tests pass.
 - [ ] Complimentary grants are added for approved users.
 - [ ] Matching live product, prices, portal, and webhook are configured.

@@ -31,6 +31,7 @@ Billing is implemented locally, disabled by default, and not approved for live p
 - The canonical Production public and demo smoke suite passed after that deployment on 2026-08-25: 17 tests passed and the 2 real-Supabase mutation checks remained intentionally opt-in. The suite verified the published operator identity, business address, public support email, prices, refund threshold, demo billing isolation, accessibility, PWA behavior, and private-route controls.
 - The dedicated rollback browser suite passed on 2026-08-25. It verifies that the documented database-first and application-second rollback state restores dashboard access and paid session creation for an invited user without a subscription.
 - Stripe test product `prod_V8yyvR88zyshaR` was created on 2026-08-26 with verified recurring CAD prices of CA$59 monthly and CA$349 annually, distinct lookup keys, and no trial. The shared test customer portal already enables invoice history, payment-method updates, and cancellation at the end of the billing period.
+- The current protected Preview webhook URL returns a Vercel SSO redirect to unauthenticated requests. Stripe delivery therefore requires a Vercel Protection Bypass for Automation secret in the webhook query string, followed by a fresh Preview deployment. No bypass secret has been created.
 - The owner approved `15041074 Canada Inc.` and its Etobicoke business address for public legal disclosure, and privately supplied the Canadian GST/HST and Quebec QST registrations for later Stripe validation. Registration numbers are not stored in source control.
 - The owner approved `fuanne_gm@hotmail.com` as the public support email.
 - The application, billing plan, and readiness preflight consistently use the customer-facing name `Montreal QBank`. Infrastructure identifiers remain unchanged.
@@ -38,8 +39,8 @@ Billing is implemented locally, disabled by default, and not approved for live p
 
 ## Safe next sequence
 
-1. Obtain explicit approval to create persistent test credentials, then create the restricted test key and webhook signing secret without sharing values in chat or source control.
-2. Finish Vercel Preview test variables and deploy a fresh billing Preview.
+1. Obtain explicit approval to create persistent test credentials, then create the restricted Stripe test key, Vercel automation bypass secret, webhook endpoint, and webhook signing secret without sharing values in chat or source control.
+2. Finish Vercel Preview test variables, deploy a fresh billing Preview, and verify direct signed webhook delivery through the bypass URL.
 3. Run Stripe Checkout, portal, signed webhook, decline, retry, cancellation, duplicate, and reconciliation tests in Preview.
 4. Add approved complimentary grants.
 5. Configure matching live resources and deploy with database enforcement still off.
