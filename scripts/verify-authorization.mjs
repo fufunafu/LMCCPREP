@@ -5,7 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-if (!url || !anonKey || !serviceKey) throw new Error("Supabase verification configuration is incomplete.");
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+if (!url || !anonKey || !serviceKey || !siteUrl) throw new Error("Supabase and site verification configuration is incomplete.");
 
 const client = (key) => createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 const admin = client(serviceKey);
@@ -37,6 +38,31 @@ async function verifyApprovedPublicCounts() {
       .eq("editorial_status", "reviewed");
     if (countError) throw new Error("Could not calculate the approved public corpus.");
     assert.equal(subject.question_count, count ?? 0, `${subject.name} public count included unapproved content`);
+  }
+  return publicCounts;
+}
+
+async function verifyPublishedPublicCounts(publicCounts) {
+  let origin;
+  try {
+    origin = new URL(siteUrl).origin;
+  } catch {
+    throw new Error("The configured public site URL is invalid.");
+  }
+  const response = await fetch(`${origin}/?catalog-verification=${randomUUID()}`, {
+    headers: { "cache-control": "no-cache" },
+    redirect: "error",
+  });
+  assert.ok(response.ok, `The published catalog returned HTTP ${response.status}`);
+  const html = await response.text();
+  const published = new Map();
+  for (const match of html.matchAll(/data-subject-id="([^"]+)"[^>]*data-question-count="(\d+)"/g)) {
+    assert.ok(!published.has(match[1]), `The published catalog repeated subject ${match[1]}`);
+    published.set(match[1], Number(match[2]));
+  }
+  assert.equal(published.size, publicCounts.length, "The published catalog did not expose every approved discipline count");
+  for (const subject of publicCounts) {
+    assert.equal(published.get(subject.id), subject.question_count, `${subject.name} published count does not match the approved production aggregate`);
   }
 }
 
@@ -91,7 +117,8 @@ async function createTestUser(label) {
 }
 
 try {
-  await verifyApprovedPublicCounts();
+  const publicCounts = await verifyApprovedPublicCounts();
+  await verifyPublishedPublicCounts(publicCounts);
   const checkedTags = await verifyAnswerSafeTags();
   const { data: question, error: questionError } = await admin.from("questions").select("qid,answer_index,subject_id,topic_id").limit(1).single();
   if (questionError || !question) throw new Error("No bank question is available for authorization verification.");
@@ -157,7 +184,7 @@ try {
   assert.ok((await userB.client.from("notes").insert({ user_id: userA.id, qid: question.qid, body: "must fail" })).error, "Cross-user note insert unexpectedly succeeded");
   assert.ok((await userB.client.from("attempts").insert({ user_id: userB.id, session_id: session.id, qid: question.qid, chosen_index: question.answer_index, correct: true, time_ms: 1 })).error, "Attempt against another user's session unexpectedly succeeded");
 
-  console.log(`Authorization verification passed: approved public counts, ${checkedTags} answer-safe tag rows, anonymous access, cross-user isolation, RPC restrictions, and billing isolation are enforced.`);
+  console.log(`Authorization verification passed: approved and published public counts, ${checkedTags} answer-safe tag rows, anonymous access, cross-user isolation, RPC restrictions, and billing isolation are enforced.`);
 } finally {
   for (const qid of createdQuestions) await admin.from("questions").delete().eq("qid", qid);
   for (const userId of createdUsers) await admin.auth.admin.deleteUser(userId);

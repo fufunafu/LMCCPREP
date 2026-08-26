@@ -186,7 +186,18 @@ test("marketing navigation stays sticky and preserves anchored headings", async 
 test("public counts are identical before and during demo, and private landmarks expose state", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  const anonymousCounts = await page.locator("#subjects h3 + p").allTextContents();
+  const subjectCards = page.locator("#subjects [data-subject-id][data-question-count]");
+  await expect(subjectCards).toHaveCount(5);
+  const anonymousCounts = await subjectCards.evaluateAll((cards) => cards.map((card) => ({
+    id: card.getAttribute("data-subject-id"),
+    count: Number(card.getAttribute("data-question-count")),
+    renderedCount: Number(card.querySelector("h3 + p")?.textContent),
+  })));
+  for (const subject of anonymousCounts) {
+    expect(subject.id).toBeTruthy();
+    expect(subject.count).toBe(subject.renderedCount);
+    expect(subject.count).toBeGreaterThanOrEqual(0);
+  }
   await signInDemo(page);
   await expect(page.getByRole("status").filter({ hasText: "Simulated demo data" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Daily accuracy for the last 28 calendar days" })).toBeAttached();
@@ -196,7 +207,11 @@ test("public counts are identical before and during demo, and private landmarks 
   await page.goto("/session/demo?mode=tutor");
   await expect(page.locator("main")).toHaveCount(1);
   await page.goto("/");
-  const demoCounts = await page.locator("#subjects h3 + p").allTextContents();
+  const demoCounts = await page.locator("#subjects [data-subject-id][data-question-count]").evaluateAll((cards) => cards.map((card) => ({
+    id: card.getAttribute("data-subject-id"),
+    count: Number(card.getAttribute("data-question-count")),
+    renderedCount: Number(card.querySelector("h3 + p")?.textContent),
+  })));
   expect(demoCounts).toEqual(anonymousCounts);
 });
 
