@@ -39,6 +39,7 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - Skip navigation, one-main-landmark routing, active navigation state, answer-letter preservation, mobile and desktop question state, reduced motion, and focus placement are implemented.
 - Analytics charts and the activity heatmap have screen-reader tables, while the decorative chart surfaces are removed from the accessibility tree.
 - The free no-card demo is prominent in the hero and pricing areas. Annual dollar and percentage savings, renewal, cancellation, tax, and refund copy are adjacent to pricing.
+- Public sign-in and Billing surfaces no longer claim a larger or complete corpus. The purchase surface names the five available disciplines, discloses that Obstetrics and Gynecology is absent, and promises only rights-approved, reviewed questions.
 - Draft legal pages disclose their draft status, version, operator, account deletion path, processors, cancellation behavior, and remaining counsel requirement.
 
 ## Verification evidence
@@ -47,7 +48,7 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - `npm run typecheck`: passed
 - `npm run test:unit`: 89 passed
 - `npm run build`: passed
-- Standard browser suite: 20 passed and 2 intentionally skipped live-Supabase checks
+- Standard browser suite: 22 passed and 2 intentionally skipped live-Supabase checks
 - Billing browser suite: 5 passed
 - Billing rollback browser gate: 1 passed
 - Production-like authorization verifier before the new public-count assertion: passed 4,972 answer-safe rows, anonymous access, service-only RPC, cross-user study data, and cross-user billing data checks; temporary users were deleted afterward
@@ -58,6 +59,8 @@ The next reviewed release candidate also contains migration `0019_enforce_paid_c
 - Maskable-icon render check: 512 by 512, 0 non-opaque pixels, foreground bounds 121 through 390 on both axes, maximum foreground radius 134.77 px inside the 204.8 px safe radius
 - Manual browser keyboard smoke: the skip link is the first focus target on public and private shells, Enter moves focus to `main-content`, focus indication is visible, and the active mobile Dashboard destination exposes `aria-current="page"`.
 - 200 percent equivalent reflow check: the homepage and demo dashboard were inspected at a 640 CSS px viewport, equivalent to 200 percent zoom on a 1,280 px desktop viewport. Both had `scrollWidth === clientWidth` and retained readable, operable layouts without horizontal page overflow.
+- The public-link crawl passes, every indexable route has a unique title, description, Open Graph title and description, canonical URL, and Open Graph URL, and structured data has the required Organization, WebSite, SoftwareApplication, Offer, and FAQ shapes.
+- Header verification passes for HTML, the disabled capture API, the service worker, and the generated PNG icon. Tablet landscape plus 1,280 px and 1,920 px desktop layout checks pass without page overflow; the existing suite also covers 375 by 812 and 390 by 844 mobile viewports.
 - Production response check confirmed the enforced CSP and the promoted deployment identifier
 
 ## Paid-launch blockers

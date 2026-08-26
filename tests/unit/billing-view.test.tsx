@@ -35,6 +35,9 @@ describe("billing rollout UI", () => {
     expect(html).toContain("Choose annual");
     expect(html).toContain("Private beta access");
     expect(html).toContain("Applicable taxes, if any");
+    expect(html).toContain("Obstetrics and Gynecology is not yet included");
+    expect(html).toContain("Available rights-approved, reviewed questions");
+    expect(html).not.toContain("Complete question bank");
     expect(html).toContain('href="/refund-policy"');
   });
 

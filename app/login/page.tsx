@@ -22,7 +22,7 @@ export default function LoginPage() {
       <div className="relative hidden overflow-hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -right-32 -top-32 size-[500px] rounded-full bg-emerald-500/20 blur-3xl" /><div className="absolute -bottom-36 -left-20 size-[420px] rounded-full bg-cyan-500/10 blur-3xl" />
         <p className="relative text-sm font-medium text-emerald-300">Built around your exam</p>
-        <div className="relative max-w-lg"><h1 className="text-4xl font-semibold leading-tight tracking-[-0.04em]">A clearer way to turn practice into progress.</h1><div className="mt-10 space-y-5">{["1,600+ focused clinical questions", "Tutor and timed practice modes", "Clear analytics down to the topic"].map((item) => <div key={item} className="flex items-center gap-3 text-slate-300"><CheckCircle2 className="size-5 text-emerald-400" />{item}</div>)}</div></div>
+        <div className="relative max-w-lg"><h1 className="text-4xl font-semibold leading-tight tracking-[-0.04em]">A clearer way to turn practice into progress.</h1><div className="mt-10 space-y-5">{["Five-discipline private-beta scope", "Tutor and timed practice modes", "Clear analytics down to the topic"].map((item) => <div key={item} className="flex items-center gap-3 text-slate-300"><CheckCircle2 className="size-5 text-emerald-400" />{item}</div>)}</div></div>
         <p className="relative text-sm text-slate-400">Current MCCQE preparation, without the noise.</p>
       </div>
     </main>
