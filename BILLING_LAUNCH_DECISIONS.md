@@ -4,9 +4,9 @@ Status: **Not approved for live billing**
 
 Billing enforcement must remain disabled until every owner decision and launch gate below is complete. Do not place secret keys in this file or in source control.
 
-Last verified billing Preview: `https://lmcc-prep-7pyy1fp9p-fuannes-projects.vercel.app` (built and route-smoke-tested 2026-08-25; protected by Vercel authentication). The reconciliation hardening is deployed in Preview and migration `0010_billing_reconciliation.sql` is applied to the linked database with enforcement off. The Stripe test catalog was created and verified on 2026-08-26.
+Last verified billing Preview: `https://lmcc-prep-8fq2d61ar-fuannes-projects.vercel.app` (deployment `dpl_4tRdjCMQ9mMf6gzLYq6QoELGJvzg`, built from clean commit `bcdf330f4c17164ad0d08ea4c02744bb06105708`). It is protected by Vercel authentication and billing remains disabled.
 
-Latest readiness preflight: 24 of 27 checks passed on 2026-08-26. The linked database is reachable with enforcement off and a three-day grace period. Approved public prices, the legal business identity, business address, support email, completed legal terms, local canonical site URL, and both test price IDs are configured. The three expected failures are the intentionally absent test API key, key-mode validation, and webhook signing secret. The `claim_stripe_webhook_event` RPC is available. Vercel Preview and Development contain the non-secret test price IDs, while Stripe secrets remain absent.
+Latest secure Preview preflight: 36 of 36 checks passed on 2026-08-26 using the captured test credentials. The restricted test key is stored in Vercel Preview and Development. The deployed Preview still lacks the webhook signing secret, so signed delivery remains gated on explicit approval for that upload and a fresh deployment.
 
 ## Owner decisions
 
@@ -49,8 +49,8 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [x] Reconciliation hardening migration `0010_billing_reconciliation.sql` is applied and verified with enforcement off.
 - [x] Stripe test product and monthly and annual CAD prices exist. Verified 2026-08-26: CA$59 monthly, CA$349 annually, recurring CAD, no trial.
 - [x] Stripe test customer portal is configured for invoice history, payment-method updates, and cancellation at the end of the billing period. Verified 2026-08-26.
-- [ ] Test webhook endpoint is configured for all required events.
-- [ ] Preview contains only test-mode Stripe values and a Vercel automation bypass secret. The current protected Preview returns an SSO redirect to unauthenticated webhook requests.
+- [x] Test webhook endpoint is configured for all required events. Verified 2026-08-26 against the protected Preview.
+- [ ] Preview contains only test-mode Stripe values and a Vercel automation bypass secret. The restricted key and bypass are present, but the webhook signing secret still requires explicit approval for upload and redeployment.
 - [ ] Checkout success, decline, cancellation, renewal failure, duplicate event, and portal tests pass.
 - [ ] Complimentary grants are added for approved users.
 - [ ] Matching live product, prices, portal, and webhook are configured.
