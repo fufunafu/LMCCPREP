@@ -53,6 +53,7 @@ export async function syncStripeSubscription(
   await syncStripeCustomer(userId, stripeCustomerId);
   const currentPeriodEnd = subscriptionPeriodEnd(subscription.items.data);
   const trialEnd = subscription.trial_end;
+  const cancellationScheduled = subscription.cancel_at_period_end || Boolean(subscription.cancel_at);
   const status = subscription.status as BillingSubscriptionStatus;
   const entitlementStatus = paymentEvent === "failed"
     ? "past_due"
@@ -76,7 +77,7 @@ export async function syncStripeSubscription(
     p_status: status,
     p_current_period_end: isoFromUnix(currentPeriodEnd),
     p_access_until: isoFromUnix(accessUntil),
-    p_cancel_at_period_end: subscription.cancel_at_period_end,
+    p_cancel_at_period_end: cancellationScheduled,
     p_trial_end: isoFromUnix(trialEnd),
     p_event_created_at: isoFromUnix(stateObservedAt),
     p_payment_event: paymentEvent ?? null,

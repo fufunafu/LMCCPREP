@@ -52,6 +52,7 @@ function subscription(overrides: Partial<Stripe.Subscription> = {}) {
     customer: "cus_test",
     metadata: { supabase_user_id: "00000000-0000-4000-8000-000000000001" },
     status: "active",
+    cancel_at: null,
     cancel_at_period_end: false,
     trial_end: null,
     items: {
@@ -97,8 +98,21 @@ describe("Stripe subscription synchronization", () => {
       p_status: "active",
       p_current_period_end: "2030-03-17T17:46:40.000Z",
       p_access_until: "2030-03-17T17:46:40.000Z",
+      p_cancel_at_period_end: false,
       p_event_created_at: "2027-01-15T08:00:00.000Z",
       p_is_reconciliation: false,
+    }));
+  });
+
+  it("normalizes Stripe's explicit cancel_at timestamp as a scheduled cancellation", async () => {
+    await syncStripeSubscription(subscription({
+      cancel_at: 1_900_000_000,
+      cancel_at_period_end: false,
+    }), 1_800_000_000);
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_billing_subscription", expect.objectContaining({
+      p_cancel_at_period_end: true,
+      p_current_period_end: "2030-03-17T17:46:40.000Z",
+      p_access_until: "2030-03-17T17:46:40.000Z",
     }));
   });
 
