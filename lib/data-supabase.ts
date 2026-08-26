@@ -77,7 +77,7 @@ export const getPublicSubjects = unstable_cache(async (): Promise<Subject[]> => 
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   if (!url || !key) throw new Error("Public catalog configuration is unavailable.");
   const supabase = createPublicClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await supabase.rpc("get_public_subject_counts");
+  const { data, error } = await supabase.rpc("get_approved_public_subject_counts");
   if (error) throw new Error(error.message);
   return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
 }, ["public-subject-counts"], { revalidate: 3600, tags: ["public-subject-counts"] });

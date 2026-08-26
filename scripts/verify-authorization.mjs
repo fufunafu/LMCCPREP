@@ -21,6 +21,25 @@ function normalizeTag(value) {
   return String(value ?? "").trim().toLowerCase().replace(/[*_`]+/g, "").replace(/\s+/g, " ");
 }
 
+async function verifyApprovedPublicCounts() {
+  const publicClient = client(anonKey);
+  const { data: publicCounts, error } = await publicClient.rpc("get_approved_public_subject_counts");
+  if (error) throw new Error("Could not read approved public subject counts.");
+  assert.equal(publicCounts?.length, 5, "The public catalog did not return all five disclosed disciplines");
+
+  for (const subject of publicCounts) {
+    const { count, error: countError } = await admin
+      .from("questions")
+      .select("qid", { count: "exact", head: true })
+      .eq("subject_id", subject.id)
+      .neq("source", "user")
+      .in("distribution_rights_status", ["original", "licensed"])
+      .eq("editorial_status", "reviewed");
+    if (countError) throw new Error("Could not calculate the approved public corpus.");
+    assert.equal(subject.question_count, count ?? 0, `${subject.name} public count included unapproved content`);
+  }
+}
+
 async function verifyAnswerSafeTags() {
   let offset = 0;
   let checked = 0;
@@ -72,6 +91,7 @@ async function createTestUser(label) {
 }
 
 try {
+  await verifyApprovedPublicCounts();
   const checkedTags = await verifyAnswerSafeTags();
   const { data: question, error: questionError } = await admin.from("questions").select("qid,answer_index,subject_id,topic_id").limit(1).single();
   if (questionError || !question) throw new Error("No bank question is available for authorization verification.");
@@ -137,7 +157,7 @@ try {
   assert.ok((await userB.client.from("notes").insert({ user_id: userA.id, qid: question.qid, body: "must fail" })).error, "Cross-user note insert unexpectedly succeeded");
   assert.ok((await userB.client.from("attempts").insert({ user_id: userB.id, session_id: session.id, qid: question.qid, chosen_index: question.answer_index, correct: true, time_ms: 1 })).error, "Attempt against another user's session unexpectedly succeeded");
 
-  console.log(`Authorization verification passed: ${checkedTags} answer-safe tag rows plus anonymous, cross-user, RPC, and billing isolation checks are enforced.`);
+  console.log(`Authorization verification passed: approved public counts, ${checkedTags} answer-safe tag rows, anonymous access, cross-user isolation, RPC restrictions, and billing isolation are enforced.`);
 } finally {
   for (const qid of createdQuestions) await admin.from("questions").delete().eq("qid", qid);
   for (const userId of createdUsers) await admin.auth.admin.deleteUser(userId);
