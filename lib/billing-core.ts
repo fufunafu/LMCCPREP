@@ -85,6 +85,27 @@ export function stripeSecretMatchesEnvironment(env: BillingEnvironment = process
   return isTest;
 }
 
+function stripeHostedUrl(value: string | undefined, host: string, env: BillingEnvironment) {
+  const url = value?.trim();
+  if (!url?.startsWith(`https://${host}/`)) return undefined;
+  const isTest = url.startsWith(`https://${host}/test_`);
+  if (env.VERCEL_ENV === "production" ? isTest : !isTest) return undefined;
+  return url;
+}
+
+/** Stripe-hosted Payment Link URLs, validated for the deployment environment. */
+export function stripePaymentLinks(env: BillingEnvironment = process.env) {
+  return {
+    monthly: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_MONTHLY, "buy.stripe.com", env),
+    annual: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_ANNUAL, "buy.stripe.com", env),
+  };
+}
+
+/** Stripe-hosted no-code customer portal login URL, validated for the deployment environment. */
+export function stripePortalLoginUrl(env: BillingEnvironment = process.env) {
+  return stripeHostedUrl(env.STRIPE_PORTAL_LOGIN_URL, "billing.stripe.com", env);
+}
+
 export function publicBillingPlans(env: BillingEnvironment = process.env) {
   return billingPlans(env).map((plan) => ({
     key: plan.key,
@@ -116,13 +137,51 @@ export function billingServerConfigured(env: BillingEnvironment = process.env) {
   );
 }
 
+/**
+ * Hosted "links" mode: Checkout and the portal are Stripe-hosted pages, so no
+ * Stripe API key is needed. The signed webhook still keeps entitlements in sync.
+ */
+export function billingLinksConfigured(env: BillingEnvironment = process.env) {
+  const links = stripePaymentLinks(env);
+  const monthlyPrice = env.STRIPE_PRICE_MONTHLY?.trim();
+  const annualPrice = env.STRIPE_PRICE_ANNUAL?.trim();
+  return Boolean(
+    links.monthly
+    && links.annual
+    && links.monthly !== links.annual
+    && env.STRIPE_WEBHOOK_SECRET?.trim().startsWith("whsec_")
+    && monthlyPrice?.startsWith("price_")
+    && annualPrice?.startsWith("price_")
+    && monthlyPrice !== annualPrice
+    && env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+    && env.BILLING_TERMS_READY?.trim().toLowerCase() === "true",
+  );
+}
+
+export type BillingCheckoutMode = "api" | "links";
+
+/** Which Checkout integration is usable: the Stripe API, hosted links, or neither. */
+export function billingCheckoutMode(env: BillingEnvironment = process.env): BillingCheckoutMode | undefined {
+  if (billingServerConfigured(env)) return "api";
+  if (billingLinksConfigured(env)) return "links";
+  return undefined;
+}
+
+export function billingConfigured(env: BillingEnvironment = process.env) {
+  return billingCheckoutMode(env) !== undefined;
+}
+
 export function isoFromUnix(value: number | null | undefined) {
   return value == null ? null : new Date(value * 1000).toISOString();
 }
 
-export function subscriptionPeriodEnd(items: Array<{ current_period_end: number }>) {
-  if (!items.length) return null;
-  return Math.max(...items.map((item) => item.current_period_end));
+export function subscriptionPeriodEnd(
+  items: Array<{ current_period_end?: number | null }>,
+  fallback?: number | null,
+) {
+  const ends = items.map((item) => item.current_period_end).filter((value): value is number => typeof value === "number");
+  if (ends.length) return Math.max(...ends);
+  return typeof fallback === "number" ? fallback : null;
 }
 
 export function deriveAccessUntil(input: {
@@ -148,4 +207,13 @@ export function hasCurrentEntitlement(input: {
 }, now = new Date()) {
   if (input.granted && (!input.grantExpiresAt || new Date(input.grantExpiresAt) > now)) return true;
   return Boolean(input.status && ENTITLED_STATUSES.has(input.status) && input.accessUntil && new Date(input.accessUntil) > now);
+}
+
+/**
+ * Whether public pricing pages and navigation should be shown. This only
+ * requires the public CAD amounts; checkout enforcement is governed separately
+ * by `billingServerConfigured()` and `isBillingRequired()`.
+ */
+export function billingMarketingAvailable(env: BillingEnvironment = process.env) {
+  return billingPlans(env).every((plan) => plan.amountCad !== undefined);
 }

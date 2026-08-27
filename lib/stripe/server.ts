@@ -13,6 +13,23 @@ export function getStripe() {
   return stripeClient;
 }
 
+/** The Stripe client when an API key is configured for this environment, otherwise undefined. */
+export function getOptionalStripe() {
+  try {
+    return getStripe();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Signature verification is local and needs no API key, so hosted "links" mode
+ * can verify webhooks without a Stripe secret key.
+ */
+export function stripeWebhookVerifier() {
+  return getOptionalStripe()?.webhooks ?? Stripe.webhooks;
+}
+
 export function stripeWebhookSecret() {
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) throw new Error("Stripe webhooks are not configured.");

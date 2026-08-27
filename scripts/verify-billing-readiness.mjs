@@ -71,8 +71,23 @@ function configurationChecks() {
       ? secret.startsWith("sk_live_") || secret.startsWith("rk_live_")
       : secret.startsWith("sk_test_") || secret.startsWith("rk_test_")
     : false;
-  record("Configuration", Boolean(secret), "Stripe secret key is configured");
-  record("Configuration", keyMatches, `Stripe key mode matches ${environment}`);
+  const hostedUrl = (name, host) => {
+    const url = value(name);
+    if (!url?.startsWith(`https://${host}/`)) return undefined;
+    const isTest = url.startsWith(`https://${host}/test_`);
+    return (expectedLive ? isTest : !isTest) ? undefined : url;
+  };
+  const monthlyLink = hostedUrl("STRIPE_PAYMENT_LINK_MONTHLY", "buy.stripe.com");
+  const annualLink = hostedUrl("STRIPE_PAYMENT_LINK_ANNUAL", "buy.stripe.com");
+  const portalLink = hostedUrl("STRIPE_PORTAL_LOGIN_URL", "billing.stripe.com");
+  const linksMode = !secret && Boolean(monthlyLink && annualLink && monthlyLink !== annualLink);
+  if (linksMode) {
+    record("Configuration", true, `Hosted Payment Links are configured for ${environment} (no API key mode)`);
+    record("Configuration", Boolean(portalLink), `Hosted customer portal login link is configured for ${environment}`);
+  } else {
+    record("Configuration", Boolean(secret), "Stripe secret key is configured");
+    record("Configuration", keyMatches, `Stripe key mode matches ${environment}`);
+  }
   record("Configuration", value("STRIPE_WEBHOOK_SECRET")?.startsWith("whsec_") === true, "Webhook signing secret is configured");
   record("Configuration", value("STRIPE_PRICE_MONTHLY")?.startsWith("price_") === true, "Monthly Stripe price is configured");
   record("Configuration", value("STRIPE_PRICE_ANNUAL")?.startsWith("price_") === true, "Annual Stripe price is configured");

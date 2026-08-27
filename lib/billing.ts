@@ -4,7 +4,7 @@ import { cache } from "react";
 import { isDemoSession } from "@/lib/demo-session";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { billingPlan, billingRequired, billingServerConfigured, hasCurrentEntitlement, planForPrice } from "@/lib/billing-core";
+import { billingConfigured, billingPlan, billingRequired, hasCurrentEntitlement, planForPrice } from "@/lib/billing-core";
 import type { BillingPlanKey, BillingSubscriptionStatus, BillingSummary } from "@/lib/types";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -72,7 +72,7 @@ export async function requireEntitledUserId(supabase?: ServerSupabaseClient) {
 }
 
 export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
-  const configured = billingServerConfigured();
+  const configured = billingConfigured();
   if (await isDemoSession()) {
     return { mode: "demo", configured, required: false, hasAccess: true, subscriptionHasAccess: false };
   }

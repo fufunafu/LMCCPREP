@@ -13,6 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("@/lib/billing-core", () => ({
   billingPlan: vi.fn(),
   billingRequired: () => false,
+  billingConfigured: () => false,
   billingServerConfigured: () => false,
   hasCurrentEntitlement: () => false,
   planForPrice: vi.fn(),

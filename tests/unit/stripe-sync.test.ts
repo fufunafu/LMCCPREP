@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   retrieve: vi.fn(),
   list: vi.fn(),
   customerUserId: undefined as string | undefined,
+  apiKeyConfigured: true,
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -34,13 +35,16 @@ vi.mock("@/lib/supabase/admin", () => ({
   }),
 }));
 
+const stripeClient = {
+  subscriptions: {
+    retrieve: mocks.retrieve,
+    list: mocks.list,
+  },
+};
+
 vi.mock("@/lib/stripe/server", () => ({
-  getStripe: () => ({
-    subscriptions: {
-      retrieve: mocks.retrieve,
-      list: mocks.list,
-    },
-  }),
+  getStripe: () => stripeClient,
+  getOptionalStripe: () => (mocks.apiKeyConfigured ? stripeClient : undefined),
 }));
 
 import { processStripeEvent, reconcileBillingUser, syncStripeSubscription } from "@/lib/stripe/sync";
@@ -208,6 +212,38 @@ describe("Stripe subscription synchronization", () => {
       p_status: "canceled",
       p_access_until: "2027-01-15T08:01:40.000Z",
     }));
+  });
+
+  it("processes subscription events from their payload when no API key is configured", async () => {
+    mocks.apiKeyConfigured = false;
+    mocks.customerUserId = "00000000-0000-4000-8000-000000000001";
+    const legacy = { ...subscription({ metadata: {} }), items: { data: [{ price: { id: "price_monthly" } }] }, current_period_end: 1_900_000_000 };
+    await processStripeEvent({
+      id: "evt_links",
+      type: "customer.subscription.updated",
+      created: 1_800_000_000,
+      data: { object: legacy },
+    } as unknown as Stripe.Event);
+    expect(mocks.retrieve).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_billing_subscription", expect.objectContaining({
+      p_user_id: "00000000-0000-4000-8000-000000000001",
+      p_access_until: new Date(1_900_000_000 * 1000).toISOString(),
+    }));
+    mocks.apiKeyConfigured = true;
+  });
+
+  it("links Checkout to the user without retrieving the subscription when no API key is configured", async () => {
+    mocks.apiKeyConfigured = false;
+    await processStripeEvent({
+      id: "evt_links_checkout",
+      type: "checkout.session.completed",
+      created: 1_800_000_000,
+      data: { object: { client_reference_id: "00000000-0000-4000-8000-000000000001", customer: "cus_test", subscription: "sub_test" } },
+    } as unknown as Stripe.Event);
+    expect(mocks.customerUpsert).toHaveBeenCalledWith(expect.objectContaining({ stripe_customer_id: "cus_test" }));
+    expect(mocks.retrieve).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    mocks.apiKeyConfigured = true;
   });
 
   it("ignores unknown event types without touching subscription state", async () => {

@@ -3,7 +3,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { billingGraceDays, deriveAccessUntil, isoFromUnix, planForPrice, subscriptionPeriodEnd } from "@/lib/billing-core";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStripe } from "@/lib/stripe/server";
+import { getOptionalStripe, getStripe } from "@/lib/stripe/server";
 import type { BillingSubscriptionStatus } from "@/lib/types";
 
 function objectId(value: string | { id: string } | null | undefined) {
@@ -44,6 +44,9 @@ export async function syncStripeSubscription(
   const stripeCustomerId = objectId(subscription.customer);
   const firstItem = subscription.items.data[0];
   if (!userId || !stripeCustomerId || !firstItem?.price?.id) {
+    // In hosted "links" mode the customer mapping is written by
+    // checkout.session.completed; a subscription event that arrives first
+    // fails here so Stripe redelivers it once the mapping exists.
     throw new Error("Stripe subscription identity is incomplete.");
   }
   if (subscription.items.data.length !== 1 || !planForPrice(firstItem.price.id)) {
@@ -51,7 +54,8 @@ export async function syncStripeSubscription(
   }
 
   await syncStripeCustomer(userId, stripeCustomerId);
-  const currentPeriodEnd = subscriptionPeriodEnd(subscription.items.data);
+  const legacyPeriodEnd = (subscription as Stripe.Subscription & { current_period_end?: number }).current_period_end;
+  const currentPeriodEnd = subscriptionPeriodEnd(subscription.items.data, legacyPeriodEnd);
   const trialEnd = subscription.trial_end;
   const cancellationScheduled = subscription.cancel_at_period_end || Boolean(subscription.cancel_at);
   const status = subscription.status as BillingSubscriptionStatus;
@@ -100,7 +104,9 @@ function pastDueAnchorTimestamp(subscription: Stripe.Subscription, fallback: num
 }
 
 export async function processStripeEvent(event: Stripe.Event) {
-  const stripe = getStripe();
+  // Without an API key (hosted "links" mode) events are processed from their
+  // own payloads only; subscription lifecycle events carry everything needed.
+  const stripe = getOptionalStripe();
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
@@ -109,7 +115,7 @@ export async function processStripeEvent(event: Stripe.Event) {
       if (!userId || !customerId) throw new Error("Checkout session identity is incomplete.");
       await syncStripeCustomer(userId, customerId);
       const subscriptionId = objectId(session.subscription);
-      if (subscriptionId) {
+      if (subscriptionId && stripe) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["items.data.price"] });
         await syncStripeSubscription(subscription, event.created);
       }
@@ -117,7 +123,9 @@ export async function processStripeEvent(event: Stripe.Event) {
     }
     case "customer.subscription.created":
     case "customer.subscription.updated": {
-      const subscription = await stripe.subscriptions.retrieve(event.data.object.id, { expand: ["items.data.price"] });
+      const subscription = stripe
+        ? await stripe.subscriptions.retrieve(event.data.object.id, { expand: ["items.data.price"] })
+        : event.data.object;
       await syncStripeSubscription(subscription, event.created);
       return;
     }
@@ -126,6 +134,9 @@ export async function processStripeEvent(event: Stripe.Event) {
       return;
     case "invoice.paid":
     case "invoice.payment_failed": {
+      // Without an API key the subscription cannot be retrieved here; the
+      // matching customer.subscription.updated event carries the new status.
+      if (!stripe) return;
       const subscriptionId = invoiceSubscriptionId(event.data.object);
       if (!subscriptionId) return;
       const subscription = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["items.data.price"] });

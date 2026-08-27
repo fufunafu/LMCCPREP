@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  billingCheckoutMode,
   billingGraceDays,
+  billingLinksConfigured,
   billingPlans,
   billingRequired,
   billingServerConfigured,
@@ -8,6 +10,8 @@ import {
   deriveAccessUntil,
   hasCurrentEntitlement,
   planForPrice,
+  stripePaymentLinks,
+  stripePortalLoginUrl,
   stripeSecretMatchesEnvironment,
   subscriptionPeriodEnd,
 } from "@/lib/billing-core";
@@ -58,6 +62,46 @@ describe("billing configuration", () => {
     expect(billingServerConfigured({ ...configured, STRIPE_SECRET_KEY: "sk_live_example" })).toBe(false);
     expect(billingServerConfigured({ ...configured, STRIPE_PRICE_ANNUAL: "price_monthly" })).toBe(false);
     expect(billingServerConfigured({ ...configured, BILLING_TERMS_READY: "false" })).toBe(false);
+  });
+});
+
+describe("hosted links mode", () => {
+  const links = {
+    VERCEL_ENV: "production",
+    STRIPE_PAYMENT_LINK_MONTHLY: "https://buy.stripe.com/live_monthly",
+    STRIPE_PAYMENT_LINK_ANNUAL: "https://buy.stripe.com/live_annual",
+    STRIPE_PORTAL_LOGIN_URL: "https://billing.stripe.com/p/login/live_portal",
+    STRIPE_WEBHOOK_SECRET: "whsec_example",
+    STRIPE_PRICE_MONTHLY: "price_monthly",
+    STRIPE_PRICE_ANNUAL: "price_annual",
+    SUPABASE_SERVICE_ROLE_KEY: "service-role-example",
+    BILLING_TERMS_READY: "true",
+  };
+
+  it("requires Stripe-hosted URLs whose mode matches the environment", () => {
+    expect(stripePaymentLinks(links)).toEqual({ monthly: links.STRIPE_PAYMENT_LINK_MONTHLY, annual: links.STRIPE_PAYMENT_LINK_ANNUAL });
+    expect(stripePaymentLinks({ ...links, STRIPE_PAYMENT_LINK_MONTHLY: "https://buy.stripe.com/test_abc" }).monthly).toBeUndefined();
+    expect(stripePaymentLinks({ ...links, VERCEL_ENV: "preview" }).monthly).toBeUndefined();
+    expect(stripePaymentLinks({ ...links, VERCEL_ENV: "preview", STRIPE_PAYMENT_LINK_MONTHLY: "https://buy.stripe.com/test_abc" }).monthly).toBe("https://buy.stripe.com/test_abc");
+    expect(stripePaymentLinks({ ...links, STRIPE_PAYMENT_LINK_MONTHLY: "https://attacker.example/eVq" }).monthly).toBeUndefined();
+    expect(stripePortalLoginUrl(links)).toBe(links.STRIPE_PORTAL_LOGIN_URL);
+    expect(stripePortalLoginUrl({ ...links, STRIPE_PORTAL_LOGIN_URL: "https://buy.stripe.com/x" })).toBeUndefined();
+  });
+
+  it("selects links mode only without an API key and with complete configuration", () => {
+    expect(billingLinksConfigured(links)).toBe(true);
+    expect(billingCheckoutMode(links)).toBe("links");
+    expect(billingCheckoutMode({ ...links, STRIPE_SECRET_KEY: "sk_live_example" })).toBe("api");
+    expect(billingCheckoutMode({ ...links, STRIPE_SECRET_KEY: "sk_test_example" })).toBe("links");
+    expect(billingCheckoutMode({ ...links, STRIPE_WEBHOOK_SECRET: "" })).toBeUndefined();
+    expect(billingCheckoutMode({ ...links, STRIPE_PAYMENT_LINK_ANNUAL: links.STRIPE_PAYMENT_LINK_MONTHLY })).toBeUndefined();
+    expect(billingCheckoutMode({ ...links, BILLING_TERMS_READY: "false" })).toBeUndefined();
+  });
+
+  it("falls back to a subscription-level period end for legacy payloads", () => {
+    expect(subscriptionPeriodEnd([{}], 42)).toBe(42);
+    expect(subscriptionPeriodEnd([{ current_period_end: 7 }], 42)).toBe(7);
+    expect(subscriptionPeriodEnd([], null)).toBeNull();
   });
 });
 

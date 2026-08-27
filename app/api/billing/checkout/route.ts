@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { authenticatedBillingUser, checkoutPrice, trustedMutationOrigin } from "@/lib/billing";
-import { automaticTaxEnabled, billingServerConfigured, billingTrialDays } from "@/lib/billing-core";
+import { automaticTaxEnabled, billingCheckoutMode, billingTrialDays, stripePaymentLinks } from "@/lib/billing-core";
 import { isDemoSession } from "@/lib/demo-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/server";
@@ -12,7 +12,8 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   if (!trustedMutationOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   if (await isDemoSession()) return NextResponse.json({ error: "Billing is not available in the demo." }, { status: 403 });
-  if (!billingServerConfigured()) return NextResponse.json({ error: "Billing is not fully configured yet." }, { status: 503 });
+  const mode = billingCheckoutMode();
+  if (!mode) return NextResponse.json({ error: "Billing is not fully configured yet." }, { status: 503 });
 
   try {
     const body = await request.json() as { plan?: BillingPlanKey };
@@ -23,7 +24,6 @@ export async function POST(request: Request) {
     const { userId, email } = await authenticatedBillingUser();
     const priceId = checkoutPrice(body.plan);
     const admin = createAdminClient();
-    const stripe = getStripe();
     const now = new Date().toISOString();
     const [subscriptionResult, grantResult] = await Promise.all([
       admin
@@ -49,6 +49,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Your account already has complimentary access." }, { status: 409 });
     }
 
+    if (mode === "links") {
+      // Stripe-hosted Payment Link. client_reference_id ties the resulting
+      // Checkout Session back to this user for the signed webhook.
+      const link = stripePaymentLinks()[body.plan];
+      if (!link) return NextResponse.json({ error: "That billing plan is not configured correctly." }, { status: 503 });
+      const url = new URL(link);
+      url.searchParams.set("client_reference_id", userId);
+      if (email) url.searchParams.set("prefilled_email", email);
+      return NextResponse.json({ url: url.toString() }, { headers: { "Cache-Control": "no-store" } });
+    }
+
+    const stripe = getStripe();
     const price = await stripe.prices.retrieve(priceId);
     const expectedInterval = body.plan === "monthly" ? "month" : "year";
     if (!price.active || price.currency !== "cad" || price.type !== "recurring" || price.recurring?.interval !== expectedInterval) {

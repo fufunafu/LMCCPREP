@@ -27,8 +27,11 @@ vi.mock("@/lib/billing", () => ({
 
 vi.mock("@/lib/billing-core", () => ({
   automaticTaxEnabled: () => false,
+  billingCheckoutMode: () => (mocks.configured ? "api" : undefined),
   billingServerConfigured: () => mocks.configured,
   billingTrialDays: () => undefined,
+  stripePaymentLinks: () => ({ monthly: undefined, annual: undefined }),
+  stripePortalLoginUrl: () => undefined,
 }));
 
 vi.mock("@/lib/demo-session", () => ({ isDemoSession: async () => mocks.demo }));
