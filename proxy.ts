@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { DEMO_COOKIE, DEMO_COOKIE_VALUE } from "@/lib/demo-auth";
 
-const PUBLIC_PATHS = ["/", "/login", "/forgot-password", "/manifest.webmanifest", "/icon", "/icon.svg", "/apple-icon.png", "/og.png", "/sw.js", "/offline.html", "/api/stripe/webhook", "/terms", "/privacy", "/refund-policy", "/support"];
+const PUBLIC_PATHS = ["/", "/login", "/forgot-password", "/manifest.webmanifest", "/icon", "/icon.svg", "/apple-icon.png", "/og.png", "/sw.js", "/offline.html", "/api/stripe/webhook", "/terms", "/privacy", "/refund-policy", "/support", "/features", "/subjects", "/pricing", "/faq", "/request-access"];
 const PUBLIC_ASSET = /\.(?:png|jpg|jpeg|gif|webp|svg|ico|txt|xml|webmanifest)$/;
 
 /** Refreshes the Supabase session cookie and gates app routes behind sign-in. */

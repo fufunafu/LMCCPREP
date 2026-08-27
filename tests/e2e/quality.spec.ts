@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, signInDemo, test } from "./fixtures";
 
-const publicPaths = ["/", "/terms", "/privacy", "/refund-policy", "/support"];
+const publicPaths = ["/", "/features", "/pricing", "/faq", "/request-access", "/terms", "/privacy", "/refund-policy", "/support"];
 
 async function expectNoSeriousViolations(page: import("@playwright/test").Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -87,7 +87,10 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   expect(graph.map((item) => item["@type"])).toEqual(["Organization", "WebSite", "SoftwareApplication", "FAQPage"]);
   const application = graph.find((item) => item["@type"] === "SoftwareApplication");
   expect(application).toMatchObject({ name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web" });
-  expect(application?.offers).toEqual([]);
+  expect(application?.offers).toEqual([
+    { "@type": "Offer", priceCurrency: "CAD", price: 59, category: "per month", url: "https://lmcc-prep.vercel.app/pricing" },
+    { "@type": "Offer", priceCurrency: "CAD", price: 349, category: "per year", url: "https://lmcc-prep.vercel.app/pricing" },
+  ]);
   const faq = graph.find((item) => item["@type"] === "FAQPage");
   expect(faq?.mainEntity).toEqual(expect.arrayContaining([
     expect.objectContaining({ "@type": "Question", acceptedAnswer: expect.objectContaining({ "@type": "Answer" }) }),
@@ -102,7 +105,7 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   const sitemap = await page.request.get("/sitemap.xml");
   expect(sitemap.ok()).toBeTruthy();
   const sitemapText = await sitemap.text();
-  for (const route of ["/terms", "/privacy", "/refund-policy", "/support"]) expect(sitemapText).toContain(route);
+  for (const route of ["/features", "/pricing", "/faq", "/request-access", "/terms", "/privacy", "/refund-policy", "/support"]) expect(sitemapText).toContain(route);
   for (const route of ["/dashboard", "/login", "/api/"]) expect(sitemapText).not.toContain(route);
 
   const capture = await page.request.post("/api/public/capture", { data: { stem: "should not be accepted" } });
@@ -169,14 +172,16 @@ test("every indexable page has unique metadata and all public links resolve", as
   }
 });
 
-test("marketing navigation stays sticky and preserves anchored headings", async ({ page, consoleErrors }) => {
+test("marketing navigation routes to dedicated pages and stays sticky", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  for (const name of ["Features", "FAQ"]) {
+  for (const [name, path, heading] of [["Features", "/features", "Tools that make each session count."], ["FAQ", "/faq", "Frequently asked questions."]]) {
     await page.getByRole("navigation", { name: "Marketing navigation" }).getByRole("link", { name }).click();
+    await expect(page).toHaveURL(path);
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Marketing navigation" }).getByRole("link", { name })).toHaveAttribute("aria-current", "page");
+    await page.mouse.wheel(0, 600);
     await expect.poll(() => page.locator("header").evaluate((header) => Math.round(header.getBoundingClientRect().top))).toBe(0);
-    const target = name === "FAQ" ? "#faq" : `#${name.toLowerCase()}`;
-    await expect.poll(() => page.locator(target).evaluate((section) => section.getBoundingClientRect().top)).toBeGreaterThanOrEqual(70);
   }
 });
 

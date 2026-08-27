@@ -44,7 +44,7 @@ export function AppShell({ children, user, demo = false }: { children: React.Rea
         </div>
       </aside>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">
-        <Logo className="text-base" /><div className="flex items-center gap-1"><ThemeToggle /><Link href="/#faq" aria-label="Help" className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><CircleHelp className="size-4" /></Link></div>
+        <Logo className="text-base" /><div className="flex items-center gap-1"><ThemeToggle /><Link href="/faq" aria-label="Help" className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><CircleHelp className="size-4" /></Link></div>
       </header>
       <main id="main-content" tabIndex={-1} className="pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none md:ml-[248px] md:pb-0">{demo && <div role="status" className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-center text-xs font-medium text-blue-950 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-100">Simulated demo data. Changes are temporary and remain only in this browser.</div>}{children}</main>
       <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-50 grid min-h-[76px] grid-cols-5 border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">

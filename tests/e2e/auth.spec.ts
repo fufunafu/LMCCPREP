@@ -1,15 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, signInDemo, test } from "./fixtures";
 
-test("public landing withholds unapproved catalog and disabled billing", async ({ page, consoleErrors }) => {
+test("public landing withholds unapproved catalog and links pricing as a separate page", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
   const navigation = page.getByRole("navigation", { name: "Marketing navigation" });
   await expect(navigation.getByRole("link", { name: "Subjects" })).toHaveCount(0);
-  await expect(navigation.getByRole("link", { name: "Pricing" })).toHaveCount(0);
+  await expect(navigation.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
   await expect(page.locator("#subjects")).toHaveCount(0);
-  await expect(page.getByText("$59", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("$349", { exact: true })).toHaveCount(0);
+  await expect(page.locator("#pricing")).toHaveCount(0);
+  expect((await page.request.get("/subjects")).status()).toBe(404);
+  await page.goto("/pricing");
+  await expect(page.locator("#pricing")).toHaveCount(1);
+  await page.goto("/faq");
   await page.locator("#faq summary").filter({ hasText: "What is included?" }).click();
   await expect(page.getByText(/Obstetrics and Gynecology is not included/)).toBeVisible();
 
