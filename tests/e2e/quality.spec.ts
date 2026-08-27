@@ -89,7 +89,8 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   expect(application).toMatchObject({ name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web" });
   expect(application?.offers).toEqual([
     { "@type": "Offer", priceCurrency: "CAD", price: 59, category: "per month", url: "https://montrealqbank.vercel.app/pricing" },
-    { "@type": "Offer", priceCurrency: "CAD", price: 349, category: "per year", url: "https://montrealqbank.vercel.app/pricing" },
+    { "@type": "Offer", priceCurrency: "CAD", price: 79, category: "per 3 months", url: "https://montrealqbank.vercel.app/pricing" },
+    { "@type": "Offer", priceCurrency: "CAD", price: 159, category: "per year", url: "https://montrealqbank.vercel.app/pricing" },
   ]);
   const faq = graph.find((item) => item["@type"] === "FAQPage");
   expect(faq?.mainEntity).toEqual(expect.arrayContaining([

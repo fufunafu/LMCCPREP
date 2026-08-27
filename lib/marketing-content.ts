@@ -58,7 +58,7 @@ export const extendedFaqGroups: readonly FaqGroup[] = [
   {
     title: "Billing",
     items: [
-      ["How much does it cost?", "Invited learners can choose monthly or annual access in Canadian dollars. Current prices are listed on the Pricing page; taxes and the final total are shown before payment."],
+      ["How much does it cost?", "Invited learners can choose monthly, three-month, or annual access in Canadian dollars. Current prices are listed on the Pricing page; taxes and the final total are shown before payment."],
       ["How do I cancel?", "Cancel any time from the Stripe customer portal in your account's Billing page. Renewal stops and access continues through the paid period."],
       ["Who processes payments?", "Billing is processed by Stripe. Montreal QBank never sees or stores your full card details."],
       ["What is your refund policy?", "Refund terms are published on the Refund policy page and are linked from every pricing surface."],

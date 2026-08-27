@@ -8,9 +8,9 @@ export type QuestionSummary = Pick<Question, "id" | "qid" | "subjectId" | "topic
 export type SessionMode = 'tutor' | 'timed'
 export type Session = { id: string; mode: SessionMode; questionIds: string[]; createdAt: string;
                    finishedAt?: string; secondsPerQuestion?: number; currentIndex?: number; attempted?: number; correct?: number; durationMs?: number }
-export type BillingPlanKey = "monthly" | "annual"
+export type BillingPlanKey = "monthly" | "quarterly" | "annual"
 export type BillingSubscriptionStatus = "incomplete" | "incomplete_expired" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "paused"
-export type BillingPlan = { key: BillingPlanKey; name: string; cadence: string; priceId?: string; amountCad?: number; formattedPrice?: string; trialDays?: number; configured: boolean }
+export type BillingPlan = { key: BillingPlanKey; name: string; cadence: string; months: number; priceId?: string; amountCad?: number; formattedPrice?: string; trialDays?: number; configured: boolean }
 export type BillingSummary = {
   mode: "demo" | "disabled" | "enabled" | "configuration_error"
   configured: boolean

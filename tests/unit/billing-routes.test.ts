@@ -28,9 +28,10 @@ vi.mock("@/lib/billing", () => ({
 vi.mock("@/lib/billing-core", () => ({
   automaticTaxEnabled: () => false,
   billingCheckoutMode: () => (mocks.configured ? "api" : undefined),
+  billingPlans: () => [{ key: "monthly" }, { key: "annual" }],
   billingServerConfigured: () => mocks.configured,
   billingTrialDays: () => undefined,
-  stripePaymentLinks: () => ({ monthly: undefined, annual: undefined }),
+  stripePaymentLinks: () => ({ monthly: undefined, quarterly: undefined, annual: undefined }),
   stripePortalLoginUrl: () => undefined,
 }));
 

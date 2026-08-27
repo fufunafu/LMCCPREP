@@ -13,8 +13,8 @@ import { BillingView } from "@/components/billing-view";
 import type { BillingPlan, BillingSummary } from "@/lib/types";
 
 const plans: BillingPlan[] = [
-  { key: "monthly", name: "Monthly", cadence: "per month", formattedPrice: "$20", amountCad: 20, configured: true },
-  { key: "annual", name: "Annual", cadence: "per year", formattedPrice: "$200", amountCad: 200, configured: true },
+  { key: "monthly", name: "Monthly", cadence: "per month", months: 1, formattedPrice: "$20", amountCad: 20, configured: true },
+  { key: "annual", name: "Annual", cadence: "per year", months: 12, formattedPrice: "$200", amountCad: 200, configured: true },
 ];
 
 function summary(overrides: Partial<BillingSummary> = {}): BillingSummary {

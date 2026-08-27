@@ -47,6 +47,7 @@ export function formatCad(amount: number) {
 
 export function billingPlans(env: BillingEnvironment = process.env): BillingPlan[] {
   const monthlyAmount = optionalCadAmount(env.NEXT_PUBLIC_BILLING_MONTHLY_CAD);
+  const quarterlyAmount = optionalCadAmount(env.NEXT_PUBLIC_BILLING_QUARTERLY_CAD);
   const annualAmount = optionalCadAmount(env.NEXT_PUBLIC_BILLING_ANNUAL_CAD);
   const trialDays = billingTrialDays(env);
   const plans: Array<Omit<BillingPlan, "configured">> = [
@@ -54,15 +55,28 @@ export function billingPlans(env: BillingEnvironment = process.env): BillingPlan
       key: "monthly",
       name: "Monthly",
       cadence: "per month",
+      months: 1,
       priceId: env.STRIPE_PRICE_MONTHLY?.trim() || undefined,
       amountCad: monthlyAmount,
       formattedPrice: monthlyAmount === undefined ? undefined : formatCad(monthlyAmount),
       trialDays,
     },
+    // Optional: only offered when a public price is configured.
+    ...(quarterlyAmount === undefined ? [] : [{
+      key: "quarterly" as const,
+      name: "3 months",
+      cadence: "per 3 months",
+      months: 3,
+      priceId: env.STRIPE_PRICE_QUARTERLY?.trim() || undefined,
+      amountCad: quarterlyAmount,
+      formattedPrice: formatCad(quarterlyAmount),
+      trialDays,
+    }]),
     {
       key: "annual",
       name: "Annual",
       cadence: "per year",
+      months: 12,
       priceId: env.STRIPE_PRICE_ANNUAL?.trim() || undefined,
       amountCad: annualAmount,
       formattedPrice: annualAmount === undefined ? undefined : formatCad(annualAmount),
@@ -97,6 +111,7 @@ function stripeHostedUrl(value: string | undefined, host: string, env: BillingEn
 export function stripePaymentLinks(env: BillingEnvironment = process.env) {
   return {
     monthly: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_MONTHLY, "buy.stripe.com", env),
+    quarterly: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_QUARTERLY, "buy.stripe.com", env),
     annual: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_ANNUAL, "buy.stripe.com", env),
   };
 }
@@ -111,6 +126,7 @@ export function publicBillingPlans(env: BillingEnvironment = process.env) {
     key: plan.key,
     name: plan.name,
     cadence: plan.cadence,
+    months: plan.months,
     amountCad: plan.amountCad,
     formattedPrice: plan.formattedPrice,
     trialDays: plan.trialDays,

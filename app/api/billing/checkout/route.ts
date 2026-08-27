@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { authenticatedBillingUser, checkoutPrice, trustedMutationOrigin } from "@/lib/billing";
-import { automaticTaxEnabled, billingCheckoutMode, billingTrialDays, stripePaymentLinks } from "@/lib/billing-core";
+import { automaticTaxEnabled, billingCheckoutMode, billingPlans, billingTrialDays, stripePaymentLinks } from "@/lib/billing-core";
 import { isDemoSession } from "@/lib/demo-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/server";
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json() as { plan?: BillingPlanKey };
-    if (body.plan !== "monthly" && body.plan !== "annual") {
+    if (!body.plan || !billingPlans().some((plan) => plan.key === body.plan)) {
       return NextResponse.json({ error: "Choose a valid billing plan." }, { status: 400 });
     }
 

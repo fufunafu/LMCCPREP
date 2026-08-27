@@ -83,7 +83,7 @@ export function BillingView({ plans, summary, checkout, notice }: { plans: Billi
 
       {!summary.required && <div role="status" className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">Billing enforcement is currently off. Existing invite access remains available while subscription setup is completed.</div>}
 
-      {summary.mode !== "demo" && canChoosePlan && <div className="grid gap-5 md:grid-cols-2">{plans.map((plan) => {
+      {summary.mode !== "demo" && canChoosePlan && <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{plans.map((plan) => {
         const features = [
           "Available rights-approved, reviewed questions",
           "Tutor and timed modes",
