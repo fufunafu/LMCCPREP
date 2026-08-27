@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { isDeepStrictEqual } from "node:util";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { completeRedundantSupportFields } from "../lib/question-review-corrections.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectDirectory = resolve(scriptDirectory, "..");
@@ -47,6 +48,9 @@ const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 const allowIncomplete = process.argv.includes("--allow-incomplete");
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const bankContent = { ...bank };
+delete bankContent.generated_at;
+const bankContentSha256 = sha256(JSON.stringify(bankContent));
 
 function normalizeCompact(value) {
   return String(value ?? "")
@@ -113,10 +117,14 @@ function replayBatches() {
       if (!current) continue;
       assert(current.content_fingerprint === update.expected_fingerprint, `Correction ${batch.batch_id} has a stale fingerprint for Q${update.qid}.`);
       assert(!deletions.has(update.qid), `Q${update.qid} is corrected after deletion.`);
-      const next = { ...current, ...(update.patch ?? {}) };
+      const normalizedUpdate = {
+        ...update,
+        patch: completeRedundantSupportFields(current, update.patch ?? {}),
+      };
+      const next = { ...current, ...normalizedUpdate.patch };
       next.content_fingerprint = contentFingerprint(next);
       byQid.set(update.qid, next);
-      updates.set(update.qid, { batch_id: batch.batch_id, update });
+      updates.set(update.qid, { batch_id: batch.batch_id, update: normalizedUpdate });
     }
     for (const deletion of batch.deletions ?? []) {
       const current = byQid.get(deletion.remove_qid);
@@ -248,6 +256,7 @@ for (const [name, artifact] of Object.entries(artifacts)) {
 }
 assert(report.input_sha256 === sha256(artifacts.question_review_snapshot.text), "Legacy input hash does not match the source snapshot.");
 assert(report.bank_sha256 === sha256(bankText), "Bank hash does not match report.");
+assert(report.bank_content_sha256 === bankContentSha256, "Stable bank content hash does not match report.");
 
 const result = {
   passed: failures.length === 0,
@@ -263,6 +272,7 @@ const result = {
   unresolved_possible_duplicate_pairs: unresolvedPairs.length,
   likely_or_exact_unresolved_pairs: likelyOrExactPairs.length,
   bank_sha256: sha256(bankText),
+  bank_content_sha256: bankContentSha256,
 };
 console.log(JSON.stringify(result, null, 2));
 if (failures.length) process.exitCode = 1;

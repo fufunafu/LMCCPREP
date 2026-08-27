@@ -6,13 +6,13 @@ Montreal QBank is a private, mobile-first question bank for Canadian medical lea
 
 The full LMCC question review is complete for the authoritative 4,972-question snapshot. The verified output contains 4,036 nonduplicate survivors after 1,397 corrections and 936 confirmed duplicate removals. Do not repeat the general LMCC question review unless the source snapshot changes, the strict verifier fails, or a new review is explicitly requested.
 
-See [`audit-output/LMCC_QUESTION_BANK_AUDIT_COMPLETE.md`](audit-output/LMCC_QUESTION_BANK_AUDIT_COMPLETE.md) for the durable completion record, final checksums, artifacts, and rerun conditions.
+See [`QUESTION_BANK_AUDIT_COMPLETE.md`](QUESTION_BANK_AUDIT_COMPLETE.md) for the tracked completion record, final checksums, artifacts, and rerun conditions. Production correction and deduplication are separate controlled operations documented in [`QUESTION_BANK_RELEASE_RUNBOOK.md`](QUESTION_BANK_RELEASE_RUNBOOK.md).
 
 ## Local setup
 
 1. Install dependencies with `npm install`.
 2. Copy `.env.example` to `.env.local` and provide the public Supabase project values.
-3. For a local Supabase stack, run `supabase start` and `supabase db reset`. To use an existing hosted project, run `supabase link --project-ref <project-ref>` and then `supabase db push`.
+3. For a local Supabase stack, run `supabase start` and `supabase db reset`. Do not push migrations to a hosted project as part of local setup. Production migration approval and verification are documented separately.
 4. Start the app with `npm run dev`.
 
 The **Use demo login** button opens the demo in one click. The equivalent credentials are `demo@lmccprep.ca` and `practice` for direct form testing. Demo requests use mock data and never call or write to Supabase. Practice answers, flags, notes, and the current demo question are saved only in that browser so a refresh can restore the session. Signing out or resetting progress clears that browser-only state.
@@ -41,7 +41,7 @@ Do not expose the service-role key through a `NEXT_PUBLIC_` variable. Leave all 
 
 Before real accounts are used:
 
-1. Apply every tracked migration in `supabase/migrations` with `supabase db push`.
+1. Apply the reviewed migration set needed by the target environment. For Production, follow the release runbook and do not automatically push candidate migrations that have not received release-owner approval.
 2. In Supabase Authentication URL settings, set the production Site URL.
 3. Add `https://lmcc-prep.vercel.app/auth/callback` as an allowed redirect URL. Add the matching localhost callback while testing locally.
 4. Confirm that email invitations and password-recovery messages point to `/auth/callback`.
@@ -112,6 +112,8 @@ Verify immediately that an entitled account enters the app and an unsubscribed a
 npm run lint
 npm run typecheck
 npm run test:unit
+npm run content:bank:verify
+npm run test:migration:dedup
 npm run test:billing-e2e
 npm run test:billing-rollback
 npm run build

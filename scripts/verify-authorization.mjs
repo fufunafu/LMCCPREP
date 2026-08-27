@@ -60,6 +60,11 @@ async function verifyPublishedPublicCounts(publicCounts) {
     assert.ok(!published.has(match[1]), `The published catalog repeated subject ${match[1]}`);
     published.set(match[1], Number(match[2]));
   }
+  const approvedTotal = publicCounts.reduce((sum, subject) => sum + subject.question_count, 0);
+  if (approvedTotal === 0) {
+    assert.equal(published.size, 0, "The published catalog exposed a discipline section without approved content");
+    return;
+  }
   assert.equal(published.size, publicCounts.length, "The published catalog did not expose every approved discipline count");
   for (const subject of publicCounts) {
     assert.equal(published.get(subject.id), subject.question_count, `${subject.name} published count does not match the approved production aggregate`);

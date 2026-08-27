@@ -87,10 +87,7 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   expect(graph.map((item) => item["@type"])).toEqual(["Organization", "WebSite", "SoftwareApplication", "FAQPage"]);
   const application = graph.find((item) => item["@type"] === "SoftwareApplication");
   expect(application).toMatchObject({ name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web" });
-  expect(application?.offers).toEqual(expect.arrayContaining([
-    expect.objectContaining({ priceCurrency: "CAD", price: 59 }),
-    expect.objectContaining({ priceCurrency: "CAD", price: 349 }),
-  ]));
+  expect(application?.offers).toEqual([]);
   const faq = graph.find((item) => item["@type"] === "FAQPage");
   expect(faq?.mainEntity).toEqual(expect.arrayContaining([
     expect.objectContaining({ "@type": "Question", acceptedAnswer: expect.objectContaining({ "@type": "Answer" }) }),
@@ -175,7 +172,7 @@ test("every indexable page has unique metadata and all public links resolve", as
 test("marketing navigation stays sticky and preserves anchored headings", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  for (const name of ["Features", "Subjects", "Pricing", "FAQ"]) {
+  for (const name of ["Features", "FAQ"]) {
     await page.getByRole("navigation", { name: "Marketing navigation" }).getByRole("link", { name }).click();
     await expect.poll(() => page.locator("header").evaluate((header) => Math.round(header.getBoundingClientRect().top))).toBe(0);
     const target = name === "FAQ" ? "#faq" : `#${name.toLowerCase()}`;
@@ -183,21 +180,10 @@ test("marketing navigation stays sticky and preserves anchored headings", async 
   }
 });
 
-test("public counts are identical before and during demo, and private landmarks expose state", async ({ page, consoleErrors }) => {
+test("unapproved public catalog stays withheld during demo, and private landmarks expose state", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  const subjectCards = page.locator("#subjects [data-subject-id][data-question-count]");
-  await expect(subjectCards).toHaveCount(5);
-  const anonymousCounts = await subjectCards.evaluateAll((cards) => cards.map((card) => ({
-    id: card.getAttribute("data-subject-id"),
-    count: Number(card.getAttribute("data-question-count")),
-    renderedCount: Number(card.querySelector("h3 + p")?.textContent),
-  })));
-  for (const subject of anonymousCounts) {
-    expect(subject.id).toBeTruthy();
-    expect(subject.count).toBe(subject.renderedCount);
-    expect(subject.count).toBeGreaterThanOrEqual(0);
-  }
+  await expect(page.locator("#subjects")).toHaveCount(0);
   await signInDemo(page);
   await expect(page.getByRole("status").filter({ hasText: "Simulated demo data" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Daily accuracy for the last 28 calendar days" })).toBeAttached();
@@ -207,12 +193,7 @@ test("public counts are identical before and during demo, and private landmarks 
   await page.goto("/session/demo?mode=tutor");
   await expect(page.locator("main")).toHaveCount(1);
   await page.goto("/");
-  const demoCounts = await page.locator("#subjects [data-subject-id][data-question-count]").evaluateAll((cards) => cards.map((card) => ({
-    id: card.getAttribute("data-subject-id"),
-    count: Number(card.getAttribute("data-question-count")),
-    renderedCount: Number(card.querySelector("h3 + p")?.textContent),
-  })));
-  expect(demoCounts).toEqual(anonymousCounts);
+  await expect(page.locator("#subjects")).toHaveCount(0);
 });
 
 test("registered service worker serves the offline fallback", async ({ page, context }) => {

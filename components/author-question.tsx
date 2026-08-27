@@ -54,7 +54,7 @@ export function AuthorQuestion({ subjects }: { subjects: Subject[] }) {
         <Card><CardHeader><CardTitle className="text-base">Category</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2"><Label htmlFor="subject">Subject</Label><select id="subject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
           <div className="space-y-2"><Label htmlFor="topic">Topic</Label><Input id="topic" value={topicName} onChange={(e) => setTopicName(e.target.value)} placeholder="e.g. Preeclampsia" /></div>
-          <div className="space-y-2 sm:col-span-2"><Label htmlFor="tags">Search tags</Label><Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. hypertension, pregnancy, emergency management" /><p className="text-xs text-muted-foreground">Separate tags with commas. Subject, topic, and the correct answer are added automatically.</p></div>
+          <div className="space-y-2 sm:col-span-2"><Label htmlFor="tags">Search tags</Label><Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. hypertension, pregnancy, emergency management" /><p className="text-xs text-muted-foreground">Separate tags with commas. Subject and topic are added automatically. Do not include the correct answer text.</p></div>
         </CardContent></Card>
 
         <Card><CardHeader><CardTitle className="text-base">Question</CardTitle></CardHeader><CardContent className="space-y-4">

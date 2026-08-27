@@ -51,6 +51,23 @@ test("timed mode records an answer and advances without showing feedback", async
   await expect(page.getByText("Q 1 / 20")).toBeVisible();
 });
 
+test("keeps the default explanation compact on a phone", async ({ page, consoleErrors }) => {
+  void consoleErrors;
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto("/session/demo?mode=tutor");
+  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("button", { name: "Submit answer" }).click();
+
+  const explanation = page.getByRole("region", { name: "Answer explanation" });
+  const collapsedHeight = await explanation.evaluate((element) => element.getBoundingClientRect().height);
+  expect(collapsedHeight).toBeLessThan(667 / 2);
+  await expect(page.getByText("Standing reduces venous return and often makes an innocent Still murmur quieter.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "More detail" }).click();
+  await expect(page.getByText("Standing reduces venous return and often makes an innocent Still murmur quieter.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show less" })).toHaveAttribute("aria-expanded", "true");
+});
+
 test("opens notes, toggles a flag, and reaches session review", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/session/demo?mode=tutor");

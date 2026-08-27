@@ -101,7 +101,7 @@ const snapshot = {
 };
 
 await mkdir(dirname(outputPath), { recursive: true });
-await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 console.log(JSON.stringify({
   output: outputPath,
   question_count: snapshot.question_count,

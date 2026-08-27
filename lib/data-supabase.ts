@@ -1,8 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
-import { createClient as createPublicClient } from "@supabase/supabase-js";
 import { createClient, currentUserId } from "@/lib/supabase/server";
+import { fetchApprovedPublicSubjects } from "@/lib/public-subjects";
 import { torontoDateKey } from "@/lib/utils";
 import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats } from "@/lib/types";
 
@@ -72,15 +71,12 @@ export async function getSubjects(): Promise<Subject[]> {
   return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
 }
 
-export const getPublicSubjects = unstable_cache(async (): Promise<Subject[]> => {
+export async function getPublicSubjects(): Promise<Subject[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   if (!url || !key) throw new Error("Public catalog configuration is unavailable.");
-  const supabase = createPublicClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await supabase.rpc("get_approved_public_subject_counts");
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
-}, ["public-subject-counts"], { revalidate: 3600, tags: ["public-subject-counts"] });
+  return fetchApprovedPublicSubjects(url, key);
+}
 
 export async function getTopics(subjectId?: string): Promise<Topic[]> {
   const supabase = await createClient();

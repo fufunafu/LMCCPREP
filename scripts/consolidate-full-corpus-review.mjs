@@ -150,5 +150,5 @@ const artifact = {
   missing_model_batches: missingBatches,
   reviews,
 };
-await writeFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
+await writeFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 console.log(JSON.stringify({ output_path: outputPath, ...artifact, reviews: undefined }, null, 2));

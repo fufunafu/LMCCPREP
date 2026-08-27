@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import nextEnvironment from "@next/env";
+import { completeRedundantSupportFields } from "../lib/question-review-corrections.mjs";
 
 const { loadEnvConfig } = nextEnvironment;
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -15,10 +16,13 @@ loadEnvConfig(projectDirectory);
 
 const batchArgument = process.argv.find((argument) => argument.endsWith(".json"));
 if (!batchArgument) {
-  throw new Error("Usage: node scripts/apply-question-review-corrections.mjs <batch.json> --project <ref> [--apply]");
+  throw new Error("Usage: node scripts/apply-question-review-corrections.mjs <batch.json> --project <ref> [--apply --confirm APPLY_QUESTION_CORRECTIONS] [--skip-deletions]");
 }
 const batchPath = resolve(process.cwd(), batchArgument);
 const applyChanges = process.argv.includes("--apply");
+const skipDeletions = process.argv.includes("--skip-deletions");
+const confirmationFlagIndex = process.argv.indexOf("--confirm");
+const applyConfirmation = confirmationFlagIndex >= 0 ? process.argv[confirmationFlagIndex + 1] : undefined;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 if (!supabaseUrl || !serviceRoleKey) {
@@ -41,6 +45,10 @@ if (!requestedProject || requestedProject.startsWith("--")) {
 }
 if (requestedProject !== configuredProject) {
   console.error(`Refusing to run: --project ${requestedProject} does not match the configured Supabase project "${configuredProject ?? "unknown"}".`);
+  process.exit(1);
+}
+if (applyChanges && applyConfirmation !== "APPLY_QUESTION_CORRECTIONS") {
+  console.error("Refusing to write: pass --confirm APPLY_QUESTION_CORRECTIONS with --apply.");
   process.exit(1);
 }
 const apiHeaders = {
@@ -94,41 +102,6 @@ function parseAnswerKeyOption(answerKey) {
   if (typeof answerKey !== "string") return null;
   const match = answerKey.match(/correct answer is\s*(?:\*{1,2})?\s*option\s*(\d+)/iu);
   return match ? Number(match[1]) - 1 : null;
-}
-
-function completeRedundantSupportFields(snapshotQuestion, patch) {
-  const rewritesQuestionContent = ["stem", "options", "answer_index", "explanation"]
-    .some((field) => Object.hasOwn(patch, field));
-  if (!rewritesQuestionContent) return patch;
-
-  const mergedQuestion = { ...snapshotQuestion, ...patch };
-  const options = Array.isArray(mergedQuestion.options) ? mergedQuestion.options : [];
-  const answerIndex = mergedQuestion.answer_index;
-  const answerText = Number.isInteger(answerIndex) ? options[answerIndex] : null;
-  const paragraphs = Array.isArray(mergedQuestion.explanation)
-    ? mergedQuestion.explanation.map((paragraph) => paragraph?.trim()).filter(Boolean)
-    : [];
-  if (!answerText || paragraphs.length === 0) return patch;
-
-  const supportParagraphs = paragraphs.length > 1 ? paragraphs.slice(1) : paragraphs;
-  const primarySupport = supportParagraphs[0];
-  const distractorSupport = supportParagraphs.at(-1);
-  const completedPatch = { ...patch };
-  if (!Object.hasOwn(completedPatch, "answer_key")) {
-    completedPatch.answer_key = `The correct answer is Option ${answerIndex + 1}: ${answerText}. ${primarySupport}`;
-  }
-  if (!Object.hasOwn(completedPatch, "key_points")) {
-    completedPatch.key_points = supportParagraphs.join("\n\n");
-  }
-  if (!Object.hasOwn(completedPatch, "option_explanations")) {
-    completedPatch.option_explanations = Object.fromEntries(options.map((option, index) => [
-      String(index),
-      index === answerIndex
-        ? `Correct. ${primarySupport}`
-        : `Incorrect. The best answer is ${answerText}. ${distractorSupport}`,
-    ]));
-  }
-  return completedPatch;
 }
 
 function validateQuestion(question) {
@@ -236,6 +209,21 @@ async function patchQuestion(qid, patch) {
   });
 }
 
+async function patchRows(table, filter, patch) {
+  return api(`${table}?${filter}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Prefer: "return=representation" },
+    body: JSON.stringify(patch),
+  });
+}
+
+async function deleteRows(table, filter) {
+  return api(`${table}?${filter}`, {
+    method: "DELETE",
+    headers: { Prefer: "return=representation" },
+  });
+}
+
 async function insertIgnore(table, row, conflictColumns) {
   return api(`${table}?on_conflict=${encodeURIComponent(conflictColumns)}`, {
     method: "POST",
@@ -254,14 +242,84 @@ async function deleteQuestion(qid) {
   });
 }
 
+async function migrateQuestionDependencies(removeQid, keepQid) {
+  await patchRows("attempts", `qid=eq.${removeQid}`, { qid: keepQid });
+  await patchRows("question_edits", `qid=eq.${removeQid}`, { qid: keepQid });
+
+  const flags = await fetchRows("flags", `select=user_id,qid,created_at&qid=eq.${removeQid}`);
+  for (const flag of flags) {
+    const existing = await fetchRows(
+      "flags",
+      `select=user_id,qid,created_at&user_id=eq.${flag.user_id}&qid=eq.${keepQid}`,
+    );
+    const createdAt = !existing.length || new Date(flag.created_at) < new Date(existing[0].created_at)
+      ? flag.created_at
+      : existing[0].created_at;
+    await api("flags?on_conflict=user_id,qid", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({ ...flag, qid: keepQid, created_at: createdAt }),
+    });
+  }
+  if (flags.length) await deleteRows("flags", `qid=eq.${removeQid}`);
+
+  const notes = await fetchRows("notes", `select=user_id,qid,body,updated_at&qid=eq.${removeQid}`);
+  for (const note of notes) {
+    const existing = await fetchRows(
+      "notes",
+      `select=user_id,qid,body,updated_at&user_id=eq.${note.user_id}&qid=eq.${keepQid}`,
+    );
+    const retained = !existing.length || new Date(note.updated_at) > new Date(existing[0].updated_at)
+      ? { ...note, qid: keepQid }
+      : existing[0];
+    await api("notes?on_conflict=user_id,qid", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(retained),
+    });
+  }
+  if (notes.length) await deleteRows("notes", `qid=eq.${removeQid}`);
+
+  const sessions = await fetchRows(
+    "sessions",
+    `select=id,question_ids,current_index&question_ids=cs.%7B${removeQid}%7D`,
+  );
+  for (const session of sessions) {
+    const currentQid = session.question_ids[session.current_index];
+    const mappedCurrentQid = currentQid === removeQid ? keepQid : currentQid;
+    const mapped = session.question_ids.map((qid) => qid === removeQid ? keepQid : qid);
+    const questionIds = mapped.filter((qid, position) => mapped.indexOf(qid) === position);
+    const mappedCurrentIndex = questionIds.indexOf(mappedCurrentQid);
+    const currentIndex = mappedCurrentIndex >= 0
+      ? mappedCurrentIndex
+      : Math.max(0, Math.min(session.current_index, questionIds.length - 1));
+    await patchRows("sessions", `id=eq.${session.id}`, {
+      question_ids: questionIds,
+      current_index: currentIndex,
+    });
+  }
+}
+
 const [snapshot, batch] = await Promise.all([
   readFile(snapshotPath, "utf8").then(JSON.parse),
   readFile(batchPath, "utf8").then(JSON.parse),
 ]);
 const updates = Array.isArray(batch.updates) ? batch.updates : [];
-const deletions = Array.isArray(batch.deletions) ? batch.deletions : [];
+const batchDeletions = Array.isArray(batch.deletions) ? batch.deletions : [];
+const deletions = skipDeletions ? [] : batchDeletions;
 if (!batch.batch_id || (!updates.length && !deletions.length)) {
   throw new Error("The correction batch needs a batch_id and at least one update or deletion.");
+}
+if (applyChanges && deletions.length > 100) {
+  throw new Error(
+    `Refusing ${deletions.length} non-atomic REST deletions. Apply updates with --skip-deletions and use the reviewed SQL migration for the duplicate removals.`,
+  );
 }
 const snapshotById = new Map(snapshot.questions.map((question) => [question.qid, question]));
 const includeTags = snapshot.questions.some((question) => Object.hasOwn(question, "tags"));
@@ -312,6 +370,20 @@ for (const deletion of deletions) {
     preconditionFailures.push(`Duplicate candidate ${deletion.remove_qid} no longer matches the batch fingerprint.`);
   }
 }
+const deletionTargetByRemoved = new Map(deletions.map((deletion) => [deletion.remove_qid, deletion.keep_qid]));
+for (const deletion of deletions) {
+  const visited = new Set([deletion.remove_qid]);
+  let survivor = deletion.keep_qid;
+  while (deletionTargetByRemoved.has(survivor)) {
+    if (visited.has(survivor)) {
+      preconditionFailures.push(`Duplicate mapping cycle reaches question ${survivor}.`);
+      break;
+    }
+    visited.add(survivor);
+    survivor = deletionTargetByRemoved.get(survivor);
+  }
+  deletion.keep_qid = survivor;
+}
 if (preconditionFailures.length) {
   throw new Error(`Batch preconditions failed:\n${preconditionFailures.join("\n")}`);
 }
@@ -322,11 +394,24 @@ const qids = [...new Set([
 ])];
 const productionQuestions = await fetchQuestions(qids, includeTags);
 const productionById = new Map(productionQuestions.map((question) => [question.qid, question]));
+const updateByQid = new Map(updates.map((update) => [update.qid, update]));
+const deletionQids = new Set(deletions.map((deletion) => deletion.remove_qid));
+const alreadyAppliedUpdateQids = new Set();
 for (const qid of qids) {
   const snapshotQuestion = snapshotById.get(qid);
   const productionQuestion = productionById.get(qid);
   if (!productionQuestion) preconditionFailures.push(`Question ${qid} is missing from production.`);
-  else if (reviewHash(snapshotQuestion, includeTags) !== reviewHash(productionQuestion, includeTags)) {
+  else if (updateByQid.has(qid)) {
+    const update = updateByQid.get(qid);
+    const beforeHash = reviewHash(snapshotQuestion, includeTags);
+    const afterHash = reviewHash({ ...snapshotQuestion, ...update.patch }, includeTags);
+    const productionHash = reviewHash(productionQuestion, includeTags);
+    if (productionHash === afterHash) alreadyAppliedUpdateQids.add(qid);
+    else if (productionHash !== beforeHash) {
+      preconditionFailures.push(`Question ${qid} matches neither the reviewed before state nor the reviewed correction.`);
+    }
+  } else if (deletionQids.has(qid)
+    && reviewHash(snapshotQuestion, includeTags) !== reviewHash(productionQuestion, includeTags)) {
     preconditionFailures.push(`Question ${qid} changed after the snapshot was exported.`);
   }
 }
@@ -335,9 +420,6 @@ const dependencyReport = [];
 for (const deletion of deletions) {
   const counts = await dependencyCounts(deletion.remove_qid);
   dependencyReport.push({ qid: deletion.remove_qid, counts });
-  if (Object.values(counts).some((count) => count > 0)) {
-    preconditionFailures.push(`Question ${deletion.remove_qid} has user-data or session dependencies.`);
-  }
 }
 if (preconditionFailures.length) {
   throw new Error(`Production preconditions failed:\n${preconditionFailures.join("\n")}`);
@@ -378,7 +460,7 @@ await writeFile(backupPath, `${JSON.stringify({
   questions: productionQuestions,
   hierarchy: hierarchyBackup,
   dependencies: dependencyReport,
-}, null, 2)}\n`, "utf8");
+}, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 
 if (applyChanges) {
   for (const topic of batch.ensure_topics ?? []) await upsertTopic(topic);
@@ -387,12 +469,17 @@ const changes = [];
 for (const update of updates) {
   const before = productionById.get(update.qid);
   let after = { ...before, ...update.patch };
-  if (applyChanges) {
+  const alreadyApplied = alreadyAppliedUpdateQids.has(update.qid);
+  if (applyChanges && !alreadyApplied) {
     const updated = await patchQuestion(update.qid, update.patch);
     if (!updated || updated.length !== 1) {
       throw new Error(`Question ${update.qid} update returned ${updated?.length ?? 0} rows.`);
     }
     [after] = updated;
+  }
+  const expectedAfterHash = reviewHash({ ...snapshotById.get(update.qid), ...update.patch }, includeTags);
+  if (reviewHash(after, includeTags) !== expectedAfterHash) {
+    throw new Error(`Question ${update.qid} does not match its reviewed correction after apply.`);
   }
   changes.push({
     qid: update.qid,
@@ -400,6 +487,7 @@ for (const update of updates) {
     fields: Object.keys(update.patch).sort(),
     before_hash: reviewHash(before, includeTags),
     after_hash: reviewHash(after, includeTags),
+    already_applied: alreadyApplied,
   });
 }
 const deletionResults = [];
@@ -408,6 +496,7 @@ for (const deletion of deletions) {
   const topicLink = hierarchyBackup.topics.find(({ qid }) => qid === deletion.remove_qid);
   const imageLinks = hierarchyBackup.images.filter(({ qid }) => qid === deletion.remove_qid);
   if (applyChanges) {
+    await migrateQuestionDependencies(deletion.remove_qid, deletion.keep_qid);
     for (const link of categoryLinks) {
       await insertIgnore(
         "qbank_question_categories",
@@ -445,15 +534,18 @@ await writeFile(reportPath, `${JSON.stringify({
   generated_at: new Date().toISOString(),
   mode: applyChanges ? "apply" : "dry_run",
   batch_id: batch.batch_id,
+  skipped_deletion_count: skipDeletions ? batchDeletions.length : 0,
   backup_path: backupPath,
   changes,
   deletions: deletionResults,
-}, null, 2)}\n`, "utf8");
+}, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 console.log(JSON.stringify({
   mode: applyChanges ? "apply" : "dry_run",
   batch_id: batch.batch_id,
   update_count: changes.length,
+  already_applied_update_count: alreadyAppliedUpdateQids.size,
   deletion_count: deletionResults.length,
+  skipped_deletion_count: skipDeletions ? batchDeletions.length : 0,
   backup: backupPath,
   report: reportPath,
 }, null, 2));

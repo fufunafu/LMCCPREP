@@ -7,6 +7,9 @@ const abuseSql = readFileSync(new URL("../../supabase/migrations/0016_access_req
 const accessCompatibilitySql = readFileSync(new URL("../../supabase/migrations/0017_restore_private_content_access.sql", import.meta.url), "utf8");
 const paidContentGateSql = readFileSync(new URL("../../supabase/migrations/0019_enforce_paid_content_approval.sql", import.meta.url), "utf8");
 const atomicApprovalsSql = readFileSync(new URL("../../supabase/migrations/0020_atomic_content_approval_workflow.sql", import.meta.url), "utf8");
+const reviewedDeduplicationSql = readFileSync(new URL("../../supabase/migrations/0021_remove_reviewed_duplicate_questions.sql", import.meta.url), "utf8");
+const correctionImporter = readFileSync(new URL("../../scripts/apply-question-review-corrections.mjs", import.meta.url), "utf8");
+const authoringView = readFileSync(new URL("../../components/author-question.tsx", import.meta.url), "utf8");
 
 describe("website remediation migration contracts", () => {
   it("removes normalized correct-answer text on backfill and every relevant write", () => {
@@ -58,5 +61,35 @@ describe("website remediation migration contracts", () => {
     expect(atomicApprovalsSql).toContain("an eligible question has an image without approved rights");
     expect(atomicApprovalsSql).toContain("grant execute on function apply_content_approval_batch_v1");
     expect(atomicApprovalsSql).toContain("to service_role");
+  });
+
+  it("moves reviewed duplicates only to terminal survivors and preserves active sessions", () => {
+    const mappingBlock = reviewedDeduplicationSql.match(
+      /insert into reviewed_duplicate_question_map \(remove_qid, keep_qid\) values([\s\S]*?);/,
+    );
+    expect(mappingBlock).not.toBeNull();
+    const mappings = [...(mappingBlock?.[1] ?? "").matchAll(/\((\d+), (\d+)\)/g)]
+      .map((match) => ({ removeQid: Number(match[1]), keepQid: Number(match[2]) }));
+    const removedQids = new Set(mappings.map(({ removeQid }) => removeQid));
+
+    expect(mappings).toHaveLength(936);
+    expect(mappings.every(({ keepQid }) => !removedQids.has(keepQid))).toBe(true);
+    expect(reviewedDeduplicationSql).toMatch(/^begin;$/m);
+    expect(reviewedDeduplicationSql).toMatch(/^commit;$/m);
+    expect(reviewedDeduplicationSql).toContain("reviewed_duplicate_session_state");
+    expect(reviewedDeduplicationSql).toContain("array_position(s.question_ids, state.current_qid) - 1");
+    expect(reviewedDeduplicationSql).toContain("A session still references a removed duplicate");
+    expect(reviewedDeduplicationSql).toContain("approved_duplicate_image_deletions");
+    expect(reviewedDeduplicationSql).toContain("lacks explicit deletion approval");
+  });
+
+  it("requires an explicit confirmation phrase before correction writes", () => {
+    expect(correctionImporter).toContain('applyConfirmation !== "APPLY_QUESTION_CORRECTIONS"');
+    expect(correctionImporter).toContain("Refusing to write");
+  });
+
+  it("does not tell authors that answer text is added to learner-visible tags", () => {
+    expect(authoringView).toContain("Do not include the correct answer text.");
+    expect(authoringView).not.toContain("the correct answer are added automatically");
   });
 });

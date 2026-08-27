@@ -33,6 +33,8 @@ Migration `0019_enforce_paid_content_approval.sql` was explicitly approved and a
 - Rights, editorial status, references, reviewer role, review date, and documented exceptions are modeled and shown after answer submission.
 - `CONTENT_GOVERNANCE.md` defines the item-level rights evidence, separate image review, transformation history, Canadian editorial standard, re-review cadence, and release record required before any item becomes paid-distributable.
 - Migration `0020_atomic_content_approval_workflow.sql`, the `content:approvals` command, and a private-manifest template provide a dry-run-first approval workflow. The database function is service-role-only, refuses changes while billing is active, validates complete rights and editorial metadata, applies at most 250 records atomically, and records the manifest hash in an approval ledger. The migration is tracked and passed an isolated PostgreSQL integration test but is not yet applied to Production.
+- The fixed 4,972-question source snapshot has a completed review artifact. It applies 1,397 reviewed corrections and resolves 936 confirmed duplicates to 4,036 terminal survivors, with 224 ambiguous survivors explicitly flagged. Migration `0021_remove_reviewed_duplicate_questions.sql` reproducibly maps all duplicate dependencies to terminal survivors, but neither the correction batches nor migration `0021` has been applied to Production.
+- `QUESTION_BANK_RELEASE_RUNBOOK.md` records the exact dry-run, approval, correction, migration, verification, and database-restore sequence. Correction writes require both the matching project reference and the confirmation phrase `APPLY_QUESTION_CORRECTIONS`; local artifacts are created with owner-only permissions.
 - The capture route fails closed by default, limits requests to 128 KiB, and avoids logging database messages or payloads.
 - Access requests use a honeypot, normalized-email deduplication, and a one-request-per-network-fingerprint-per-hour limit. Public database inserts are revoked.
 - CSP, HSTS, frame denial, MIME protection, referrer policy, permissions policy, `robots.txt`, `sitemap.xml`, canonical metadata, route metadata, and structured data are implemented.
@@ -42,15 +44,15 @@ Migration `0019_enforce_paid_content_approval.sql` was explicitly approved and a
 - Analytics charts and the activity heatmap have screen-reader tables, while the decorative chart surfaces are removed from the accessibility tree.
 - The free no-card demo is prominent in the hero and pricing areas. Annual dollar and percentage savings, renewal, cancellation, tax, and refund copy are adjacent to pricing.
 - Public sign-in and Billing surfaces no longer claim a larger or complete corpus. The purchase surface names the five available disciplines, discloses that Obstetrics and Gynecology is absent, and promises only rights-approved, reviewed questions.
-- Draft legal pages disclose their draft status, version, operator, account deletion path, processors, cancellation behavior, and remaining counsel requirement.
+- Current private-rollout policy pages publish an effective date, operator, account deletion path, processors, and accurate no-purchase behavior. Counsel approval remains required before replacing them with paid-launch terms.
 
 ## Verification evidence
 
 - `npm run lint`: passed
 - `npm run typecheck`: passed
-- `npm run test:unit`: 89 passed
+- `npm run test:unit`: 106 passed
 - `npm run build`: passed
-- Standard browser suite: 22 passed and 2 intentionally skipped live-Supabase checks
+- Standard browser suite: 23 passed and 2 intentionally skipped live-Supabase checks
 - Canonical Production browser suite after promotion: 21 passed, one mobile navigation check missed its five-second wait, and 2 intentionally skipped live-Supabase checks. The single mobile check passed on immediate isolated rerun in 2.2 seconds. The direct browser inspection and authorization verifier independently assert the expected zero approved total.
 - Billing browser suite: 5 passed
 - Billing rollback browser gate: 1 passed
@@ -59,6 +61,8 @@ Migration `0019_enforce_paid_content_approval.sql` was explicitly approved and a
 - The verifier requires every published five-discipline value to equal the approved production RPC. Its post-promotion Production run passed, along with 4,972 answer-safe tag rows, anonymous isolation, service-only RPC restrictions, cross-user study-data isolation, and cross-user billing-data isolation. Temporary test users and records were removed afterward.
 - Production schema probes confirmed the provenance and access-request columns
 - Migration `0020` passed an isolated PostgreSQL 17 integration test covering metadata constraints, stale-target row counts, full rollback after an invalid image target, direct rejection of eligibility with an unapproved attached image, successful question and image approval, audit-ledger insertion, anonymous and authenticated execution denial, service-role execution, and billing lockout. The linked CLI dry run could not authenticate because no current database password or Supabase access token is available in the workspace, so Production remains at migration `0019`.
+- The strict full-bank verifier passes 4,972 source reviews, 1,397 corrections, 936 confirmed duplicate removals, 4,036 unique survivors, zero structural failures, and zero unresolved likely or exact semantic duplicates. Its reproducible content identity, excluding the generation timestamp, is `a2c57cab96ec1000c2e118cb04931435d97c233e8ca9f2ff4a450012e7a0366f`.
+- Migration `0021` passed an isolated PostgreSQL 17 integration test for all 936 mappings. The test proves terminal-survivor normalization, transaction rollback on an unauthorized image deletion, attempt and edit-report migration, deterministic flag and note merging, active-session position preservation, taxonomy retention, and deletion of only the nine image records with explicit reviewed approval. Production was not mutated.
 - A local-only, mode-0600 provenance inventory generated after migration `0019` contains all 4,972 production questions and 89 clinical images without question text, answer text, or secret values. It reports `schema_complete: true`, 4,972 rights-unverified and editorially pending questions, plus 89 rights-unverified images. The schema includes structured author, license or permission, evidence, transformation-history, and provenance-review fields for questions and images.
 - Production aggregate audit: 4,972 questions total, 4,972 rights-unverified, 0 rights-approved, 0 editorially reviewed, 3,826 with reference text, and 0 with a reference exception
 - Maskable-icon render check: 512 by 512, 0 non-opaque pixels, foreground bounds 121 through 390 on both axes, maximum foreground radius 134.77 px inside the 204.8 px safe radius
@@ -104,6 +108,7 @@ Migration `0019_enforce_paid_content_approval.sql` was explicitly approved and a
 6. A human screen-reader smoke test still requires a verification record. The keyboard, 200 percent equivalent reflow, and maskable-icon safe-zone checks are complete.
 7. Matching live Stripe resources, staged enforcement, rollback rehearsal, and 48-hour monitoring remain tracked in the billing launch documents. The complete test-mode payment lifecycle passes.
 8. Migration `0020` must be reviewed and applied before the controlled content-approval importer can operate against Production.
+9. The reviewed corrections and migration `0021` must be committed, independently reviewed, applied through the documented database process, and verified against the 4,036-question content identity `a2c57cab96ec1000c2e118cb04931435d97c233e8ca9f2ff4a450012e7a0366f` before they can replace the current 4,972-row Production corpus.
 
 ## Release and rollback procedure
 

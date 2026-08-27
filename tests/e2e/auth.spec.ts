@@ -1,21 +1,27 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, signInDemo, test } from "./fixtures";
 
-test("public landing shows all five available discipline totals", async ({ page, consoleErrors }) => {
+test("public landing withholds unapproved catalog and disabled billing", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  const subjects = page.getByRole("region", { name: /questions across five available disciplines/i });
-  await expect(subjects.getByRole("heading", { level: 3 })).toHaveCount(5);
-  await expect(page.getByText("$59", { exact: true })).toBeVisible();
-  await expect(page.getByText("$349", { exact: true })).toBeVisible();
+  const navigation = page.getByRole("navigation", { name: "Marketing navigation" });
+  await expect(navigation.getByRole("link", { name: "Subjects" })).toHaveCount(0);
+  await expect(navigation.getByRole("link", { name: "Pricing" })).toHaveCount(0);
+  await expect(page.locator("#subjects")).toHaveCount(0);
+  await expect(page.getByText("$59", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("$349", { exact: true })).toHaveCount(0);
+  await page.locator("#faq summary").filter({ hasText: "What is included?" }).click();
+  await expect(page.getByText(/Obstetrics and Gynecology is not included/)).toBeVisible();
 
   await page.goto("/refund-policy");
-  await expect(page.getByRole("heading", { name: "Initial-purchase refunds" })).toBeVisible();
-  await expect(page.getByText(/no more than 25 questions/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Current availability" })).toBeVisible();
+  await expect(page.getByText(/does not offer purchases or subscriptions/)).toBeVisible();
 
   await page.goto("/terms");
   await expect(page.getByText("Montreal QBank is operated by 15041074 Canada Inc.")).toBeVisible();
   await expect(page.getByText("67 Westmore Dr, Unit 19, Etobicoke, ON M9V 3Y6, Canada")).toBeVisible();
+  await expect(page.getByText(/paid-distribution rights have not been approved/)).toBeVisible();
+  await expect(page.getByText(/questions, choices, and explanations are original content/)).toHaveCount(0);
 
   await page.goto("/support");
   await expect(page.getByRole("link", { name: "fuanne_gm@hotmail.com" })).toHaveAttribute("href", "mailto:fuanne_gm@hotmail.com");

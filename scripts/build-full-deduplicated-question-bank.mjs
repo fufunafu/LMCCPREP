@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { completeRedundantSupportFields } from "../lib/question-review-corrections.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectDirectory = resolve(scriptDirectory, "..");
@@ -65,10 +66,14 @@ function applyBatches(snapshot, batches) {
       if (!current) throw new Error(`Update target Q${update.qid} is missing.`);
       if (current.content_fingerprint !== update.expected_fingerprint) throw new Error(`Update target Q${update.qid} has a stale fingerprint.`);
       if (deletions.has(update.qid)) throw new Error(`Q${update.qid} is updated after deletion.`);
-      const next = { ...current, ...(update.patch ?? {}) };
+      const normalizedUpdate = {
+        ...update,
+        patch: completeRedundantSupportFields(current, update.patch ?? {}),
+      };
+      const next = { ...current, ...normalizedUpdate.patch };
       next.content_fingerprint = contentFingerprint(next);
       byQid.set(update.qid, next);
-      updates.set(update.qid, { batch_id: batch.batch_id, update });
+      updates.set(update.qid, { batch_id: batch.batch_id, update: normalizedUpdate });
     }
     for (const deletion of batch.deletions ?? []) {
       const current = byQid.get(deletion.remove_qid);
@@ -180,7 +185,10 @@ const bank = {
   questions: enrichedQuestions,
 };
 const bankText = `${JSON.stringify(bank, null, 2)}\n`;
-await writeFile(bankPath, bankText, "utf8");
+const bankContent = { ...bank };
+delete bankContent.generated_at;
+const bankContentSha256 = sha256(JSON.stringify(bankContent));
+await writeFile(bankPath, bankText, { encoding: "utf8", mode: 0o600 });
 
 const report = {
   schema_version: 1,
@@ -228,8 +236,9 @@ const report = {
   },
   bank_path: relative(projectDirectory, bankPath),
   bank_sha256: sha256(bankText),
+  bank_content_sha256: bankContentSha256,
 };
-await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 console.log(JSON.stringify({
   report_path: reportPath,
   ...report,

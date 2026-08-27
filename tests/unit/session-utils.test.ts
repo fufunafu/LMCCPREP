@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveInitialIndex } from "@/lib/session-utils";
+import { prepareExplanation, resolveInitialIndex } from "@/lib/session-utils";
 
 describe("resolveInitialIndex", () => {
   it("parses a 1-based ?q= value", () => {
@@ -24,5 +24,42 @@ describe("resolveInitialIndex", () => {
     expect(resolveInitialIndex(null, { currentIndex: 50 }, 10)).toBe(9);
     expect(resolveInitialIndex(null, { currentIndex: -1 }, 10)).toBe(0);
     expect(resolveInitialIndex("3", {}, 0)).toBe(0);
+  });
+});
+
+describe("prepareExplanation", () => {
+  it("keeps only one copy of repeated explanation text", () => {
+    const result = prepareExplanation([
+      "A rising beta-hCG level supports an early viable pregnancy.",
+      "  A rising beta-hCG level supports an early viable pregnancy.  ",
+      "A follow-up ultrasound confirms location.",
+    ], "Repeat beta-hCG testing");
+
+    expect(result.paragraphs).toEqual([
+      "A rising beta-hCG level supports an early viable pregnancy.",
+      "A follow-up ultrasound confirms location.",
+    ]);
+  });
+
+  it("removes an answer-only restatement when a rationale is available", () => {
+    const result = prepareExplanation([
+      "The correct answer is pulmonary embolism.",
+      "Sudden hypoxemia and pleuritic pain after surgery suggest pulmonary embolism.",
+    ], "Pulmonary embolism");
+
+    expect(result.paragraphs).toEqual([
+      "Sudden hypoxemia and pleuritic pain after surgery suggest pulmonary embolism.",
+    ]);
+    expect(result.hasMore).toBe(false);
+  });
+
+  it("returns a short preview and preserves additional unique detail", () => {
+    const longRationale = "This clinical pattern strongly supports the diagnosis because the history, examination findings, laboratory pattern, imaging features, and time course all point to the same underlying mechanism and exclude the closest distractors.";
+    const result = prepareExplanation([longRationale, "A second useful point remains available."], "Diagnosis");
+
+    expect(result.preview.length).toBeLessThanOrEqual(121);
+    expect(result.preview.endsWith("…")).toBe(true);
+    expect(result.paragraphs).toEqual([longRationale, "A second useful point remains available."]);
+    expect(result.hasMore).toBe(true);
   });
 });
