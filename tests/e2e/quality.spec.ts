@@ -79,8 +79,8 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   const home = await page.goto("/");
   expect(home?.headers()["content-security-policy"]).toContain("default-src 'self'");
   expect(home?.headers()["x-powered-by"]).toBeUndefined();
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https:\/\/lmcc-prep\.vercel\.app\/?$/);
-  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", /^https:\/\/lmcc-prep\.vercel\.app\/?$/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https:\/\/montrealqbank\.vercel\.app\/?$/);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", /^https:\/\/montrealqbank\.vercel\.app\/?$/);
   const jsonLdText = await page.locator('script[type="application/ld+json"]').textContent();
   const jsonLd = JSON.parse(jsonLdText ?? "{}");
   const graph = jsonLd["@graph"] as Array<Record<string, unknown>>;
@@ -88,8 +88,8 @@ test("SEO routes, canonical metadata, structured data, and security headers are 
   const application = graph.find((item) => item["@type"] === "SoftwareApplication");
   expect(application).toMatchObject({ name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web" });
   expect(application?.offers).toEqual([
-    { "@type": "Offer", priceCurrency: "CAD", price: 59, category: "per month", url: "https://lmcc-prep.vercel.app/pricing" },
-    { "@type": "Offer", priceCurrency: "CAD", price: 349, category: "per year", url: "https://lmcc-prep.vercel.app/pricing" },
+    { "@type": "Offer", priceCurrency: "CAD", price: 59, category: "per month", url: "https://montrealqbank.vercel.app/pricing" },
+    { "@type": "Offer", priceCurrency: "CAD", price: 349, category: "per year", url: "https://montrealqbank.vercel.app/pricing" },
   ]);
   const faq = graph.find((item) => item["@type"] === "FAQPage");
   expect(faq?.mainEntity).toEqual(expect.arrayContaining([
@@ -133,7 +133,7 @@ test("every indexable page has unique metadata and all public links resolve", as
     await test.step(path, async () => {
       const response = await page.goto(path);
       expect(response?.status()).toBeLessThan(400);
-      const expectedCanonical = `https://lmcc-prep.vercel.app${path === "/" ? "" : path}`;
+      const expectedCanonical = `https://montrealqbank.vercel.app${path === "/" ? "" : path}`;
       const title = await page.title();
       const description = await page.locator('meta[name="description"]').getAttribute("content");
       const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");

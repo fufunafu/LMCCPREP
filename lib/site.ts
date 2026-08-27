@@ -1,4 +1,4 @@
-export const DEFAULT_SITE_ORIGIN = "https://lmcc-prep.vercel.app";
+export const DEFAULT_SITE_ORIGIN = "https://montrealqbank.vercel.app";
 
 export function siteOrigin() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();

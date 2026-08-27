@@ -20,6 +20,12 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   distDir: process.env.BILLING_FIXTURE === "true" ? ".next-billing-fixture" : ".next",
+  async redirects() {
+    // Legacy project URL: send everything to the canonical origin.
+    return [
+      { source: "/:path*", has: [{ type: "host", value: "lmcc-prep.vercel.app" }], destination: "https://montrealqbank.vercel.app/:path*", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
