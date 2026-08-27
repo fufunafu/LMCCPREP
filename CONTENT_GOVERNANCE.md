@@ -72,10 +72,12 @@ Use a reviewer role that communicates qualification without exposing a person's 
 3. Record each transformation as a new history entry. Do not overwrite prior history.
 4. Complete medical review, references, blueprint mapping, and reviewer metadata.
 5. Have a second reviewer or release owner verify that all required fields are present and internally consistent.
-6. Apply decisions through a reviewed, reversible migration or an access-controlled administrative process with an audit trail.
-7. Regenerate the inventory and compare counts and hashes with the approved review batch.
-8. Run `npm run security:verify`, the full quality gate, and the production smoke suite.
-9. Obtain written counsel approval of the content-licensing model before enabling paid access.
+6. Copy `scripts/content-approvals.example.json` to a private, access-controlled location and prepare an approval batch of no more than 250 question and image records. Do not store evidence documents, private evidence URLs, reviewer identities, or completed manifests in Git.
+7. Run `npm run content:approvals -- --file /private/path/content-approval-batch.json`. The dry run validates target state, complete rights metadata, transformation artifact hashes, editorial metadata, references, and image approval dependencies without changing the database.
+8. After the release owner approves the dry-run summary, apply the same immutable manifest with `npm run content:approvals -- --file /private/path/content-approval-batch.json --apply --confirm APPLY_CONTENT_APPROVALS`. Migration `0020_atomic_content_approval_workflow.sql` rejects incomplete metadata, refuses updates while billing enforcement is active, applies each batch atomically, and records the manifest hash in the service-only approval ledger.
+9. Regenerate the inventory and compare counts and hashes with the approved review batch. Reversals must use a new reviewed manifest with the current expected state, preserving the original batch record.
+10. Run `npm run security:verify`, the full quality gate, and the production smoke suite.
+11. Obtain written counsel approval of the content-licensing model before enabling paid access.
 
 ## Release evidence
 

@@ -51,6 +51,8 @@ The repository contains the complete ordered schema history, including the billi
 
 Question and clinical-image rights, provenance, editorial review, and the paid-distribution gate are governed by [`CONTENT_GOVERNANCE.md`](CONTENT_GOVERNANCE.md). Run `npm run content:inventory` to create the ignored local inventory used by that review process.
 
+After migration `0020_atomic_content_approval_workflow.sql` is applied, approved review decisions are applied only through private manifests and the service-only atomic approval workflow. Start with `scripts/content-approvals.example.json`, run `npm run content:approvals -- --file /private/path/content-approval-batch.json` for a dry run, and use the explicit apply confirmation documented in `CONTENT_GOVERNANCE.md` only after release-owner review. Never commit a completed approval manifest or its protected evidence references.
+
 ## Stripe billing setup
 
 Billing is fail-safe and disabled by default. Before enabling it, create one Montreal QBank product with monthly and annual recurring CAD prices in Stripe, configure the customer portal, approve the legal and commercial terms, and set these server-only variables:

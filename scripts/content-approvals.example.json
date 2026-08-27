@@ -1,0 +1,67 @@
+{
+  "batch_id": "review-2026-08-26-001",
+  "approval_record": {
+    "release_owner_role": "Content release owner",
+    "approved_at": "2026-08-26T20:00:00-04:00",
+    "legal_approval_record_id": null
+  },
+  "questions": [
+    {
+      "qid": 12345,
+      "expected": {
+        "distribution_rights_status": "unverified",
+        "editorial_status": "pending"
+      },
+      "rights": {
+        "status": "original",
+        "note": "Company-owned original question with authorship evidence reviewed for paid digital distribution.",
+        "content_author": "Original content author or rights holder",
+        "license_or_permission": "Original work assignment covering paid digital distribution",
+        "permission_evidence_uri": "vault://content-rights/question-12345",
+        "reviewed_at": "2026-08-26",
+        "reviewer_role": "Rights reviewer",
+        "transformations": [
+          {
+            "date": "2026-08-26",
+            "responsible_role": "Content editor",
+            "action": "Recorded the approved source and final editorial artifact.",
+            "artifact_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ]
+      },
+      "editorial": {
+        "status": "reviewed",
+        "last_reviewed_at": "2026-08-26",
+        "reviewer_role": "Canadian-licensed physician",
+        "references_text": "Authoritative Canadian reference and URL",
+        "reference_exception": null
+      }
+    }
+  ],
+  "images": [
+    {
+      "qid": 12345,
+      "image_index": 0,
+      "expected": {
+        "distribution_rights_status": "unverified"
+      },
+      "rights": {
+        "status": "licensed",
+        "note": "Written image license reviewed for paid digital distribution.",
+        "content_author": "Image author or rights holder",
+        "license_or_permission": "Written license covering paid digital distribution and transformations",
+        "permission_evidence_uri": "vault://content-rights/question-12345-image-0",
+        "reviewed_at": "2026-08-26",
+        "reviewer_role": "Rights reviewer",
+        "transformations": [
+          {
+            "date": "2026-08-26",
+            "responsible_role": "Image editor",
+            "action": "Recorded the approved image artifact without altering clinical meaning.",
+            "artifact_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      }
+    }
+  ]
+}
