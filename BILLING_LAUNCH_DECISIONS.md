@@ -12,7 +12,7 @@ Authenticated pre-payment checks and the complete test lifecycle pass. The Previ
 
 The matching live product, monthly and annual prices, tax behavior, product tax code, customer portal, and six-event webhook endpoint are staged. Live price IDs are stored in Vercel Production. The live restricted key and rotated webhook signing secret remain blocked behind Stripe owner identity verification. GST/HST and Quebec QST registrations still require private owner entry. Both enforcement switches remain off, no live Checkout Session can be created, and no live payment exists.
 
-Production currently exposes zero rights-approved questions. Billing must not accept payment until the paid-content aggregate is nonzero and the release owner confirms that the available catalog satisfies the product promise.
+Production now exposes 115 rights-approved questions. On 2026-08-27, the authorization verifier confirmed that every published discipline count matches the approved production aggregate and that the content and billing isolation controls remain enforced.
 
 ## Owner decisions
 
@@ -65,4 +65,4 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [ ] An approved live transaction and refund test passes, if required.
 - [ ] Application enforcement is deployed first, then database enforcement is enabled and both are verified together.
 - [ ] Production smoke tests pass and rollback is verified.
-- [ ] The production approved-content aggregate is nonzero and matches the paid catalog promise.
+- [x] The production approved-content aggregate is nonzero and matches the paid catalog promise. Verified at 115 published questions on 2026-08-27.
