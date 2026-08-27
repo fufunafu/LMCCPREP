@@ -4,7 +4,7 @@ import { startDemoSession } from "@/lib/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AccessRequestForm } from "@/components/access-request-form";
-import { marketingFaqs } from "@/lib/marketing-content";
+import { extendedFaqGroups, marketingFaqs, type FaqGroup } from "@/lib/marketing-content";
 import type { BillingPlan, Subject } from "@/lib/types";
 
 const features = [
@@ -77,8 +77,17 @@ export function PricingSection({ plans }: { plans: BillingPlan[] }) {
   );
 }
 
+function FaqList({ items }: { items: FaqGroup["items"] }) {
+  return <div className="divide-y rounded-2xl border bg-background px-5 sm:px-7">{items.map(([question, answer]) => <details key={question} className="group py-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">{question}<span className="text-xl text-muted-foreground group-open:rotate-45">+</span></summary><p className="max-w-2xl pt-3 text-sm leading-6 text-muted-foreground">{answer}</p></details>)}</div>;
+}
+
 export function FaqSection() {
-  return <section id="faq" className="mx-auto max-w-4xl scroll-mt-20 px-5 py-24 sm:px-8"><div className="text-center"><p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Questions, answered</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Before you request access</h2></div><div className="mt-10 divide-y rounded-2xl border bg-background px-5 sm:px-7">{marketingFaqs.map(([question, answer]) => <details key={question} className="group py-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">{question}<span className="text-xl text-muted-foreground group-open:rotate-45">+</span></summary><p className="max-w-2xl pt-3 text-sm leading-6 text-muted-foreground">{answer}</p></details>)}</div></section>;
+  return <section id="faq" className="mx-auto max-w-4xl scroll-mt-20 px-5 py-24 sm:px-8"><div className="text-center"><p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Questions, answered</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Before you request access</h2></div><div className="mt-10"><FaqList items={marketingFaqs} /></div></section>;
+}
+
+/** Full, topic-grouped FAQ for the dedicated page. */
+export function ExtendedFaqSection() {
+  return <section id="faq" className="mx-auto max-w-4xl scroll-mt-20 px-5 pb-24 pt-8 sm:px-8"><nav aria-label="FAQ topics" className="flex flex-wrap gap-2 text-sm">{extendedFaqGroups.map((group) => <a key={group.title} href={`#faq-${group.title.toLowerCase().replaceAll(/[^a-z]+/g, "-")}`} className="rounded-full border bg-background px-3 py-1.5 hover:border-emerald-600">{group.title}</a>)}</nav><div className="mt-12 space-y-14">{extendedFaqGroups.map((group) => { const id = `faq-${group.title.toLowerCase().replaceAll(/[^a-z]+/g, "-")}`; return <div key={group.title} id={id} className="scroll-mt-28"><h2 className="text-2xl font-semibold tracking-[-0.03em]">{group.title}</h2><div className="mt-5"><FaqList items={group.items} /></div></div>; })}</div><p className="mt-14 text-center text-sm text-muted-foreground">Still have a question? <Link href="/support" className="font-medium text-emerald-800 underline dark:text-emerald-400">Contact support</Link>.</p></section>;
 }
 
 export function AccessSection() {
