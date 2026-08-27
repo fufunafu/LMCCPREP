@@ -1,14 +1,18 @@
 # Montreal QBank billing launch decisions
 
-Status: **Not approved for live billing**
+Status: **Live resources staged; payment collection remains disabled**
 
 Billing enforcement must remain disabled until every owner decision and launch gate below is complete. Do not place secret keys in this file or in source control.
 
-Latest billing-only Preview: `https://lmcc-prep-494ye63zl-fuannes-projects.vercel.app` (deployment `dpl_5WAWeYbwooCLxY2VCnkZuH4BnLkJ`). It is protected by Vercel authentication and billing remains disabled.
+Latest billing-only Preview: `https://lmcc-prep-p4sysjcrj-fuannes-projects.vercel.app` (deployment `dpl_3SsAfxrXUSgvDZL932v8fxXKrw5h`). It is protected by Vercel authentication and billing remains disabled.
 
 Latest expanded secure Preview preflight: 37 of 37 checks passed on 2026-08-26 using the protected test credentials and the exact protected Preview origin. The restricted test key and webhook signing secret are stored in Vercel Preview and Development. Direct signed delivery and duplicate-event idempotency passed against the updated destination.
 
-Authenticated pre-payment checks also pass: the Preview rejects unknown plans, creates approved Stripe-hosted Checkout sessions, opens the customer portal, and returns safely from cancellation. Checkout displays `Montreal QBank` as the product heading and subscription title. Stripe's payment-authorization language identifies the shared account as `Glass Railing - RF Transparent`, which the owner explicitly approved on 2026-08-26. The account-wide identity remains unchanged, and the Montreal QBank product uses its own `MONTREAL QBANK` subscription statement descriptor. A dedicated test user has also completed an insufficient-funds decline and successful retry, after which the signed webhook provisioned exactly one active local subscription and the portal displayed the plan and paid invoice. The remaining cancellation and renewal scenarios are still pending.
+Authenticated pre-payment checks and the complete test lifecycle pass. The Preview rejects unknown plans, creates approved Stripe-hosted Checkout sessions, opens the customer portal, and returns safely from cancellation. Checkout displays `Montreal QBank` as the product heading and subscription title. A dedicated test user completed an insufficient-funds decline, successful retry, signed webhook provisioning, portal inspection, failed renewal, exact three-day grace, paid recovery, period-end cancellation, and access cutoff. Duplicate and stale events were handled safely, and authoritative reconciliation passed.
+
+The matching live product, monthly and annual prices, tax behavior, product tax code, customer portal, and six-event webhook endpoint are staged. Live price IDs are stored in Vercel Production. The live restricted key and rotated webhook signing secret remain blocked behind Stripe owner identity verification. GST/HST and Quebec QST registrations still require private owner entry. Both enforcement switches remain off, no live Checkout Session can be created, and no live payment exists.
+
+Production currently exposes zero rights-approved questions. Billing must not accept payment until the paid-content aggregate is nonzero and the release owner confirms that the available catalog satisfies the product promise.
 
 ## Owner decisions
 
@@ -54,10 +58,11 @@ Pricing will be reviewed after 90 days or 50 paid customers. Existing subscriber
 - [x] Test webhook endpoint is configured for all required events. Verified 2026-08-26 against the protected Preview.
 - [x] Preview contains only test-mode Stripe values, the webhook signing secret, and a Vercel automation bypass secret. The known-good Preview was redeployed and direct signed delivery was verified on 2026-08-26.
 - [x] Checkout displays Montreal QBank through the session-specific override, and the product uses the approved `MONTREAL QBANK` subscription statement descriptor without changing shared account details. Verified 2026-08-26.
-- [ ] Checkout success, decline, cancellation, renewal failure, duplicate event, and portal tests pass.
+- [x] Checkout success, decline, cancellation, renewal failure, duplicate event, reconciliation, access cutoff, and portal tests pass.
 - [ ] Complimentary grants are added for approved users.
-- [ ] Matching live product, prices, portal, and webhook are configured.
+- [ ] Matching live product, prices, portal, and webhook are fully configured. Catalog and endpoint are staged; the live key, rotated signing secret, and tax registrations remain.
 - [x] Production legal, support, tax, and business information is published and verified on the canonical site. Deployed and smoke-tested 2026-08-25.
 - [ ] An approved live transaction and refund test passes, if required.
 - [ ] Application enforcement is deployed first, then database enforcement is enabled and both are verified together.
 - [ ] Production smoke tests pass and rollback is verified.
+- [ ] The production approved-content aggregate is nonzero and matches the paid catalog promise.
