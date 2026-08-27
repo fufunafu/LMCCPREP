@@ -8,7 +8,7 @@ test("public landing withholds unapproved catalog and links pricing as a separat
   await expect(navigation.getByRole("link", { name: "Subjects" })).toHaveCount(0);
   await expect(navigation.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
   await expect(page.locator("#subjects")).toHaveCount(0);
-  await expect(page.locator("#pricing")).toHaveCount(0);
+  await expect(page.locator("#pricing")).toHaveCount(1);
   expect((await page.request.get("/subjects")).status()).toBe(404);
   await page.goto("/pricing");
   await expect(page.locator("#pricing")).toHaveCount(1);
