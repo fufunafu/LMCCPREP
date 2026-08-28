@@ -1,4 +1,5 @@
-export type Subject = { id: string; name: string; questionCount: number }
+export type Exam    = { id: string; name: string; shortName: string; secondsPerQuestion: number; sectionSize: number }
+export type Subject = { id: string; name: string; questionCount: number; examId: string }
 export type Topic   = { id: string; subjectId: string; name: string; questionCount: number }
 export type EditorialStatus = "pending" | "reviewed" | "stale" | "personal"
 export type Question = { id: string; qid: number; subjectId: string; topicId: string; stem: string;
@@ -40,4 +41,4 @@ export type DailyActivity = { date: string; attempted: number; correct: number }
 export type DashboardStats = { totalQuestions: number; attempted: number; correct: number; streakDays: number;
                           subjects: SubjectStats[]; weakestTopics: TopicStats[]; activity: DailyActivity[] }
 export type Profile = { id: string; name: string; email: string; streakDays: number; medicalSchool: string;
-                    targetExamDate: string; dailyReminder: boolean; showShortcuts: boolean; explanationAutoScroll: boolean }
+                    targetExamDate: string; dailyReminder: boolean; showShortcuts: boolean; explanationAutoScroll: boolean; examId: string }

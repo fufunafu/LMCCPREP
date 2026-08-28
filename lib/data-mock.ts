@@ -1,6 +1,12 @@
 import type { Question } from "@/lib/types";
 import { dashboardStats, demoAttempts, demoSession, questionStatuses, questions, recentSessions, subjects, topicStats, topics } from "@/lib/mock";
 
+export const exams = [
+  { id: "mccqe", name: "MCCQE Part I", shortName: "MCCQE", secondsPerQuestion: 83, sectionSize: 115 },
+  { id: "usmle", name: "USMLE Step 1 and Step 2 CK", shortName: "USMLE", secondsPerQuestion: 90, sectionSize: 40 },
+];
+export function getExams() { return exams; }
+export function getCurrentExam() { return exams[0]; }
 export function getSubjects() { return subjects; }
 export function getTopics(subjectId?: string) { return subjectId ? topics.filter((topic) => topic.subjectId === subjectId) : topics; }
 export function getQuestions() { return questions; }
@@ -19,4 +25,4 @@ export function getFlaggedQuestions() { return questions.filter((question) => qu
 export function getFlaggedQuestionIds(questionIds?: string[]) { const ids = getFlaggedQuestions().map((question) => question.id); return questionIds ? ids.filter((id) => questionIds.includes(id)) : ids; }
 export function getNotes(questionIds?: string[]) { const notes = { q2: "Review the Ottawa ankle rules and their exclusions." }; return questionIds ? Object.fromEntries(Object.entries(notes).filter(([id]) => questionIds.includes(id))) : notes; }
 export function getUserId() { return "demo-user"; }
-export function getProfile() { return { id: "demo-user", name: "Demo Learner", email: "demo@lmccprep.ca", streakDays: dashboardStats.streakDays, medicalSchool: "University of Toronto", targetExamDate: "2027-04-15", dailyReminder: true, showShortcuts: true, explanationAutoScroll: false }; }
+export function getProfile() { return { id: "demo-user", name: "Demo Learner", email: "demo@lmccprep.ca", streakDays: dashboardStats.streakDays, medicalSchool: "University of Toronto", targetExamDate: "2027-04-15", dailyReminder: true, showShortcuts: true, explanationAutoScroll: false, examId: "mccqe" }; }

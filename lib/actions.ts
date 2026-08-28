@@ -206,7 +206,7 @@ export async function requestAccess(formData: FormData) {
   return { demo: false };
 }
 
-export async function updateProfile(input: { displayName?: string; medicalSchool?: string; targetExamDate?: string | null; dailyReminder?: boolean; showShortcuts?: boolean; explanationAutoScroll?: boolean }) {
+export async function updateProfile(input: { displayName?: string; medicalSchool?: string; targetExamDate?: string | null; dailyReminder?: boolean; showShortcuts?: boolean; explanationAutoScroll?: boolean; examId?: string }) {
   if (await isDemoSession()) return { demo: true };
   const supabase = await createClient();
   const userId = await requireUserId(supabase);
@@ -217,6 +217,10 @@ export async function updateProfile(input: { displayName?: string; medicalSchool
   if (input.dailyReminder !== undefined) updates.daily_reminder = input.dailyReminder;
   if (input.showShortcuts !== undefined) updates.show_shortcuts = input.showShortcuts;
   if (input.explanationAutoScroll !== undefined) updates.explanation_auto_scroll = input.explanationAutoScroll;
+  if (input.examId !== undefined) {
+    if (!/^[a-z0-9-]{2,32}$/.test(input.examId)) throw new Error("Choose a valid exam.");
+    updates.exam_id = input.examId;
+  }
   const { error } = await supabase.from("profiles").upsert({ id: userId, ...updates }, { onConflict: "id" });
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");

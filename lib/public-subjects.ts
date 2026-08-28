@@ -14,5 +14,5 @@ export async function fetchApprovedPublicSubjects(
   });
   if (!response.ok) throw new Error(`Public catalog request failed with status ${response.status}.`);
   const data = await response.json() as PublicSubjectRow[];
-  return data.map((row) => ({ id: row.id, name: row.name, questionCount: row.question_count }));
+  return data.map((row) => ({ id: row.id, name: row.name, questionCount: row.question_count, examId: "mccqe" }));
 }

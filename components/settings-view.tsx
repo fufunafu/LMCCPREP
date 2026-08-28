@@ -15,13 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn, dateLabel } from "@/lib/utils";
-import type { BillingSummary, Profile } from "@/lib/types";
+import type { BillingSummary, Exam, Profile } from "@/lib/types";
 import { clearDemoPractice } from "@/lib/demo-practice";
 import { BillingPortalButton } from "@/components/billing-portal-button";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 
-export function SettingsView({ profile, billing }: { profile?: Profile; billing: BillingSummary }) {
+export function SettingsView({ profile, billing, exams = [] }: { profile?: Profile; billing: BillingSummary; exams?: Exam[] }) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -48,7 +48,7 @@ export function SettingsView({ profile, billing }: { profile?: Profile; billing:
     const form = new FormData(event.currentTarget);
     startSaving(async () => {
       try {
-        const result = await updateProfile({ displayName: String(form.get("name") ?? ""), medicalSchool: String(form.get("school") ?? ""), targetExamDate: String(form.get("exam-date") ?? "") || null });
+        const result = await updateProfile({ displayName: String(form.get("name") ?? ""), medicalSchool: String(form.get("school") ?? ""), targetExamDate: String(form.get("exam-date") ?? "") || null, ...(exams.length ? { examId: String(form.get("exam") ?? "") } : {}) });
         toast.success("Profile saved", { description: result.demo ? "Demo changes are temporary." : "Your study profile has been updated." });
       } catch { toast.error("Could not save your profile. Try again."); }
     });
@@ -71,7 +71,7 @@ export function SettingsView({ profile, billing }: { profile?: Profile; billing:
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 md:px-8 md:py-8">
       <PageHeader eyebrow="Preferences" title="Settings" description="Manage how Montreal QBank looks and how your study profile appears." />
       <div className="space-y-5">
-        <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><User className="size-5" /></div><div><CardTitle className="text-lg">Profile</CardTitle><CardDescription>Your basic learner details</CardDescription></div></div></CardHeader><CardContent><form onSubmit={save}><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="name">Full name</Label><Input id="name" name="name" defaultValue={profile?.name ?? ""} maxLength={80} required /></div><div className="space-y-2"><Label htmlFor="email-setting">Email</Label><Input id="email-setting" type="email" defaultValue={profile?.email ?? ""} readOnly /></div><div className="space-y-2"><Label htmlFor="school">Medical school</Label><Input id="school" name="school" defaultValue={profile?.medicalSchool ?? ""} maxLength={120} placeholder="Optional" /></div><div className="space-y-2"><Label htmlFor="exam-date">Target exam date</Label><Input id="exam-date" name="exam-date" defaultValue={profile?.targetExamDate ?? ""} type="date" /></div></div><Button type="submit" disabled={saving} className="mt-5 bg-emerald-800 hover:bg-emerald-900">{saving ? "Saving…" : "Save profile"}</Button></form></CardContent></Card>
+        <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><User className="size-5" /></div><div><CardTitle className="text-lg">Profile</CardTitle><CardDescription>Your basic learner details</CardDescription></div></div></CardHeader><CardContent><form onSubmit={save}><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="name">Full name</Label><Input id="name" name="name" defaultValue={profile?.name ?? ""} maxLength={80} required /></div><div className="space-y-2"><Label htmlFor="email-setting">Email</Label><Input id="email-setting" type="email" defaultValue={profile?.email ?? ""} readOnly /></div><div className="space-y-2"><Label htmlFor="school">Medical school</Label><Input id="school" name="school" defaultValue={profile?.medicalSchool ?? ""} maxLength={120} placeholder="Optional" /></div>{exams.length > 0 && <div className="space-y-2"><Label htmlFor="exam">Exam you are studying for</Label><select id="exam" name="exam" defaultValue={profile?.examId ?? exams[0]?.id} className="flex h-9 w-full rounded-md border bg-background px-3 text-sm shadow-xs">{exams.map((exam) => <option key={exam.id} value={exam.id}>{exam.name}</option>)}</select><p className="text-xs text-muted-foreground">Subjects, sessions, and stats are scoped to this exam.</p></div>}<div className="space-y-2"><Label htmlFor="exam-date">Target exam date</Label><Input id="exam-date" name="exam-date" defaultValue={profile?.targetExamDate ?? ""} type="date" /></div></div><Button type="submit" disabled={saving} className="mt-5 bg-emerald-800 hover:bg-emerald-900">{saving ? "Saving…" : "Save profile"}</Button></form></CardContent></Card>
 
         <Card><CardHeader><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300"><Palette className="size-5" /></div><div><CardTitle className="text-lg">Appearance</CardTitle><CardDescription>Choose the theme that is easiest on your eyes</CardDescription></div></div></CardHeader><CardContent><div className="grid gap-3 sm:grid-cols-3">{[{ value: "light", icon: Sun, label: "Light" }, { value: "dark", icon: Moon, label: "Dark" }, { value: "system", icon: Laptop, label: "System" }].map(({ value, icon: Icon, label }) => <button type="button" key={value} aria-pressed={mounted && theme === value} onClick={() => setTheme(value)} className={cn("flex items-center gap-3 rounded-xl border p-4 text-sm font-medium", mounted && theme === value && "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/10 dark:bg-emerald-950/30")}><Icon className="size-5" />{label}<span aria-hidden="true" className={cn("ml-auto size-4 rounded-full border-2", mounted && theme === value && "border-[5px] border-emerald-700")} /></button>)}</div></CardContent></Card>
 

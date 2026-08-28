@@ -8,7 +8,7 @@ describe("fetchApprovedPublicSubjects", () => {
     ]), { status: 200 })) as typeof fetch;
 
     await expect(fetchApprovedPublicSubjects("https://example.supabase.co", "public-key", fetcher)).resolves.toEqual([
-      { id: "medicine", name: "Internal Medicine", questionCount: 12 },
+      { id: "medicine", name: "Internal Medicine", questionCount: 12, examId: "mccqe" },
     ]);
     expect(fetcher).toHaveBeenCalledWith(
       "https://example.supabase.co/rest/v1/rpc/get_approved_public_subject_counts",

@@ -2,11 +2,11 @@ import type { Attempt, DashboardStats, Question, QuestionStatus, Session, Subjec
 import { DEFAULT_SECONDS_PER_QUESTION, torontoDateKey } from "@/lib/utils";
 
 export const subjects: Subject[] = [
-  { id: "pediatrics", name: "Pediatrics", questionCount: 6 },
-  { id: "psychiatry", name: "Psychiatry", questionCount: 6 },
-  { id: "medicine", name: "Medicine", questionCount: 6 },
-  { id: "pmch", name: "PMCH", questionCount: 6 },
-  { id: "surgery", name: "Surgery", questionCount: 6 },
+  { id: "pediatrics", name: "Pediatrics", questionCount: 6, examId: "mccqe" },
+  { id: "psychiatry", name: "Psychiatry", questionCount: 6, examId: "mccqe" },
+  { id: "medicine", name: "Medicine", questionCount: 6, examId: "mccqe" },
+  { id: "pmch", name: "PMCH", questionCount: 6, examId: "mccqe" },
+  { id: "surgery", name: "Surgery", questionCount: 6, examId: "mccqe" },
 ];
 
 export const topics: Topic[] = [

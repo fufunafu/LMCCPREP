@@ -3,7 +3,7 @@ import { cache } from "react";
 import { createClient, currentUserId } from "@/lib/supabase/server";
 import { fetchApprovedPublicSubjects } from "@/lib/public-subjects";
 import { torontoDateKey } from "@/lib/utils";
-import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats } from "@/lib/types";
+import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats, Exam } from "@/lib/types";
 
 // Row shapes (subset of columns we read)
 type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null; references_text: string | null; editorial_status: "pending" | "reviewed" | "stale" | "personal"; last_reviewed_at: string | null; reviewer_role: string | null; reference_exception: string | null; source: string };
@@ -65,11 +65,37 @@ async function getQuestionImageIndexes(
 }
 
 // ---------- content ----------
+export const DEFAULT_EXAM_ID = "mccqe";
+
+export async function getExams(): Promise<Exam[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("exams").select("id,name,short_name,seconds_per_question,section_size").order("sort");
+  return (data ?? []).map((r: { id: string; name: string; short_name: string; seconds_per_question: number; section_size: number }) => ({ id: r.id, name: r.name, shortName: r.short_name, secondsPerQuestion: r.seconds_per_question, sectionSize: r.section_size }));
+}
+
+/** The signed-in learner's active exam; content queries are scoped to it. */
+export const getCurrentExamId = cache(async (): Promise<string> => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const id = data?.claims?.sub as string | undefined;
+  if (!id) return DEFAULT_EXAM_ID;
+  const { data: profile } = await supabase.from("profiles").select("exam_id").eq("id", id).maybeSingle();
+  return profile?.exam_id ?? DEFAULT_EXAM_ID;
+});
+
+export async function getCurrentExam(): Promise<Exam | undefined> {
+  const examId = await getCurrentExamId();
+  return (await getExams()).find((exam) => exam.id === examId);
+}
+
 export async function getSubjects(): Promise<Subject[]> {
   const supabase = await createClient();
-  const { data } = await supabase.from("subject_counts").select("id,name,question_count");
-  return (data ?? []).map((r: { id: string; name: string; question_count: number }) => ({ id: r.id, name: r.name, questionCount: r.question_count }));
+  const examId = await getCurrentExamId();
+  const { data } = await supabase.from("subject_counts").select("id,name,question_count,exam_id").eq("exam_id", examId);
+  return (data ?? []).map((r: { id: string; name: string; question_count: number; exam_id: string }) => ({ id: r.id, name: r.name, questionCount: r.question_count, examId: r.exam_id }));
 }
+
+const getSubjectIds = cache(async (): Promise<string[]> => (await getSubjects()).map((subject) => subject.id));
 
 export async function getPublicSubjects(): Promise<Subject[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -81,7 +107,7 @@ export async function getPublicSubjects(): Promise<Subject[]> {
 export async function getTopics(subjectId?: string): Promise<Topic[]> {
   const supabase = await createClient();
   let q = supabase.from("topic_counts").select("id,subject_id,name,question_count").range(0, 4999);
-  if (subjectId) q = q.eq("subject_id", subjectId);
+  q = subjectId ? q.eq("subject_id", subjectId) : q.in("subject_id", await getSubjectIds());
   const { data } = await q;
   return (data ?? []).map((r: { id: string; subject_id: string; name: string; question_count: number }) => ({ id: r.id, subjectId: r.subject_id, name: r.name, questionCount: r.question_count }));
 }
@@ -90,15 +116,17 @@ const QUESTION_SELECT = "qid,subject_id,topic_id,stem,options,answer_index,expla
 
 export async function getQuestions(): Promise<Question[]> {
   const supabase = await createClient();
-  const rows = await fetchAll<QuestionRow>(() => supabase.from("questions").select(QUESTION_SELECT).order("qid"));
+  const subjectIds = await getSubjectIds();
+  const rows = await fetchAll<QuestionRow>(() => supabase.from("questions").select(QUESTION_SELECT).in("subject_id", subjectIds).order("qid"));
   const images = await getQuestionImageIndexes(supabase);
   return rows.map((row) => toQuestion(row, images.get(row.qid)));
 }
 
 export async function getQuestionSummaries(): Promise<QuestionSummary[]> {
   const supabase = await createClient();
+  const subjectIds = await getSubjectIds();
   // `options` is read only to derive optionCount; the option text never reaches the client.
-  const rows = await fetchAll<{ qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; tags: string[] | null }>(() => supabase.from("questions").select("qid,subject_id,topic_id,stem,options,tags").order("qid"));
+  const rows = await fetchAll<{ qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; tags: string[] | null }>(() => supabase.from("questions").select("qid,subject_id,topic_id,stem,options,tags").in("subject_id", subjectIds).order("qid"));
   return rows.map((row) => ({ id: String(row.qid), qid: row.qid, subjectId: row.subject_id, topicId: row.topic_id, stem: row.stem, optionCount: row.options.length, tags: row.tags ?? [] }));
 }
 
@@ -222,15 +250,16 @@ export function streakFrom(activity: DailyActivity[], today = torontoDateKey()):
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
+  const subjectIds = await getSubjectIds();
   const [{ count: totalQuestions }, subjectsRes, topicsRes, activityRes, { count: attemptedCount }, { count: correctCount }] = await Promise.all([
-    supabase.from("questions").select("qid", { count: "exact", head: true }),
+    supabase.from("questions").select("qid", { count: "exact", head: true }).in("subject_id", subjectIds),
     supabase.from("subject_stats").select("subject_id,attempted,correct,avg_time_ms"),
     supabase.from("topic_stats").select("topic_id,attempted,correct,avg_time_ms").gte("attempted", 3),
     supabase.from("daily_activity").select("day,attempted,correct").order("day", { ascending: false }).limit(120),
     supabase.from("user_question_status").select("qid", { count: "exact", head: true }),
     supabase.from("user_question_status").select("qid", { count: "exact", head: true }).eq("last_correct", true),
   ]);
-  const subjects: SubjectStats[] = (subjectsRes.data ?? []).map((r) => ({ subjectId: r.subject_id, attempted: r.attempted, correct: r.correct, avgTimeMs: r.avg_time_ms ?? 0 }));
+  const subjects: SubjectStats[] = (subjectsRes.data ?? []).filter((r) => subjectIds.includes(r.subject_id)).map((r) => ({ subjectId: r.subject_id, attempted: r.attempted, correct: r.correct, avgTimeMs: r.avg_time_ms ?? 0 }));
   const weakestTopics: TopicStats[] = (topicsRes.data ?? [])
     .map((r) => ({ topicId: r.topic_id, attempted: r.attempted, correct: r.correct, avgTimeMs: r.avg_time_ms ?? 0 }))
     .sort((a, b) => a.correct / a.attempted - b.correct / b.attempted).slice(0, 5);
@@ -259,7 +288,7 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   const id = data?.claims?.sub as string | undefined;
   if (!id) return null;
   const [{ data: profile }, { data: activity }] = await Promise.all([
-    supabase.from("profiles").select("display_name,medical_school,target_exam_date,daily_reminder,show_shortcuts,explanation_auto_scroll").eq("id", id).maybeSingle(),
+    supabase.from("profiles").select("display_name,medical_school,target_exam_date,daily_reminder,show_shortcuts,explanation_auto_scroll,exam_id").eq("id", id).maybeSingle(),
     supabase.from("daily_activity").select("day,attempted,correct").order("day", { ascending: false }).limit(400),
   ]);
   const email = (data?.claims?.email as string | undefined) ?? "";
@@ -274,5 +303,6 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
     dailyReminder: profile?.daily_reminder ?? true,
     showShortcuts: profile?.show_shortcuts ?? true,
     explanationAutoScroll: profile?.explanation_auto_scroll ?? false,
+    examId: profile?.exam_id ?? DEFAULT_EXAM_ID,
   };
 });

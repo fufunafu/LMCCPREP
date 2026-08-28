@@ -6,14 +6,14 @@ import { isDemoSession } from "@/lib/demo-session";
 import { requireEntitledUserId, SubscriptionRequiredError } from "@/lib/billing";
 import * as mock from "@/lib/data-mock";
 import * as supabase from "@/lib/data-supabase";
-import type { Attempt, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, Topic, TopicStats } from "@/lib/types";
+import type { Attempt, DashboardStats, Exam, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, Topic, TopicStats } from "@/lib/types";
 
 const PUBLIC_SUBJECT_FALLBACK: Subject[] = [
-  { id: "medicine", name: "Internal Medicine", questionCount: 0 },
-  { id: "pediatrics", name: "Pediatrics", questionCount: 0 },
-  { id: "pmch", name: "Population Health & Community Medicine (PMCH)", questionCount: 0 },
-  { id: "psychiatry", name: "Psychiatry", questionCount: 0 },
-  { id: "surgery", name: "Surgery", questionCount: 0 },
+  { id: "medicine", name: "Internal Medicine", questionCount: 0, examId: "mccqe" },
+  { id: "pediatrics", name: "Pediatrics", questionCount: 0, examId: "mccqe" },
+  { id: "pmch", name: "Population Health & Community Medicine (PMCH)", questionCount: 0, examId: "mccqe" },
+  { id: "psychiatry", name: "Psychiatry", questionCount: 0, examId: "mccqe" },
+  { id: "surgery", name: "Surgery", questionCount: 0, examId: "mccqe" },
 ];
 
 async function accountSource() {
@@ -34,6 +34,8 @@ const paidSource = cache(async () => {
 });
 
 export async function getSubjects(): Promise<Subject[]> { return (await paidSource()).getSubjects(); }
+export async function getExams(): Promise<Exam[]> { return (await accountSource()).getExams(); }
+export async function getCurrentExam(): Promise<Exam | undefined> { return (await accountSource()).getCurrentExam(); }
 export async function getPublicSubjects(): Promise<Subject[]> {
   try {
     return await supabase.getPublicSubjects();
