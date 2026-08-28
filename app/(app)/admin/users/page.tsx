@@ -79,7 +79,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               <TableHead>Role and permissions</TableHead>
               <TableHead>Billing access</TableHead>
               <TableHead>Activity</TableHead>
-              <TableHead>Complimentary access</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -99,18 +98,18 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     {permissionsForRole(user.role).join(" · ")}
                   </p>
                 </TableCell>
-                <TableCell className="min-w-40 align-top">
+                <TableCell className="min-w-72 align-top">
                   <AccessBadge user={user} />
                   {user.subscriptionStatus ? <p className="mt-2 text-xs capitalize text-muted-foreground">{user.subscriptionStatus.replaceAll("_", " ")} until {formatDate(user.accessUntil)}</p> : null}
                   {user.access === "grant" && user.grantReason ? <p className="mt-2 text-xs text-muted-foreground">Reason: {user.grantReason}</p> : null}
+                  <div className="mt-3">
+                    <GrantForm userId={user.id} hasGrant={Boolean(user.grantReason !== null || user.grantExpiresAt)} reason={user.grantReason} expiresAt={user.grantExpiresAt} />
+                    {user.grantExpiresAt ? <p className="mt-2 text-xs text-muted-foreground">Expires {formatDate(user.grantExpiresAt)}</p> : null}
+                  </div>
                 </TableCell>
                 <TableCell className="min-w-40 align-top text-xs">
                   <p><span className="text-muted-foreground">Joined:</span> {formatDate(user.createdAt)}</p>
                   <p className="mt-2"><span className="text-muted-foreground">Last sign-in:</span> {formatDate(user.lastSignInAt)}</p>
-                </TableCell>
-                <TableCell className="min-w-56 align-top">
-                  <GrantForm userId={user.id} hasGrant={Boolean(user.grantReason !== null || user.grantExpiresAt)} reason={user.grantReason} expiresAt={user.grantExpiresAt} />
-                  {user.grantExpiresAt ? <p className="mt-2 text-xs text-muted-foreground">Expires {formatDate(user.grantExpiresAt)}</p> : null}
                 </TableCell>
               </TableRow>
             ))}
