@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleButton } from "@/components/google-button";
 import { signUp } from "@/lib/actions";
 import { billingConfigured } from "@/lib/billing-core";
 import { safeReturnPath } from "@/lib/urls";
@@ -41,6 +42,8 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
                 <CardDescription>Set up a Montreal QBank account, then choose a plan at Stripe Checkout.</CardDescription>
               </CardHeader>
               <CardContent>
+                <GoogleButton next={returnPath} label="Sign up with Google" />
+                <div className="relative my-5"><div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or use email</span></div></div>
                 <form action={signUp} className="space-y-5">
                   <input type="hidden" name="next" value={returnPath} />
                   {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{error}</p>}

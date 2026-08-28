@@ -117,6 +117,25 @@ export async function signUp(formData: FormData) {
   redirect(`/signup?notice=confirm&email=${encodeURIComponent(email)}`);
 }
 
+/**
+ * Google OAuth via Supabase (PKCE). The provider redirects back to Supabase,
+ * which then sends the browser to our /auth/callback with a code to exchange.
+ */
+export async function signInWithGoogle(formData: FormData) {
+  if (await isDemoSession()) redirect("/dashboard");
+  const next = safeReturnPath(String(formData.get("next") ?? ""), "/dashboard");
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${applicationOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      queryParams: { access_type: "offline", prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) redirect(`/login?error=${encodeURIComponent("Google sign-in is not available right now.")}`);
+  redirect(data.url);
+}
+
 export async function signOut() {
   if (await isDemoSession()) {
     (await cookies()).delete(DEMO_COOKIE);
