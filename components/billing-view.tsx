@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, CircleAlert, CreditCard, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { BillingPortalButton } from "@/components/billing-portal-button";
@@ -17,7 +17,7 @@ function statusLabel(status?: string) {
   return status.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
 
-export function BillingView({ plans, summary, checkout, notice }: { plans: BillingPlan[]; summary: BillingSummary; checkout?: string; notice?: string }) {
+export function BillingView({ plans, summary, checkout, notice, requestedPlan }: { plans: BillingPlan[]; summary: BillingSummary; checkout?: string; notice?: string; requestedPlan?: string }) {
   const router = useRouter();
   const [pendingPlan, setPendingPlan] = useState<BillingPlanKey>();
   const [pollingComplete, setPollingComplete] = useState(false);
@@ -68,6 +68,19 @@ export function BillingView({ plans, summary, checkout, notice }: { plans: Billi
       || summary.status === "unpaid"
       || summary.status === "canceled"
     );
+  // A pricing-card "Subscribe" link arrives as ?plan=<key>; start that Checkout
+  // once the user is signed in and eligible. Runs at most once per page load.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current || pendingPlan) return;
+    const plan = plans.find((candidate) => candidate.key === requestedPlan);
+    if (!plan?.configured || !summary.configured || summary.mode === "demo" || !canChoosePlan) return;
+    autoStarted.current = true;
+    const timer = window.setTimeout(() => void startCheckout(plan.key), 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedPlan]);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 md:px-8 md:py-8">
       <PageHeader eyebrow="Account" title="Billing" description="Choose a plan or manage your Montreal QBank subscription." />

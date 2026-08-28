@@ -8,7 +8,7 @@ export const revalidate = 3600;
 
 export default async function Home() {
   const origin = siteOrigin();
-  const { subjects, showSubjects, showPricing, plans } = await marketingShellData();
+  const { subjects, showSubjects, showPricing, checkoutAvailable, plans } = await marketingShellData();
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -18,5 +18,5 @@ export default async function Home() {
       { "@type": "FAQPage", mainEntity: marketingFaqs.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
     ],
   };
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }} /><MarketingShell showSubjects={showSubjects} showPricing={showPricing}><HeroSection /><FeaturesSection /><ProgressSection />{showSubjects ? <SubjectsSection subjects={subjects} /> : null}{showPricing ? <PricingSection plans={plans} /> : null}<FaqSection /><AccessSection /></MarketingShell></>;
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }} /><MarketingShell showSubjects={showSubjects} showPricing={showPricing}><HeroSection /><FeaturesSection /><ProgressSection />{showSubjects ? <SubjectsSection subjects={subjects} /> : null}{showPricing ? <PricingSection plans={plans} checkoutAvailable={checkoutAvailable} /> : null}<FaqSection /><AccessSection /></MarketingShell></>;
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Billing" };
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string; notice?: string }>;
+  searchParams: Promise<{ checkout?: string; notice?: string; plan?: string }>;
 }) {
   const params = await searchParams;
   if (params.checkout === "success") {
@@ -21,5 +21,5 @@ export default async function BillingPage({
     }
   }
   const summary = await getBillingSummary();
-  return <BillingView plans={publicBillingPlans()} summary={summary} checkout={params.checkout} notice={params.notice} />;
+  return <BillingView plans={publicBillingPlans()} summary={summary} checkout={params.checkout} notice={params.notice} requestedPlan={params.plan} />;
 }
