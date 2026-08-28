@@ -202,3 +202,35 @@ export function bookingErrorMessage(raw: string | undefined) {
   if (message.includes("not_signed_in")) return "Sign in to book a session.";
   return "We could not hold that time. Try again.";
 }
+
+// ---------- tutor portal ----------
+
+export const TUTOR_BOOKING_STATUSES = ["completed", "cancelled"] as const;
+export type TutorBookingStatus = (typeof TUTOR_BOOKING_STATUSES)[number];
+
+/**
+ * Mirrors the checks inside the `tutor_set_booking` RPC so the action can
+ * fail fast with a friendly message. Returns the normalised payload.
+ */
+export function validateTutorBookingUpdate({ meetingUrl, status }: { meetingUrl?: string | null; status?: string | null }) {
+  const url = (meetingUrl ?? "").trim();
+  if (url && (!/^https:\/\/\S+$/.test(url) || url.length > 500)) throw new Error("Meeting links must start with https://.");
+  if (status && !TUTOR_BOOKING_STATUSES.includes(status as TutorBookingStatus)) throw new Error("Bookings can only be marked completed or cancelled.");
+  if (!url && meetingUrl === undefined && !status) throw new Error("Nothing to update.");
+  return { meetingUrl: meetingUrl === undefined ? null : url, status: (status as TutorBookingStatus | undefined) ?? null };
+}
+
+/** Maps tutor RPC exception names to user-facing messages. */
+export function tutorErrorMessage(raw: string | undefined) {
+  const message = raw ?? "";
+  if (message.includes("not_a_tutor")) return "Your account is not linked to a tutor profile.";
+  if (message.includes("booking_unknown")) return "Unknown booking.";
+  if (message.includes("booking_not_paid")) return "Only paid bookings can be updated.";
+  if (message.includes("meeting_url_invalid")) return "Meeting links must start with https://.";
+  if (message.includes("status_invalid")) return "Bookings can only be marked completed or cancelled.";
+  if (message.includes("slot_has_paid_booking")) return "That slot has a paid booking. Ask an admin to cancel it first.";
+  if (message.includes("timezone_invalid")) return "Unknown timezone.";
+  if (message.includes("headline_too_long")) return "Headline is too long.";
+  if (message.includes("bio_too_long")) return "Bio is too long.";
+  return "Something went wrong.";
+}

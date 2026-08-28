@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, CircleHelp, GraduationCap, LayoutDashboard, PlusCircle, Settings, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, BookOpenText, CalendarClock, CircleHelp, GraduationCap, LayoutDashboard, PlusCircle, Settings, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,8 @@ function activePath(pathname: string, href: string) {
   return pathname.startsWith(href) || (href === "/create" && pathname.startsWith("/session"));
 }
 
-export function AppShell({ children, user, demo = false, admin = false }: { children: React.ReactNode; user?: { name: string; email: string; streakDays?: number }; demo?: boolean; admin?: boolean }) {
-  const navItems = admin ? [...items, { href: "/admin", label: "Admin", icon: ShieldCheck }] : items;
+export function AppShell({ children, user, demo = false, admin = false, tutor = false }: { children: React.ReactNode; user?: { name: string; email: string; streakDays?: number }; demo?: boolean; admin?: boolean; tutor?: boolean }) {
+  const navItems = [...items, ...(tutor ? [{ href: "/coaching/tutor", label: "Tutor", icon: CalendarClock }] : []), ...(admin ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : [])];
   const initials = (user?.name ?? "LP").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const pathname = usePathname();
   return (
