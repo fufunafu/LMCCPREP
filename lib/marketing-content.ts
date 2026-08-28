@@ -6,14 +6,14 @@ export type FaqGroup = { title: string; items: ReadonlyArray<readonly [string, s
  */
 export function marketingFaqs(checkoutOpen: boolean): ReadonlyArray<readonly [string, string]> {
   return [
-    ["Who is Montreal QBank for?", "Canadian medical students and graduates preparing for the MCCQE, formerly MCCQE Part I. It is an independent study resource and is not affiliated with the Medical Council of Canada."],
+    ["Who is Montreal QBank for?", "Medical students and graduates preparing for the MCCQE, formerly MCCQE Part I, or for the USMLE Step 1 and Step 2 CK. The question bank currently focuses on the MCCQE, and one-to-one coaching is available for both exams. Montreal QBank is an independent study resource and is not affiliated with the Medical Council of Canada or the NBME."],
     ["Is there a free trial?", "Yes. The demo opens the full practice environment on temporary, simulated data with no card and no account, so you can try tutor mode, timed mode, review, and analytics before you pay."],
     ["How much does it cost?", checkoutOpen
-      ? "Monthly, three-month, and annual plans are priced in Canadian dollars and listed on the Pricing page. The three-month and annual plans cost less per month than paying monthly. Taxes and the final total are shown at Stripe Checkout before you pay."
+      ? "Monthly, three-month, and annual plans are priced in Canadian dollars and listed on the Pricing page; the three-month and annual plans cost less per month than paying monthly. Students who sign up through their institution may be eligible for a group discount, and you can always email us through the Support page to ask about one. Taxes and the final total are shown before you pay."
       : "Monthly, three-month, and annual plans are priced in Canadian dollars and listed on the Pricing page. The current rollout is invite-only; request an invitation for saved account access."],
     ["What is included?", "The current practice scope is Pediatrics, Psychiatry, Internal Medicine, Population Health and Community Medicine, and Surgery. Obstetrics and Gynecology is not included. Every plan includes tutor and timed sessions, explanations with references, flags, notes, session review, and progress analytics."],
     ["How do I get started?", checkoutOpen
-      ? "Try the demo, then create an account and choose a plan. Access starts as soon as Stripe Checkout completes, and you can sign in on any device."
+      ? "Try the demo, then create an account, pick a plan, and check out. Access starts right away, and you can sign in on any device."
       : "Try the no-card demo immediately or request an invitation for saved account access. The current rollout does not offer purchases."],
     ["How does timed mode match the exam?", "Timed mode uses 83 seconds per question, matching the current MCCQE pace of 115 questions in 160 minutes, with an optional 115-question section that mirrors a full exam block."],
     ["Can I cancel?", "Yes, any time from the Stripe customer portal in your Billing page. Renewal stops and access continues through the period you have already paid for. Refund terms are on the Refund policy page."],
@@ -49,7 +49,7 @@ export const extendedFaqGroups = (checkoutOpen: boolean): readonly FaqGroup[] =>
       ["Where do the questions come from?", "Every item carries rights and editorial metadata. Public counts and paid access include only questions that are rights-approved and editorially reviewed to a Canadian standard; anything else is withheld."],
       ["Why do the subject counts show zero or change over time?", "Counts reflect only content that has completed rights and editorial review. They grow as the review process publishes approved items."],
       ["How do you handle duplicate or incorrect questions?", "The bank is de-duplicated and corrected in reviewed batches before release. If you spot a problem, use the report option on the question and it is routed to editorial review."],
-      ["Is Montreal QBank affiliated with the Medical Council of Canada?", "No. Montreal QBank is an independent study resource and is not affiliated with, endorsed by, or connected to the Medical Council of Canada."],
+      ["Is Montreal QBank affiliated with the Medical Council of Canada or the NBME?", "No. Montreal QBank is an independent study resource and is not affiliated with, endorsed by, or connected to the Medical Council of Canada, the NBME, or any licensing body."],
       ["Is this a substitute for clinical advice?", "No. Montreal QBank is an educational service only and must not be used for urgent clinical questions or patient care decisions."],
     ],
   },
