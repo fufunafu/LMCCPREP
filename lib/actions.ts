@@ -11,6 +11,7 @@ import type { QuestionStatus, SessionMode } from "@/lib/types";
 import { configuredSiteOrigin, safeReturnPath } from "@/lib/urls";
 import { DEFAULT_SECONDS_PER_QUESTION } from "@/lib/utils";
 import { requireEntitledUserId } from "@/lib/billing";
+import { billingConfigured } from "@/lib/billing-core";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -72,6 +73,48 @@ export async function signIn(formData: FormData) {
   }
   if (message) redirect(`/login?error=${encodeURIComponent(message)}&email=${encodeURIComponent(email)}`);
   redirect(safeReturnPath(next));
+}
+
+/**
+ * Self-serve account creation. Only offered once a Stripe Checkout integration
+ * is configured, since the account exists to hold a subscription. Supabase
+ * sends a confirmation email; the callback then continues to `next`.
+ */
+export async function signUp(formData: FormData) {
+  if (await isDemoSession()) redirect("/dashboard");
+  if (!billingConfigured()) redirect("/login");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  const next = safeReturnPath(String(formData.get("next") ?? ""), "/billing");
+  const back = (message: string) => redirect(`/signup?error=${encodeURIComponent(message)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) back("Enter a valid email address.");
+  if (password.length < 10) back("Use a password of at least 10 characters.");
+  if (password !== confirm) back("The passwords do not match.");
+  const supabase = await createClient();
+  const emailRedirectTo = `${applicationOrigin()}/auth/callback?next=${encodeURIComponent(next)}`;
+  let session = false;
+  let message: string | null = null;
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+    if (error) {
+      const normalized = error.message.toLowerCase();
+      message = normalized.includes("already registered") || normalized.includes("already exists")
+        ? "An account with that email already exists. Sign in instead."
+        : normalized.includes("signups not allowed") || normalized.includes("disabled")
+          ? "Account creation is not open yet. Request an invitation instead."
+          : normalized.includes("password")
+            ? "Choose a stronger password."
+            : authErrorMessage(error.message);
+    } else {
+      session = Boolean(data.session);
+    }
+  } catch {
+    message = "We could not reach the sign-up service. Check your connection and try again.";
+  }
+  if (message) back(message);
+  if (session) redirect(next);
+  redirect(`/signup?notice=confirm&email=${encodeURIComponent(email)}`);
 }
 
 export async function signOut() {

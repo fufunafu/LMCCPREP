@@ -33,7 +33,7 @@ describe("billing rollout UI", () => {
     const html = renderToStaticMarkup(<BillingView plans={plans} summary={summary()} />);
     expect(html).toContain("Choose monthly");
     expect(html).toContain("Choose annual");
-    expect(html).toContain("Private beta access");
+    expect(html).toContain("Current access");
     expect(html).toContain("Applicable taxes, if any");
     expect(html).toContain("Obstetrics and Gynecology is not yet included");
     expect(html).toContain("Available rights-approved, reviewed questions");

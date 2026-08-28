@@ -1,23 +1,31 @@
-export const marketingFaqs = [
-  ["Who is Montreal QBank for?", "It is designed for Canadian medical students and graduates preparing for the MCCQE, formerly MCCQE Part I."],
-  ["How do I get access?", "Try the no-card demo immediately or request an invitation for saved account access. The current rollout does not offer purchases."],
-  ["What is included?", "The current practice scope is Pediatrics, Psychiatry, Internal Medicine, Population Health and Community Medicine, and Surgery. Obstetrics and Gynecology is not included. Invited accounts see only the content available to their account."],
-  ["How does timed mode match the exam?", "Timed mode uses 83 seconds per question, matching the current MCCQE pace of 115 questions in 160 minutes."],
-  ["Can I use it on my phone?", "Yes. Every practice surface is designed to work comfortably on phone-sized screens and larger."],
-] as const;
-
 export type FaqGroup = { title: string; items: ReadonlyArray<readonly [string, string]> };
 
+/**
+ * Short FAQ for the homepage. Copy depends on whether self-serve Checkout is
+ * open (subscribe) or the site is still invite-only (request access).
+ */
+export function marketingFaqs(checkoutOpen: boolean): ReadonlyArray<readonly [string, string]> {
+  return [
+    ["Who is Montreal QBank for?", "It is designed for Canadian medical students and graduates preparing for the MCCQE, formerly MCCQE Part I."],
+    ["How do I get access?", checkoutOpen
+      ? "Try the no-card demo immediately, or create an account and choose a monthly, three-month, or annual plan. Access starts as soon as Stripe Checkout completes."
+      : "Try the no-card demo immediately or request an invitation for saved account access. The current rollout does not offer purchases."],
+    ["What is included?", "The current practice scope is Pediatrics, Psychiatry, Internal Medicine, Population Health and Community Medicine, and Surgery. Obstetrics and Gynecology is not included. Accounts see only the content available to their account."],
+    ["How does timed mode match the exam?", "Timed mode uses 83 seconds per question, matching the current MCCQE pace of 115 questions in 160 minutes."],
+    ["Can I use it on my phone?", "Yes. Every practice surface is designed to work comfortably on phone-sized screens and larger."],
+  ];
+}
+
 /** Longer, topic-grouped FAQ shown only on the dedicated /faq page. */
-export const extendedFaqGroups: readonly FaqGroup[] = [
-  { title: "Getting started", items: marketingFaqs },
+export const extendedFaqGroups = (checkoutOpen: boolean): readonly FaqGroup[] => [
+  { title: "Getting started", items: marketingFaqs(checkoutOpen) },
   {
     title: "The demo",
     items: [
-      ["What does the free demo include?", "The demo opens a complete practice environment with a dashboard, tutor and timed sessions, flags, notes, session review, and statistics so you can see how everything works before requesting access."],
+      ["What does the free demo include?", "The demo opens a complete practice environment with a dashboard, tutor and timed sessions, flags, notes, session review, and statistics so you can see how everything works before subscribing."],
       ["Do I need a card or an account for the demo?", "No. The demo needs no card and no account. It runs on temporary, simulated data and is clearly labelled as such throughout."],
-      ["Is my demo progress saved?", "No. Demo data is temporary and is not linked to an account. Saved progress requires an invited account."],
-      ["Can I request access while in the demo?", "Sign out of the demo first. Access requests are only accepted from the public site so that demo sessions stay isolated from real accounts."],
+      ["Is my demo progress saved?", "No. Demo data is temporary and is not linked to an account. Saved progress requires an account."],
+      ["Can I create an account while in the demo?", "Sign out of the demo first. Account creation and access requests are only accepted from the public site so that demo sessions stay isolated from real accounts."],
     ],
   },
   {
@@ -50,7 +58,7 @@ export const extendedFaqGroups: readonly FaqGroup[] = [
   {
     title: "Accounts and privacy",
     items: [
-      ["How do I sign in or recover my password?", "Invited accounts sign in with email and password. Password recovery is available from the sign-in page and never confirms whether an address has an account."],
+      ["How do I sign in or recover my password?", "Accounts sign in with email and password. Password recovery is available from the sign-in page and never confirms whether an address has an account."],
       ["How do I delete my account or my data?", "Contact support to request access, correction, or deletion of your data. Identity verification may be required before a request is completed. See the Privacy page for details."],
       ["Does the site work offline?", "Montreal QBank can be installed as a web app. If your connection drops, an offline page is shown; practice itself requires a connection."],
     ],
@@ -58,7 +66,7 @@ export const extendedFaqGroups: readonly FaqGroup[] = [
   {
     title: "Billing",
     items: [
-      ["How much does it cost?", "Invited learners can choose monthly, three-month, or annual access in Canadian dollars. Current prices are listed on the Pricing page; taxes and the final total are shown before payment."],
+      ["How much does it cost?", "Choose monthly, three-month, or annual access in Canadian dollars. Current prices are listed on the Pricing page; taxes and the final total are shown before payment."],
       ["How do I cancel?", "Cancel any time from the Stripe customer portal in your account's Billing page. Renewal stops and access continues through the paid period."],
       ["Who processes payments?", "Billing is processed by Stripe. Montreal QBank never sees or stores your full card details."],
       ["What is your refund policy?", "Refund terms are published on the Refund policy page and are linked from every pricing surface."],

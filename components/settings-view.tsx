@@ -42,7 +42,7 @@ export function SettingsView({ profile, billing }: { profile?: Profile; billing:
           ? billingDate ? `Complimentary access is available through ${billingDate}.` : "Complimentary access does not currently expire."
           : billing.required
             ? "Choose a plan to use the question bank."
-            : "Billing enforcement is currently off for the private beta.";
+            : "Billing enforcement is currently off.";
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);

@@ -6,10 +6,10 @@ import { marketingShellData } from "@/lib/marketing-shell-data";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = { title: "Pricing", description: "Monthly, three-month, and annual subscription options for invited Montreal QBank learners, billed in CAD through Stripe.", alternates: { canonical: "/pricing" }, openGraph: { title: "Pricing | Montreal QBank", description: "Monthly, three-month, and annual subscription options for invited learners, billed in CAD through Stripe.", url: "/pricing" } };
+export const metadata: Metadata = { title: "Pricing", description: "Monthly, three-month, and annual subscription options for Montreal QBank learners, billed in CAD through Stripe.", alternates: { canonical: "/pricing" }, openGraph: { title: "Pricing | Montreal QBank", description: "Monthly, three-month, and annual subscription options, billed in CAD through Stripe.", url: "/pricing" } };
 
 export default async function PricingPage() {
   const { showSubjects, showPricing, checkoutAvailable, plans } = await marketingShellData();
   if (!showPricing) notFound();
-  return <MarketingShell showSubjects={showSubjects} showPricing={showPricing}><PricingSection plans={plans} standalone checkoutAvailable={checkoutAvailable} /><AccessSection /></MarketingShell>;
+  return <MarketingShell showSubjects={showSubjects} showPricing={showPricing} checkoutAvailable={checkoutAvailable}><PricingSection plans={plans} standalone checkoutAvailable={checkoutAvailable} /><AccessSection checkoutAvailable={checkoutAvailable} /></MarketingShell>;
 }

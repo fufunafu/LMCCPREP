@@ -21,7 +21,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Mail className="size-5" /></div>
             <h1 className="text-2xl font-semibold tracking-tight">Reset your password</h1>
-            <CardDescription>Enter the email address for your invited Montreal QBank account.</CardDescription>
+            <CardDescription>Enter the email address for your Montreal QBank account.</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={requestPasswordReset} className="space-y-5">
@@ -29,7 +29,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
               <div className="space-y-2"><Label htmlFor="reset-email">Email address</Label><Input id="reset-email" name="email" type="email" defaultValue={email ?? ""} autoComplete="email" required className="h-11" /></div>
               <Button type="submit" className="h-11 w-full bg-emerald-800 text-base hover:bg-emerald-900">Send reset link</Button>
             </form>
-            <p className="mt-5 text-xs leading-5 text-muted-foreground">For privacy, the confirmation is the same whether or not an invited account exists.</p>
+            <p className="mt-5 text-xs leading-5 text-muted-foreground">For privacy, the confirmation is the same whether or not an account exists.</p>
           </CardContent>
         </Card>
       </div>

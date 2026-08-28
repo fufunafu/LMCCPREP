@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as "invite" | "magiclink" | "recovery" | "email" | null;
+  const type = searchParams.get("type") as "invite" | "magiclink" | "recovery" | "email" | "signup" | null;
   const next = safeReturnPath(searchParams.get("next"), type === "invite" || type === "recovery" ? "/auth/set-password" : "/dashboard");
   const siteOrigin = configuredSiteOrigin() ?? origin;
 
