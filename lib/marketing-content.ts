@@ -6,19 +6,24 @@ export type FaqGroup = { title: string; items: ReadonlyArray<readonly [string, s
  */
 export function marketingFaqs(checkoutOpen: boolean): ReadonlyArray<readonly [string, string]> {
   return [
-    ["Who is Montreal QBank for?", "It is designed for Canadian medical students and graduates preparing for the MCCQE, formerly MCCQE Part I."],
-    ["How do I get access?", checkoutOpen
-      ? "Try the no-card demo immediately, or create an account and choose a monthly, three-month, or annual plan. Access starts as soon as Stripe Checkout completes."
+    ["Who is Montreal QBank for?", "Canadian medical students and graduates preparing for the MCCQE, formerly MCCQE Part I. It is an independent study resource and is not affiliated with the Medical Council of Canada."],
+    ["Is there a free trial?", "Yes. The demo opens the full practice environment on temporary, simulated data with no card and no account, so you can try tutor mode, timed mode, review, and analytics before you pay."],
+    ["How much does it cost?", checkoutOpen
+      ? "Monthly, three-month, and annual plans are priced in Canadian dollars and listed on the Pricing page. The three-month and annual plans cost less per month than paying monthly. Taxes and the final total are shown at Stripe Checkout before you pay."
+      : "Monthly, three-month, and annual plans are priced in Canadian dollars and listed on the Pricing page. The current rollout is invite-only; request an invitation for saved account access."],
+    ["What is included?", "The current practice scope is Pediatrics, Psychiatry, Internal Medicine, Population Health and Community Medicine, and Surgery. Obstetrics and Gynecology is not included. Every plan includes tutor and timed sessions, explanations with references, flags, notes, session review, and progress analytics."],
+    ["How do I get started?", checkoutOpen
+      ? "Try the demo, then create an account and choose a plan. Access starts as soon as Stripe Checkout completes, and you can sign in on any device."
       : "Try the no-card demo immediately or request an invitation for saved account access. The current rollout does not offer purchases."],
-    ["What is included?", "The current practice scope is Pediatrics, Psychiatry, Internal Medicine, Population Health and Community Medicine, and Surgery. Obstetrics and Gynecology is not included. Accounts see only the content available to their account."],
-    ["How does timed mode match the exam?", "Timed mode uses 83 seconds per question, matching the current MCCQE pace of 115 questions in 160 minutes."],
-    ["Can I use it on my phone?", "Yes. Every practice surface is designed to work comfortably on phone-sized screens and larger."],
+    ["How does timed mode match the exam?", "Timed mode uses 83 seconds per question, matching the current MCCQE pace of 115 questions in 160 minutes, with an optional 115-question section that mirrors a full exam block."],
+    ["Can I cancel?", "Yes, any time from the Stripe customer portal in your Billing page. Renewal stops and access continues through the period you have already paid for. Refund terms are on the Refund policy page."],
+    ["Can I use it on my phone?", "Yes. Every practice surface is designed to work comfortably on phone-sized screens and larger, and the site can be installed as a web app."],
   ];
 }
 
 /** Longer, topic-grouped FAQ shown only on the dedicated /faq page. */
 export const extendedFaqGroups = (checkoutOpen: boolean): readonly FaqGroup[] => [
-  { title: "Getting started", items: marketingFaqs(checkoutOpen) },
+  { title: "Getting started", items: marketingFaqs(checkoutOpen).filter(([question]) => !["Can I cancel?", "How much does it cost?"].includes(question)) },
   {
     title: "The demo",
     items: [
