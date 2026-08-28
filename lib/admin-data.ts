@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAdmin } from "@/lib/admin";
+import { isAdminEmail, roleFromAppMetadata, type UserRole } from "@/lib/admin-core";
 import { billingPlans, hasCurrentEntitlement, planForPrice } from "@/lib/billing-core";
 import type { BillingSubscriptionStatus } from "@/lib/types";
 
@@ -8,6 +9,8 @@ export type AdminUser = {
   id: string;
   email: string;
   displayName: string | null;
+  role: UserRole;
+  roleSource: "default" | "metadata" | "environment";
   createdAt: string;
   lastSignInAt: string | null;
   confirmed: boolean;
@@ -74,10 +77,14 @@ export async function listAdminUsers(): Promise<AdminUser[]> {
       const grant = grantByUser.get(user.id);
       const subscribed = subscription ? hasCurrentEntitlement({ status: subscription.status, accessUntil: subscription.access_until ?? undefined }) : false;
       const granted = grant ? hasCurrentEntitlement({ granted: true, grantExpiresAt: grant.expires_at ?? undefined }) : false;
+      const environmentAdmin = isAdminEmail(user.email, process.env.ADMIN_EMAILS);
+      const metadataRole = roleFromAppMetadata(user.app_metadata);
       return {
         id: user.id,
         email: user.email ?? "",
         displayName: names.get(user.id) ?? null,
+        role: environmentAdmin ? "admin" : metadataRole,
+        roleSource: environmentAdmin ? "environment" : user.app_metadata?.role ? "metadata" : "default",
         createdAt: user.created_at,
         lastSignInAt: user.last_sign_in_at ?? null,
         confirmed: Boolean(user.email_confirmed_at),
