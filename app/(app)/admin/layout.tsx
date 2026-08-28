@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Non-admins get a 404 so the panel's existence is not advertised.
   if (!(await isAdmin())) notFound();
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 md:px-8 md:py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:py-10">
       <PageHeader eyebrow="Administration" title="Admin panel" description="Accounts, subscriptions, the question bank, and billing controls." />
       <AdminNav />
       {children}
