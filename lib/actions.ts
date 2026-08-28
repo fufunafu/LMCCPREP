@@ -87,7 +87,9 @@ export async function signUp(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
   const next = safeReturnPath(String(formData.get("next") ?? ""), "/billing");
+  const examId = String(formData.get("examId") ?? "mccqe");
   const back = (message: string) => redirect(`/signup?error=${encodeURIComponent(message)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+  if (!/^[a-z0-9-]{2,32}$/.test(examId)) back("Choose a valid exam.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) back("Enter a valid email address.");
   if (password.length < 10) back("Use a password of at least 10 characters.");
   if (password !== confirm) back("The passwords do not match.");
@@ -96,7 +98,7 @@ export async function signUp(formData: FormData) {
   let session = false;
   let message: string | null = null;
   try {
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo, data: { exam_id: examId } } });
     if (error) {
       const normalized = error.message.toLowerCase();
       message = normalized.includes("already registered") || normalized.includes("already exists")

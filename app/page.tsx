@@ -14,7 +14,7 @@ export default async function Home() {
     "@graph": [
       { "@type": "Organization", "@id": `${origin}/#organization`, name: "Montreal QBank", url: origin, legalName: "15041074 Canada Inc." },
       { "@type": "WebSite", "@id": `${origin}/#website`, url: origin, name: "Montreal QBank", publisher: { "@id": `${origin}/#organization` } },
-      { "@type": "SoftwareApplication", name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web", url: origin, description: "Focused MCCQE question bank practice.", offers: showPricing ? plans.filter((plan) => plan.amountCad).map((plan) => ({ "@type": "Offer", priceCurrency: "CAD", price: plan.amountCad, category: plan.cadence, url: `${origin}/pricing` })) : [] },
+      { "@type": "SoftwareApplication", name: "Montreal QBank", applicationCategory: "EducationalApplication", operatingSystem: "Web", url: origin, description: "Focused MCCQE and USMLE question bank practice.", offers: showPricing ? plans.filter((plan) => plan.amountCad).map((plan) => ({ "@type": "Offer", priceCurrency: "CAD", price: plan.amountCad, category: plan.cadence, url: `${origin}/pricing` })) : [] },
       { "@type": "FAQPage", mainEntity: marketingFaqs(checkoutAvailable).map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
     ],
   };

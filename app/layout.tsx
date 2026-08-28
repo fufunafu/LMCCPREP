@@ -12,10 +12,10 @@ const origin = siteOrigin();
 export const metadata: Metadata = {
   metadataBase: new URL(origin),
   title: {
-    default: "Montreal QBank | Focused MCCQE Practice",
+    default: "Montreal QBank | MCCQE and USMLE Practice",
     template: "%s | Montreal QBank",
   },
-  description: "Focused question bank practice for Canadian medical students and graduates preparing for the current MCCQE.",
+  description: "Focused question bank practice for medical students and graduates preparing for the MCCQE Part I or the USMLE.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   applicationName: "Montreal QBank",
@@ -23,16 +23,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
-    title: "Montreal QBank | Focused MCCQE Practice",
-    description: "Practice with purpose for the current MCCQE.",
+    title: "Montreal QBank | MCCQE and USMLE Practice",
+    description: "Practice with purpose for the MCCQE Part I or the USMLE.",
     url: origin,
     siteName: "Montreal QBank",
     images: [{ url: "/og.png", width: 1672, height: 941, alt: "Montreal QBank question bank" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Montreal QBank | Focused MCCQE Practice",
-    description: "Practice with purpose for the current MCCQE.",
+    title: "Montreal QBank | MCCQE and USMLE Practice",
+    description: "Practice with purpose for the MCCQE Part I or the USMLE.",
     images: ["/og.png"],
   },
 };

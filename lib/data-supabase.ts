@@ -80,7 +80,10 @@ export const getCurrentExamId = cache(async (): Promise<string> => {
   const id = data?.claims?.sub as string | undefined;
   if (!id) return DEFAULT_EXAM_ID;
   const { data: profile } = await supabase.from("profiles").select("exam_id").eq("id", id).maybeSingle();
-  return profile?.exam_id ?? DEFAULT_EXAM_ID;
+  if (profile?.exam_id) return profile.exam_id;
+  // New accounts have no profile row yet; honour the exam chosen at signup.
+  const metadataExam = (data?.claims?.user_metadata as { exam_id?: string } | undefined)?.exam_id;
+  return typeof metadataExam === "string" && /^[a-z0-9-]{2,32}$/.test(metadataExam) ? metadataExam : DEFAULT_EXAM_ID;
 });
 
 export async function getCurrentExam(): Promise<Exam | undefined> {

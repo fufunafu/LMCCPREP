@@ -126,7 +126,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     admin.from("access_requests").select("*", { count: "exact", head: true }),
     admin.from("access_requests").select("*", { count: "exact", head: true }).gte("created_at", days(30)),
     admin.from("questions").select("*", { count: "exact", head: true }),
-    admin.from("questions").select("*", { count: "exact", head: true }).in("distribution_rights_status", ["original", "licensed"]).eq("editorial_status", "reviewed"),
+    admin.from("questions").select("*", { count: "exact", head: true }).in("distribution_rights_status", ["original", "licensed", "verified"]),
     admin.from("billing_settings").select("billing_required,grace_days").eq("id", true).maybeSingle(),
   ]);
 
@@ -169,7 +169,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
   };
 }
 
-export type AdminQuestionFilters = { subject?: string; rights?: string; editorial?: string; q?: string; page?: number };
+export type AdminQuestionFilters = { exam?: string; subject?: string; rights?: string; editorial?: string; q?: string; page?: number };
 export type AdminQuestionRow = {
   qid: number;
   subjectId: string;
@@ -193,6 +193,7 @@ export async function listAdminQuestions(filters: AdminQuestionFilters) {
     .order("qid", { ascending: true })
     .range((page - 1) * QUESTION_PAGE_SIZE, page * QUESTION_PAGE_SIZE - 1);
   if (filters.subject) query = query.eq("subject_id", filters.subject);
+  else if (filters.exam) query = filters.exam === "usmle" ? query.like("subject_id", "usmle-%") : query.not("subject_id", "like", "usmle-%");
   if (filters.rights) query = query.eq("distribution_rights_status", filters.rights);
   if (filters.editorial) query = query.eq("editorial_status", filters.editorial);
   if (filters.q?.trim()) {
@@ -201,7 +202,7 @@ export async function listAdminQuestions(filters: AdminQuestionFilters) {
   }
   const [{ data, error, count }, subjects, breakdown] = await Promise.all([
     query,
-    admin.from("subjects").select("id,name").order("sort"),
+    admin.from("subjects").select("id,name,exam_id").order("sort"),
     admin.from("questions").select("subject_id,distribution_rights_status,editorial_status"),
   ]);
   if (error || subjects.error || breakdown.error) throw new Error("Could not load questions.");
@@ -209,7 +210,7 @@ export async function listAdminQuestions(filters: AdminQuestionFilters) {
   for (const row of breakdown.data) {
     const entry = perSubject.get(row.subject_id) ?? { total: 0, approved: 0 };
     entry.total += 1;
-    if (["original", "licensed"].includes(row.distribution_rights_status) && row.editorial_status === "reviewed") entry.approved += 1;
+    if (["original", "licensed", "verified"].includes(row.distribution_rights_status)) entry.approved += 1;
     perSubject.set(row.subject_id, entry);
   }
   return {
@@ -227,7 +228,7 @@ export async function listAdminQuestions(filters: AdminQuestionFilters) {
     total: count ?? 0,
     page,
     pageSize: QUESTION_PAGE_SIZE,
-    subjects: subjects.data.map((subject) => ({ id: subject.id as string, name: subject.name as string, ...(perSubject.get(subject.id) ?? { total: 0, approved: 0 }) })),
+    subjects: subjects.data.map((subject) => ({ id: subject.id as string, name: subject.name as string, examId: subject.exam_id as string, ...(perSubject.get(subject.id) ?? { total: 0, approved: 0 }) })),
   };
 }
 

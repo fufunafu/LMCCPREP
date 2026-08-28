@@ -11,5 +11,5 @@ export const metadata: Metadata = { title: "Subjects", description: "Reviewed di
 export default async function SubjectsPage() {
   const { subjects, showSubjects, showPricing, checkoutAvailable } = await marketingShellData();
   if (!showSubjects) notFound();
-  return <MarketingShell showSubjects={showSubjects} showPricing={showPricing} checkoutAvailable={checkoutAvailable}><PageIntro eyebrow="Subjects" title="Current reviewed scope." copy="Only questions approved for public distribution and editorially reviewed are counted here." /><SubjectsSection subjects={subjects} /><AccessSection checkoutAvailable={checkoutAvailable} /></MarketingShell>;
+  return <MarketingShell showSubjects={showSubjects} showPricing={showPricing} checkoutAvailable={checkoutAvailable}><PageIntro eyebrow="Subjects" title="Current reviewed scope, by exam." copy="Only questions approved for public distribution and editorially reviewed are counted here. Choose your exam in Settings after signing in." /><SubjectsSection subjects={subjects} /><AccessSection checkoutAvailable={checkoutAvailable} /></MarketingShell>;
 }
