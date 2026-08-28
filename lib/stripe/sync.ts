@@ -3,6 +3,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { billingGraceDays, deriveAccessUntil, isoFromUnix, planForPrice, subscriptionPeriodEnd } from "@/lib/billing-core";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { applyCoachingPayment, isCoachingCheckout } from "@/lib/coaching-payments";
 import { getOptionalStripe, getStripe } from "@/lib/stripe/server";
 import type { BillingSubscriptionStatus } from "@/lib/types";
 
@@ -108,8 +109,19 @@ export async function processStripeEvent(event: Stripe.Event) {
   // own payloads only; subscription lifecycle events carry everything needed.
   const stripe = getOptionalStripe();
   switch (event.type) {
+    case "checkout.session.async_payment_succeeded": {
+      // One-time coaching payments (Payment Links in `payment` mode) confirm
+      // here; subscription checkouts never reach this event type in practice.
+      if (isCoachingCheckout(event.data.object)) await applyCoachingPayment(event.data.object);
+      return;
+    }
     case "checkout.session.completed": {
       const session = event.data.object;
+      if (isCoachingCheckout(session)) {
+        // Coaching bookings are prepaid one-time sessions, not subscriptions.
+        await applyCoachingPayment(session);
+        return;
+      }
       const userId = session.client_reference_id ?? session.metadata?.supabase_user_id;
       const customerId = objectId(session.customer);
       if (!userId || !customerId) throw new Error("Checkout session identity is incomplete.");

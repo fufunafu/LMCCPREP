@@ -78,3 +78,14 @@ export const extendedFaqGroups = (checkoutOpen: boolean): readonly FaqGroup[] =>
     ],
   },
 ];
+
+/** FAQ shown on the public /coaching page. */
+export const coachingFaqs: ReadonlyArray<readonly [string, string]> = [
+  ["Who are the tutors?", "Physicians and senior trainees who have personally passed the exam they coach: MCCQE Part I, USMLE Step 1, or USMLE Step 2 CK. Each profile lists the exams that tutor covers, and you only see availability for tutors who match your exam."],
+  ["Do I need a Montreal QBank subscription to book?", "No. You need a free account so we can attach the booking and meeting link to you, but coaching is priced per session and does not require a question-bank subscription."],
+  ["How does payment work?", "When you pick a time it is held for 20 minutes while you pay through Stripe. The booking is confirmed as soon as the payment completes. If you do not finish checkout, the hold simply expires and the time becomes available again."],
+  ["What is the cancellation policy?", "Cancel at least 24 hours before the session for a full refund by emailing support with your booking reference. Later cancellations and no-shows are not refunded, but we will do our best to reschedule if the tutor can accommodate it."],
+  ["Which timezone are the times shown in?", "Times are shown in your browser's timezone, and the timezone name is displayed next to the calendar so you can double-check before paying."],
+  ["Where does the session happen?", "Online, over video. A meeting link is added to your booking in your account before the session starts."],
+  ["Is this affiliated with the MCC or NBME?", "No. Montreal QBank coaching is an independent service and is not affiliated with, endorsed by, or connected to the Medical Council of Canada, the NBME, or any licensing body."],
+];

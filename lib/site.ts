@@ -11,4 +11,4 @@ export function siteOrigin() {
   }
 }
 
-export const publicRoutes = ["/", "/features", "/pricing", "/faq", "/request-access", "/terms", "/privacy", "/refund-policy", "/support"] as const;
+export const publicRoutes = ["/", "/features", "/pricing", "/faq", "/coaching", "/request-access", "/terms", "/privacy", "/refund-policy", "/support"] as const;
