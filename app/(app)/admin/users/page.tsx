@@ -1,8 +1,7 @@
 import { CreditCard, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
-import { GrantForm } from "@/components/admin/grant-form";
-import { RoleForm } from "@/components/admin/role-form";
 import { formatDate } from "@/components/admin/stat";
+import { UserDetailsSheet } from "@/components/admin/user-details-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +12,20 @@ function AccessBadge({ user }: { user: AdminUser }) {
   if (user.access === "subscription") return <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{user.plan ?? "Subscribed"}</Badge>;
   if (user.access === "grant") return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200">Complimentary</Badge>;
   return <Badge variant="secondary">No access</Badge>;
+}
+
+function RoleBadge({ user }: { user: AdminUser }) {
+  if (user.role === "admin") return <Badge className="bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200">Admin</Badge>;
+  return <Badge variant="secondary">Customer</Badge>;
+}
+
+function billingSummary(user: AdminUser) {
+  if (user.subscriptionStatus) {
+    const status = user.subscriptionStatus.replaceAll("_", " ");
+    return `${status}${user.cancelAtPeriodEnd ? ", cancels" : ""} until ${formatDate(user.accessUntil)}`;
+  }
+  if (user.access === "grant") return user.grantExpiresAt ? `until ${formatDate(user.grantExpiresAt)}` : "No expiry";
+  return null;
 }
 
 function SummaryCard({ label, value, icon: Icon, hint }: { label: string; value: number; icon: typeof UsersRound; hint: string }) {
@@ -76,15 +89,16 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           <TableHeader>
             <TableRow>
               <TableHead>Account</TableHead>
-              <TableHead>Role and permissions</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Billing access</TableHead>
               <TableHead>Activity</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="min-w-56 whitespace-normal align-top">
+                <TableCell className="min-w-64 py-3 align-middle">
                   <div className="font-medium">{user.email}{!user.confirmed ? <Badge variant="outline" className="ml-2">Unconfirmed</Badge> : null}</div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <UserRound className="size-3.5" aria-hidden="true" />
@@ -92,24 +106,36 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     {user.stripeCustomerId ? <><span>·</span><a className="underline underline-offset-2" href={"https://dashboard.stripe.com/customers/" + user.stripeCustomerId} target="_blank" rel="noreferrer">Stripe</a></> : null}
                   </div>
                 </TableCell>
-                <TableCell className="min-w-56 whitespace-normal align-top">
-                  <RoleForm userId={user.id} role={user.role} locked={user.roleSource === "environment"} />
-                  <p className="mt-2 max-w-64 text-xs leading-5 text-muted-foreground">
-                    {permissionsForRole(user.role).join(" · ")}
-                  </p>
+                <TableCell className="min-w-28 py-3 align-middle">
+                  <RoleBadge user={user} />
                 </TableCell>
-                <TableCell className="min-w-72 whitespace-normal align-top">
-                  <AccessBadge user={user} />
-                  {user.subscriptionStatus ? <p className="mt-2 text-xs capitalize text-muted-foreground">{user.subscriptionStatus.replaceAll("_", " ")} until {formatDate(user.accessUntil)}</p> : null}
-                  {user.access === "grant" && user.grantReason ? <p className="mt-2 text-xs text-muted-foreground">Reason: {user.grantReason}</p> : null}
-                  <div className="mt-3">
-                    <GrantForm userId={user.id} hasGrant={Boolean(user.grantReason !== null || user.grantExpiresAt)} reason={user.grantReason} expiresAt={user.grantExpiresAt} />
-                    {user.grantExpiresAt ? <p className="mt-2 text-xs text-muted-foreground">Expires {formatDate(user.grantExpiresAt)}</p> : null}
+                <TableCell className="min-w-52 py-3 align-middle">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <AccessBadge user={user} />
+                    {billingSummary(user) ? <span className="text-xs capitalize text-muted-foreground">{billingSummary(user)}</span> : null}
                   </div>
                 </TableCell>
-                <TableCell className="min-w-40 align-top text-xs">
-                  <p><span className="text-muted-foreground">Joined:</span> {formatDate(user.createdAt)}</p>
-                  <p className="mt-2"><span className="text-muted-foreground">Last sign-in:</span> {formatDate(user.lastSignInAt)}</p>
+                <TableCell className="min-w-72 py-3 align-middle text-xs">
+                  <span className="text-muted-foreground">Joined</span> {formatDate(user.createdAt)}
+                  <span className="mx-2 text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">Last sign-in</span> {formatDate(user.lastSignInAt)}
+                </TableCell>
+                <TableCell className="py-3 text-right align-middle">
+                  <UserDetailsSheet
+                    userId={user.id}
+                    email={user.email}
+                    displayName={user.displayName}
+                    role={user.role}
+                    roleLocked={user.roleSource === "environment"}
+                    permissions={permissionsForRole(user.role)}
+                    access={user.access}
+                    plan={user.plan}
+                    billingSummary={billingSummary(user)}
+                    grantReason={user.grantReason}
+                    grantExpiresAt={user.grantExpiresAt}
+                    grantExpiresLabel={user.grantExpiresAt ? formatDate(user.grantExpiresAt) : null}
+                    hasGrant={Boolean(user.grantReason !== null || user.grantExpiresAt)}
+                  />
                 </TableCell>
               </TableRow>
             ))}
