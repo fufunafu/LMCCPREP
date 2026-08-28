@@ -21,7 +21,8 @@
     "test:billing-e2e": "playwright test --config playwright.billing.config.ts",
     "test:billing-rollback": "playwright test --config playwright.billing-rollback.config.ts",
     "test:e2e": "npm run build && playwright test",
-    "test:e2e:headed": "npm run build && playwright test --headed"
+    "test:e2e:headed": "npm run build && playwright test --headed",
+    "billing:enforce": "node --env-file-if-exists=.env.local scripts/set-billing-required.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
