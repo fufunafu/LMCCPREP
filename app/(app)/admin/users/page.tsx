@@ -84,7 +84,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="min-w-56 align-top">
+                <TableCell className="min-w-56 whitespace-normal align-top">
                   <div className="font-medium">{user.email}{!user.confirmed ? <Badge variant="outline" className="ml-2">Unconfirmed</Badge> : null}</div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <UserRound className="size-3.5" aria-hidden="true" />
@@ -92,13 +92,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     {user.stripeCustomerId ? <><span>·</span><a className="underline underline-offset-2" href={"https://dashboard.stripe.com/customers/" + user.stripeCustomerId} target="_blank" rel="noreferrer">Stripe</a></> : null}
                   </div>
                 </TableCell>
-                <TableCell className="min-w-56 align-top">
+                <TableCell className="min-w-56 whitespace-normal align-top">
                   <RoleForm userId={user.id} role={user.role} locked={user.roleSource === "environment"} />
                   <p className="mt-2 max-w-64 text-xs leading-5 text-muted-foreground">
                     {permissionsForRole(user.role).join(" · ")}
                   </p>
                 </TableCell>
-                <TableCell className="min-w-72 align-top">
+                <TableCell className="min-w-72 whitespace-normal align-top">
                   <AccessBadge user={user} />
                   {user.subscriptionStatus ? <p className="mt-2 text-xs capitalize text-muted-foreground">{user.subscriptionStatus.replaceAll("_", " ")} until {formatDate(user.accessUntil)}</p> : null}
                   {user.access === "grant" && user.grantReason ? <p className="mt-2 text-xs text-muted-foreground">Reason: {user.grantReason}</p> : null}
