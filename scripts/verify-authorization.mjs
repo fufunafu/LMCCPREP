@@ -24,18 +24,28 @@ function normalizeTag(value) {
 
 async function verifyApprovedPublicCounts() {
   const publicClient = client(anonKey);
-  const { data: publicCounts, error } = await publicClient.rpc("get_approved_public_subject_counts");
-  if (error) throw new Error("Could not read approved public subject counts.");
-  assert.equal(publicCounts?.length, 5, "The public catalog did not return all five disclosed disciplines");
+  // Every exam in the catalog is checked through the anonymous per-exam aggregate.
+  const { data: exams, error: examsError } = await publicClient.from("exams").select("id").order("sort");
+  if (examsError || !exams?.length) throw new Error("Could not read the public exam catalog.");
+  const publicCounts = [];
+  for (const exam of exams) {
+    const { data: counts, error } = await publicClient.rpc("get_approved_public_subject_counts_for_exam", { p_exam: exam.id });
+    if (error) throw new Error(`Could not read approved public subject counts for ${exam.id}.`);
+    assert.ok(counts?.length, `The public catalog returned no subjects for ${exam.id}`);
+    publicCounts.push(...counts);
+  }
 
   for (const subject of publicCounts) {
+    // Distributable: rights cleared (verified, original, or licensed), editorially
+    // reviewed, not flagged for review, and no unapproved images.
     const { count, error: countError } = await admin
       .from("questions")
       .select("qid", { count: "exact", head: true })
       .eq("subject_id", subject.id)
       .neq("source", "user")
-      .in("distribution_rights_status", ["original", "licensed"])
-      .eq("editorial_status", "reviewed");
+      .in("distribution_rights_status", ["verified", "original", "licensed"])
+      .eq("editorial_status", "reviewed")
+      .eq("needs_review", false);
     if (countError) throw new Error("Could not calculate the approved public corpus.");
     assert.equal(subject.question_count, count ?? 0, `${subject.name} public count included unapproved content`);
   }
@@ -65,8 +75,10 @@ async function verifyPublishedPublicCounts(publicCounts) {
     assert.equal(published.size, 0, "The published catalog exposed a discipline section without approved content");
     return;
   }
-  assert.equal(published.size, publicCounts.length, "The published catalog did not expose every approved discipline count");
-  for (const subject of publicCounts) {
+  // The catalog renders only subjects that have approved content.
+  const expected = publicCounts.filter((subject) => subject.question_count > 0);
+  assert.equal(published.size, expected.length, "The published catalog did not expose every approved discipline count");
+  for (const subject of expected) {
     assert.equal(published.get(subject.id), subject.question_count, `${subject.name} published count does not match the approved production aggregate`);
   }
 }
@@ -115,6 +127,14 @@ async function createTestUser(label) {
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error || !data.user) throw new Error(`Could not create temporary ${label} user.`);
   createdUsers.push(data.user.id);
+  // Billing enforcement is on in Production: temporary users need a grant to
+  // exercise study-data policies. It expires in an hour and dies with the user.
+  const grant = await admin.from("billing_access_grants").upsert({
+    user_id: data.user.id,
+    reason: "authorization-verification",
+    expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+  }, { onConflict: "user_id" });
+  if (grant.error) throw new Error(`Could not grant the temporary ${label} user access.`);
   const userClient = client(anonKey);
   const signedIn = await userClient.auth.signInWithPassword({ email, password });
   if (signedIn.error) throw new Error(`Could not authenticate temporary ${label} user.`);

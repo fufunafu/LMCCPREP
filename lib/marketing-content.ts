@@ -46,7 +46,7 @@ export const extendedFaqGroups = (checkoutOpen: boolean): readonly FaqGroup[] =>
   {
     title: "Content and quality",
     items: [
-      ["Where do the questions come from?", "Every item carries rights and editorial metadata. Public counts and paid access include only questions that are rights-approved and editorially reviewed to a Canadian standard; anything else is withheld."],
+      ["Where do the questions come from?", "Every item carries rights and editorial metadata. Public counts and paid access include only questions that are rights-cleared and editorially reviewed for the exam they belong to; anything flagged as incomplete is withheld until it is fixed."],
       ["Why do the subject counts show zero or change over time?", "Counts reflect only content that has completed rights and editorial review. They grow as the review process publishes approved items."],
       ["How do you handle duplicate or incorrect questions?", "The bank is de-duplicated and corrected in reviewed batches before release. If you spot a problem, use the report option on the question and it is routed to editorial review."],
       ["Is Montreal QBank affiliated with the Medical Council of Canada or the NBME?", "No. Montreal QBank is an independent study resource and is not affiliated with, endorsed by, or connected to the Medical Council of Canada, the NBME, or any licensing body."],
