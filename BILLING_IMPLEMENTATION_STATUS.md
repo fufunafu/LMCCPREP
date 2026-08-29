@@ -1,6 +1,23 @@
 # Montreal QBank billing implementation status
 
-Last audited: 2026-08-27
+Last audited: 2026-08-29
+
+## Current live state (2026-08-29)
+
+Billing is live on Production (`https://montrealqbank.vercel.app`) in hosted "links" mode: no Stripe API key is deployed; Checkout uses Stripe Payment Links, the customer portal uses the no-code login link, and the signed webhook keeps Supabase authoritative.
+
+- Plans: CA$59 monthly, CA$79 every 3 months, CA$159 annual (the earlier CA$349 annual price is archived and its link deactivated). One subscription covers both exams.
+- Enforcement is on: `billing_settings.billing_required = true` and `BILLING_REQUIRED=true`. Grants exist for the administrator and App Review accounts. Rollback: `npm run billing:enforce -- off` plus `BILLING_REQUIRED=false` and a redeploy.
+- Self-serve accounts: `/signup` (email confirmation or Google OAuth) with an exam choice, then straight into Checkout for the chosen plan.
+- Stripe Tax collects GST/HST and QST (registrations active); `STRIPE_AUTOMATIC_TAX=true`.
+- Webhook `we_1U8qyGCT7OeO0NwLcR4BFOvO` targets `https://montrealqbank.vercel.app/api/stripe/webhook` (API version 2022-11-15; sync handles the legacy period shape).
+- Content: 7,775 questions (4,036 MCCQE from the audited deduplicated bank, 3,739 USMLE), all `distribution_rights_status = verified` and `editorial_status = reviewed` (content owner, 2026-08-29). 15 USMLE items flagged `needs_review` (missing figures or objectives) stay withheld.
+- Admin panel at `/admin` (`ADMIN_EMAILS` allowlist). `npm run security:verify` passes against Production.
+- Deploy from a `git archive HEAD` copy; the worktree may hold concurrent unfinished work.
+
+Remaining owner tasks: one real purchase and refund test, custom SMTP for Supabase auth email, a custom domain, Stripe public business name and statement descriptor, Google consent-screen branding, and re-extracting the 13 USMLE figures.
+
+The sections below record the original rollout plan and pre-launch evidence and are kept for history.
 
 Billing is implemented, disabled by default, and not yet safe for live payment collection. Live Stripe resources are staged, but owner verification, Canadian tax registration, replacement-secret deployment, approved paid content, staged enforcement, and Production verification remain.
 
