@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { createBooking } from "@/lib/coaching-actions";
 import { formatCad, formatDay, formatTime, type CoachingExam, type CoachingService, type CoachingSlot, type CoachingTutor } from "@/lib/coaching-core";
+import { CoachingSlotCalendar } from "@/components/coaching-slot-calendar";
 import { cn } from "@/lib/utils";
 import { useBrowserTimeZone } from "@/lib/use-browser-timezone";
 
@@ -27,14 +28,6 @@ export function CoachingBookingWizard({ services, exams, tutors, slots, initialS
   const service = services.find((entry) => entry.id === serviceId);
   const examTutors = useMemo(() => tutors.filter((tutor) => !examId || tutor.exams.includes(examId)), [tutors, examId]);
   const visibleSlots = useMemo(() => slots.filter((slot) => (!examId || slot.tutorExams.includes(examId)) && (tutorId === ANY_TUTOR ? examTutors.some((tutor) => tutor.id === slot.tutorId) : slot.tutorId === tutorId)), [slots, examId, tutorId, examTutors]);
-  const days = useMemo(() => {
-    const grouped = new Map<string, CoachingSlot[]>();
-    for (const slot of visibleSlots) {
-      const key = formatDay(slot.startsAt, timeZone);
-      grouped.set(key, [...(grouped.get(key) ?? []), slot]);
-    }
-    return [...grouped.entries()];
-  }, [visibleSlots, timeZone]);
   const slot = visibleSlots.find((entry) => entry.id === slotId);
   const slotTutor = slot ? tutors.find((tutor) => tutor.id === slot.tutorId) : undefined;
   const step = !serviceId ? 1 : !examId ? 2 : !slotId ? 3 : 4;
@@ -68,10 +61,8 @@ export function CoachingBookingWizard({ services, exams, tutors, slots, initialS
               {examTutors.map((tutor) => <button key={tutor.id} type="button" onClick={() => { setTutorId(tutor.id); setSlotId(""); }} aria-pressed={tutorId === tutor.id} className={cn("rounded-full border px-4 py-2 text-sm transition hover:border-emerald-600", tutorId === tutor.id && "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40")}>{tutor.displayName}</button>)}
             </div>
             <p className="mt-4 text-xs text-muted-foreground">Times shown in <span className="font-medium text-foreground">{timeZone.replaceAll("_", " ")}</span>. Next 21 days.</p>
-            {days.length ? (
-              <div className="mt-3 space-y-4">
-                {days.map(([day, daySlots]) => <div key={day}><p className="text-sm font-medium">{day}</p><div className="mt-2 flex flex-wrap gap-2">{daySlots.map((entry) => { const tutor = tutors.find((t) => t.id === entry.tutorId); return <button key={entry.id} type="button" onClick={() => setSlotId(entry.id)} aria-pressed={slotId === entry.id} className={cn("rounded-lg border px-3 py-1.5 text-sm transition hover:border-emerald-600", slotId === entry.id && "border-emerald-600 bg-emerald-800 text-white hover:border-emerald-800")}>{formatTime(entry.startsAt, timeZone)}{tutorId === ANY_TUTOR && tutor ? <span className={cn("ml-1.5 text-xs", slotId === entry.id ? "text-emerald-100" : "text-muted-foreground")}>· {tutor.displayName}</span> : null}</button>; })}</div></div>)}
-              </div>
+            {visibleSlots.length ? (
+              <CoachingSlotCalendar slots={visibleSlots} tutors={tutors} showTutor={tutorId === ANY_TUTOR} slotId={slotId} onSelect={setSlotId} timeZone={timeZone} />
             ) : (
               <div className="mt-4 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">{tutors.length ? "No open times in the next three weeks for this selection. Try another tutor or exam, or " : "Tutors for this exam are being onboarded. "}<Link href="/support" className="font-medium text-emerald-800 underline dark:text-emerald-400">contact support</Link> and we will find a time.</div>
             )}
