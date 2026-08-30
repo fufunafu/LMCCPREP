@@ -6,7 +6,7 @@ import { torontoDateKey } from "@/lib/utils";
 import type { Attempt, DailyActivity, DashboardStats, Profile, Question, QuestionStatus, QuestionSummary, Session, Subject, SubjectStats, Topic, TopicStats, Exam } from "@/lib/types";
 
 // Row shapes (subset of columns we read)
-type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null; references_text: string | null; editorial_status: "pending" | "reviewed" | "stale" | "personal"; last_reviewed_at: string | null; reviewer_role: string | null; reference_exception: string | null; source: string };
+type QuestionRow = { qid: number; subject_id: string; topic_id: string; stem: string; options: string[]; answer_index: number; explanation: string[]; tags: string[] | null; figure_url: string | null; references_text: string | null; key_points: string | null; answer_key: string | null; option_explanations: Record<string, string> | null; editorial_status: "pending" | "reviewed" | "stale" | "personal"; last_reviewed_at: string | null; reviewer_role: string | null; reference_exception: string | null; source: string };
 type QuestionImageRow = { qid: number; image_index: number };
 type SessionRow = { id: string; mode: "tutor" | "timed"; question_ids: number[]; seconds_per_question: number | null; current_index: number; created_at: string; finished_at: string | null };
 type AttemptRow = { qid: number; session_id: string | null; chosen_index: number | null; correct: boolean; time_ms: number; created_at: string };
@@ -15,6 +15,9 @@ const toQuestion = (r: QuestionRow, imageIndexes: number[] = []): Question => ({
   id: String(r.qid), qid: r.qid, subjectId: r.subject_id, topicId: r.topic_id, stem: r.stem,
   options: r.options, answerIdx: r.answer_index, explanation: r.explanation, tags: r.tags ?? [],
   references: (r.references_text ?? "").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
+  keyPoints: r.key_points ?? undefined,
+  answerKey: r.answer_key ?? undefined,
+  optionExplanations: r.option_explanations ?? undefined,
   editorialStatus: r.editorial_status,
   lastReviewedAt: r.last_reviewed_at ?? undefined,
   reviewerRole: r.reviewer_role ?? undefined,
@@ -115,7 +118,7 @@ export async function getTopics(subjectId?: string): Promise<Topic[]> {
   return (data ?? []).map((r: { id: string; subject_id: string; name: string; question_count: number }) => ({ id: r.id, subjectId: r.subject_id, name: r.name, questionCount: r.question_count }));
 }
 
-const QUESTION_SELECT = "qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url,references_text,editorial_status,last_reviewed_at,reviewer_role,reference_exception,source";
+const QUESTION_SELECT = "qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url,references_text,key_points,answer_key,option_explanations,editorial_status,last_reviewed_at,reviewer_role,reference_exception,source";
 
 export async function getQuestions(): Promise<Question[]> {
   const supabase = await createClient();

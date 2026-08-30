@@ -4,7 +4,7 @@ export type Topic   = { id: string; subjectId: string; name: string; questionCou
 export type EditorialStatus = "pending" | "reviewed" | "stale" | "personal"
 export type Question = { id: string; qid: number; subjectId: string; topicId: string; stem: string;
                     options: string[]; answerIdx: number; explanation: string[]; tags?: string[]; figureUrl?: string; figureUrls?: string[];
-                    references?: string[]; editorialStatus?: EditorialStatus; lastReviewedAt?: string; reviewerRole?: string; referenceException?: string; isPersonal?: boolean }
+                    references?: string[]; keyPoints?: string; answerKey?: string; optionExplanations?: Record<string, string>; editorialStatus?: EditorialStatus; lastReviewedAt?: string; reviewerRole?: string; referenceException?: string; isPersonal?: boolean }
 export type QuestionSummary = Pick<Question, "id" | "qid" | "subjectId" | "topicId" | "stem"> & { optionCount: number; tags: string[] }
 export type SessionMode = 'tutor' | 'timed'
 export type Session = { id: string; mode: SessionMode; questionIds: string[]; createdAt: string;
