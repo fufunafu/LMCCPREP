@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { iosAppUrl } from "@/lib/site";
 
 export function MarketingShell({ showSubjects, showPricing, checkoutAvailable = false, children }: { showSubjects: boolean; showPricing: boolean; checkoutAvailable?: boolean; children: React.ReactNode }) {
   // Once Checkout is live the primary call to action is subscribing, not requesting an invite.
@@ -32,7 +33,7 @@ export function MarketingShell({ showSubjects, showPricing, checkoutAvailable = 
         {menu && <div className="border-t px-5 py-4 md:hidden"><div className="flex flex-col gap-1">{[...links, cta, ["Sign in", "/login"]].map(([label, href]) => <Link key={href} href={href} aria-current={current(href)} onClick={() => setMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted aria-[current=page]:text-emerald-800 dark:aria-[current=page]:text-emerald-400">{label}</Link>)}</div></div>}
       </header>
       <main id="main-content" tabIndex={-1} className="outline-none">{children}</main>
-      <footer className="border-t px-5 py-8 sm:px-8"><div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row"><Logo className="text-foreground" /><p>Independent study preparation for the MCCQE and USMLE. Not affiliated with the Medical Council of Canada, the NBME, or the FSMB.</p><div className="flex flex-wrap items-center justify-center gap-4"><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link>{showPricing ? <Link href="/refund-policy">Refunds</Link> : null}<Link href="/support">Support</Link><Link href="/login">Sign in</Link><ThemeToggle /></div></div><div className="mx-auto mt-4 flex max-w-7xl justify-end"><Link href="/admin" aria-label="Admin panel" className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground">admin</Link></div></footer>
+      <footer className="border-t px-5 py-8 sm:px-8"><div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row"><Logo className="text-foreground" /><p>Independent study preparation for the MCCQE and USMLE. Not affiliated with the Medical Council of Canada, the NBME, or the FSMB.</p><div className="flex flex-wrap items-center justify-center gap-4"><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link>{showPricing ? <Link href="/refund-policy">Refunds</Link> : null}<Link href="/support">Support</Link>{iosAppUrl() ? <a href={iosAppUrl() ?? undefined} target="_blank" rel="noopener noreferrer">Get the iOS app</a> : null}<Link href="/login">Sign in</Link><ThemeToggle /></div></div><div className="mx-auto mt-4 flex max-w-7xl justify-end"><Link href="/admin" aria-label="Admin panel" className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground">admin</Link></div></footer>
     </div>
   );
 }
