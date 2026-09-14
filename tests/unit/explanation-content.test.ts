@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExplanationContent, cleanVerdict, formatParagraph } from "@/lib/explanation-content";
+import { buildExplanationContent, cleanVerdict, formatParagraph, parseInline } from "@/lib/explanation-content";
 
 const base = {
   options: ["Antibiotics", "Trim the nail", "Topical antibiotic", "Partial nail avulsion with matricectomy", "Total avulsion"],
@@ -35,6 +35,37 @@ describe("buildExplanationContent", () => {
     expect(buildExplanationContent({ ...base, keyPoints: undefined }, 0).short).toEqual([
       "This is recurrent lateral onychocryptosis with granulation tissue.",
       "Removing the lateral nail plate addresses the current conflict.",
+    ]);
+  });
+});
+
+describe("markdown key points and bold", () => {
+  it("splits markdown list key points into separate short items and keeps bold markers", () => {
+    const content = buildExplanationContent({
+      ...base,
+      keyPoints: "- **Systemic corticosteroids** should be given within the first hour. - **Oral administration** is preferred over intravenous. - **Magnesium sulfate** is second-line. - **Salbutamol** is the standard name in Canada.",
+    }, 0);
+    expect(content.short).toEqual([
+      "**Systemic corticosteroids** should be given within the first hour.",
+      "**Oral administration** is preferred over intravenous.",
+      "**Magnesium sulfate** is second-line.",
+      "**Salbutamol** is the standard name in Canada.",
+    ]);
+  });
+
+  it("parses inline bold segments", () => {
+    expect(parseInline("The **oral route is preferred** if tolerated.")).toEqual([
+      { bold: false, text: "The " },
+      { bold: true, text: "oral route is preferred" },
+      { bold: false, text: " if tolerated." },
+    ]);
+    expect(parseInline("no markup")).toEqual([{ bold: false, text: "no markup" }]);
+  });
+
+  it("turns markdown dash lists inside the long explanation into bullet blocks", () => {
+    expect(formatParagraph("Management priorities: - Give oxygen - Start salbutamol - Add ipratropium")).toEqual([
+      { type: "heading", text: "Management priorities:" },
+      { type: "bullets", items: ["Give oxygen", "Start salbutamol", "Add ipratropium"] },
     ]);
   });
 });

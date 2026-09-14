@@ -31,6 +31,35 @@ export function normalizeExplanationKey(value: string) {
   return value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
+/** Inline segments for rendering markdown-style **bold** without a markdown engine. */
+export type InlineSegment = { bold: boolean; text: string };
+
+export function parseInline(value: string): InlineSegment[] {
+  const segments: InlineSegment[] = [];
+  const pattern = /\*\*([^*]+)\*\*/gu;
+  let cursor = 0;
+  for (const match of value.matchAll(pattern)) {
+    if (match.index > cursor) segments.push({ bold: false, text: value.slice(cursor, match.index) });
+    segments.push({ bold: true, text: match[1] });
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < value.length) segments.push({ bold: false, text: value.slice(cursor) });
+  return segments.length ? segments : [{ bold: false, text: value }];
+}
+
+const LIST_MARKER = /(?:^|\n|\s)-\s+(?=\S)/gu;
+
+/** Split markdown-style "- item" runs into items; null when the text is not a list. */
+export function splitListItems(value: string): string[] | null {
+  const markers = [...value.matchAll(LIST_MARKER)];
+  if (markers.length < 2 && !(markers.length === 1 && /^\s*-\s/u.test(value))) return null;
+  const items = value
+    .split(LIST_MARKER)
+    .map((item) => squash(item))
+    .filter(Boolean);
+  return items.length >= 2 ? items : null;
+}
+
 /** Split prose into sentences, keeping terminal punctuation. */
 export function splitSentences(value: string) {
   return squash(value).split(/(?<=[.!?])\s+(?=[A-Z0-9("])/u).map((part) => part.trim()).filter(Boolean);
@@ -58,6 +87,16 @@ function isAnswerRestatement(paragraph: string, answerText: string) {
 
 /** Turn one raw paragraph (possibly OCR-flattened with inline bullet glyphs) into blocks. */
 export function formatParagraph(raw: string): ExplanationBlock[] {
+  // Markdown-style "- item" runs become a bullet list before any OCR handling.
+  const firstMarker = raw.search(LIST_MARKER);
+  const listItems = firstMarker >= 0 ? splitListItems(raw.slice(firstMarker)) : null;
+  if (listItems) {
+    const lead = squash(raw.slice(0, firstMarker));
+    const blocks: ExplanationBlock[] = [];
+    if (lead) blocks.push(lead.length < 80 && lead.endsWith(":") ? { type: "heading", text: lead } : { type: "paragraph", text: lead });
+    blocks.push({ type: "bullets", items: listItems });
+    return blocks;
+  }
   let text = squash(raw.replace(OCR_MARKERS, " "));
   if (!text) return [];
   const bulletSplit = text.split(/\s*(?:•|•|\s[o●▪]\s(?=[A-Z0-9]))\s*/u).map((part) => part.trim()).filter(Boolean);
@@ -87,7 +126,10 @@ export function buildExplanationContent(question: Pick<Question, "options" | "an
       return true;
     });
 
-  const keyPoints = question.keyPoints ? splitSentences(question.keyPoints).slice(0, 3) : [];
+  const rawKeyPoints = question.keyPoints ?? "";
+  const keyPoints = rawKeyPoints
+    ? (splitListItems(rawKeyPoints) ?? splitSentences(rawKeyPoints).slice(0, 3)).slice(0, 5)
+    : [];
   const short = keyPoints.length
     ? keyPoints
     : splitSentences(paragraphs[0] ?? "").slice(0, 2).filter(Boolean);
