@@ -55,11 +55,48 @@ export function ProgressSection() {
 }
 
 export function SubjectsSection({ subjects }: { subjects: Subject[] }) {
-  const questionTotal = subjects.reduce((sum, subject) => sum + subject.questionCount, 0).toLocaleString("en-CA");
-  // One block per exam, in catalog order, showing only subjects that have approved questions.
-  const examIds = [...new Set(subjects.map((subject) => subject.examId))];
-  const groups = examIds.map((examId) => ({ examId, label: PUBLIC_EXAM_LABELS[examId] ?? examId.toUpperCase(), subjects: subjects.filter((subject) => subject.examId === examId && subject.questionCount > 0) })).filter((group) => group.subjects.length);
-  return <section id="subjects" aria-labelledby="subjects-title" className="scroll-mt-20 bg-slate-950 py-24 text-white"><div className="mx-auto max-w-7xl px-5 sm:px-8"><div className="flex flex-col justify-between gap-6 md:flex-row md:items-end"><div><p className="text-sm font-semibold text-emerald-400">What is inside</p><h2 id="subjects-title" className="mt-3 max-w-xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">{questionTotal} questions across {groups.length > 1 ? `${groups.length} exams` : "available disciplines"}.</h2></div><p className="max-w-md text-sm leading-6 text-slate-300">Counts reflect the reviewed questions available in each discipline today.</p></div>{groups.map((group) => <div key={group.examId} className="mt-12"><h3 className="text-lg font-semibold text-emerald-300">{group.label}<span className="ml-3 text-sm font-normal text-slate-400">{group.subjects.reduce((sum, subject) => sum + subject.questionCount, 0).toLocaleString("en-CA")} questions</span></h3><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{group.subjects.map((subject, index) => <div key={subject.id} data-subject-id={subject.id} data-question-count={subject.questionCount} className="rounded-2xl border border-white/10 bg-white/5 p-5"><span className="text-xs text-emerald-400">0{index + 1}</span><h3 className="mt-6 font-medium">{subject.name}</h3><p className="mt-1 text-2xl font-semibold">{subject.questionCount}</p><p className="text-xs text-slate-400">questions</p></div>)}</div></div>)}</div></section>;
+  const availableSubjects = subjects.filter((subject) => subject.questionCount > 0);
+  const questionTotal = availableSubjects.reduce((sum, subject) => sum + subject.questionCount, 0).toLocaleString("en-CA");
+  const examIds = [...new Set(availableSubjects.map((subject) => subject.examId))];
+  const groups = examIds.map((examId) => ({
+    examId,
+    label: PUBLIC_EXAM_LABELS[examId] ?? examId.toUpperCase(),
+    subjects: availableSubjects.filter((subject) => subject.examId === examId),
+  }));
+
+  return (
+    <section id="subjects" aria-labelledby="subjects-title" className="scroll-mt-20 bg-slate-950 py-14 text-white sm:py-16">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <p className="text-sm font-semibold text-emerald-400">What&apos;s inside</p>
+        <h2 id="subjects-title" className="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Practice for your exam.</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-300">{questionTotal} reviewed questions, organized by discipline.</p>
+        <div className={`mt-8 grid items-start gap-4 ${groups.length > 1 ? "md:grid-cols-2" : "max-w-2xl"}`}>
+          {groups.map((group) => (
+            <div key={group.examId} className="min-w-0 rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-6">
+              <h3 className="text-lg font-semibold text-emerald-300">{group.label}</h3>
+              <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="text-3xl font-semibold tabular-nums tracking-tight">{group.subjects.reduce((sum, subject) => sum + subject.questionCount, 0).toLocaleString("en-CA")}</span>
+                <span className="text-sm text-slate-300">questions · {group.subjects.length} {group.subjects.length === 1 ? "discipline" : "disciplines"}</span>
+              </p>
+              <details className="group mt-5 border-t border-white/10">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm pt-4 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400 [&::-webkit-details-marker]:hidden">
+                  View subject breakdown<span aria-hidden="true" className="text-xl leading-none text-emerald-400 transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <dl className="mt-3 divide-y divide-white/10">
+                  {group.subjects.map((subject) => (
+                    <div key={subject.id} data-subject-id={subject.id} data-question-count={subject.questionCount} className="flex items-baseline justify-between gap-4 py-3 text-sm">
+                      <dt className="min-w-0 text-slate-300">{subject.name}</dt>
+                      <dd className="shrink-0 font-medium tabular-nums">{subject.questionCount.toLocaleString("en-CA")}<span className="sr-only"> questions</span></dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function PricingSection({ plans, standalone = false, checkoutAvailable = false }: { plans: BillingPlan[]; standalone?: boolean; checkoutAvailable?: boolean }) {
