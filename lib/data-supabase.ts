@@ -82,11 +82,9 @@ export const getCurrentExamId = cache(async (): Promise<string> => {
   const { data } = await supabase.auth.getClaims();
   const id = data?.claims?.sub as string | undefined;
   if (!id) return DEFAULT_EXAM_ID;
-  const { data: profile } = await supabase.from("profiles").select("exam_id").eq("id", id).maybeSingle();
-  if (profile?.exam_id) return profile.exam_id;
-  // New accounts have no profile row yet; honour the exam chosen at signup.
-  const metadataExam = (data?.claims?.user_metadata as { exam_id?: string } | undefined)?.exam_id;
-  return typeof metadataExam === "string" && /^[a-z0-9-]{2,32}$/.test(metadataExam) ? metadataExam : DEFAULT_EXAM_ID;
+  const { data: examId, error } = await supabase.rpc("current_exam_id");
+  if (error || !examId) throw new Error("Your question-bank access could not be verified. Please try again.");
+  return examId as string;
 });
 
 export async function getCurrentExam(): Promise<Exam | undefined> {
@@ -259,7 +257,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const subjectIds = await getSubjectIds();
   const [{ count: totalQuestions }, subjectsRes, topicsRes, activityRes, { count: attemptedCount }, { count: correctCount }] = await Promise.all([
     supabase.from("questions").select("qid", { count: "exact", head: true }).in("subject_id", subjectIds),
-    supabase.from("subject_stats").select("subject_id,attempted,correct,avg_time_ms"),
+    supabase.from("subject_stats").select("subject_id,attempted,correct,avg_time_ms,unique_questions"),
     supabase.from("topic_stats").select("topic_id,attempted,correct,avg_time_ms").gte("attempted", 3),
     supabase.from("daily_activity").select("day,attempted,correct").order("day", { ascending: false }).limit(120),
     supabase.from("user_question_status").select("qid", { count: "exact", head: true }),
@@ -279,6 +277,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
   return {
     totalQuestions: totalQuestions ?? 0,
+    remainingQuestions: Math.max(0, (totalQuestions ?? 0) - (subjectsRes.data ?? []).filter((row) => subjectIds.includes(row.subject_id)).reduce((sum, row) => sum + Number(row.unique_questions ?? 0), 0)),
     attempted: attemptedCount ?? 0,
     correct: correctCount ?? 0,
     streakDays: streakFrom(activity, today),
@@ -294,7 +293,7 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   const id = data?.claims?.sub as string | undefined;
   if (!id) return null;
   const [{ data: profile }, { data: activity }] = await Promise.all([
-    supabase.from("profiles").select("display_name,medical_school,target_exam_date,daily_reminder,show_shortcuts,explanation_auto_scroll,exam_id").eq("id", id).maybeSingle(),
+    supabase.from("profiles").select("display_name,medical_school,target_exam_date,exam_date_precision,daily_reminder,show_shortcuts,explanation_auto_scroll,exam_id").eq("id", id).maybeSingle(),
     supabase.from("daily_activity").select("day,attempted,correct").order("day", { ascending: false }).limit(400),
   ]);
   const email = (data?.claims?.email as string | undefined) ?? "";
@@ -306,9 +305,10 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
     streakDays,
     medicalSchool: profile?.medical_school ?? "",
     targetExamDate: profile?.target_exam_date ?? "",
+    examDatePrecision: profile?.exam_date_precision ?? (profile?.target_exam_date ? "exact" : null),
     dailyReminder: profile?.daily_reminder ?? true,
     showShortcuts: profile?.show_shortcuts ?? true,
     explanationAutoScroll: profile?.explanation_auto_scroll ?? false,
-    examId: profile?.exam_id ?? DEFAULT_EXAM_ID,
+    examId: await getCurrentExamId(),
   };
 });

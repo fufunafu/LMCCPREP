@@ -99,6 +99,7 @@ describe("Stripe subscription synchronization", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("sync_billing_subscription", expect.objectContaining({
       p_stripe_subscription_id: "sub_test",
       p_stripe_price_id: "price_monthly",
+      p_exam_id: "mccqe",
       p_status: "active",
       p_current_period_end: "2030-03-17T17:46:40.000Z",
       p_access_until: "2030-03-17T17:46:40.000Z",
@@ -106,6 +107,19 @@ describe("Stripe subscription synchronization", () => {
       p_event_created_at: "2027-01-15T08:00:00.000Z",
       p_is_reconciliation: false,
     }));
+  });
+
+  it("derives exam access from the purchased price rather than subscription metadata", async () => {
+    vi.stubEnv("STRIPE_PRICE_USMLE_MONTHLY", "price_usmle_monthly");
+    try {
+      await syncStripeSubscription(subscription({
+        metadata: { supabase_user_id: "00000000-0000-4000-8000-000000000001", exam_id: "mccqe" },
+        items: { data: [{ price: { id: "price_usmle_monthly" }, current_period_end: 1_900_000_000 }] } as unknown as Stripe.Subscription["items"],
+      }), 1_800_000_000);
+      expect(mocks.rpc).toHaveBeenCalledWith("sync_billing_subscription", expect.objectContaining({ p_exam_id: "usmle" }));
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("normalizes Stripe's explicit cancel_at timestamp as a scheduled cancellation", async () => {

@@ -197,6 +197,7 @@ const server = createServer(async (request, response) => {
   }
   if (url.pathname.startsWith("/rest/v1/rpc/")) {
     const rpc = url.pathname.slice("/rest/v1/rpc/".length);
+    if (rpc === "current_exam_id") return json(response, 200, "mccqe");
     if (rpc === "has_billing_access") return json(response, 200, entitled());
     if (rpc === "pick_questions") return json(response, 200, entitled() ? [101] : []);
     if (rpc === "get_public_subject_counts") return json(response, 200, [subject]);

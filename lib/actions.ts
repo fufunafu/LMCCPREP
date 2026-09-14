@@ -1,5 +1,7 @@
 "use server";
 
+import { validateExamDate } from "@/lib/study-plan";
+import { torontoDateKey } from "@/lib/utils";
 import { createHmac } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
@@ -208,21 +210,21 @@ export async function requestAccess(formData: FormData) {
   return { demo: false };
 }
 
-export async function updateProfile(input: { displayName?: string; medicalSchool?: string; targetExamDate?: string | null; dailyReminder?: boolean; showShortcuts?: boolean; explanationAutoScroll?: boolean; examId?: string }) {
+export async function updateProfile(input: { displayName?: string; medicalSchool?: string; targetExamDate?: string | null; examDatePrecision?: "exact" | "approximate" | "unknown"; dailyReminder?: boolean; showShortcuts?: boolean; explanationAutoScroll?: boolean }) {
   if (await isDemoSession()) return { demo: true };
   const supabase = await createClient();
   const userId = await requireUserId(supabase);
   const updates: Record<string, string | boolean | null> = {};
   if (input.displayName !== undefined) updates.display_name = input.displayName.trim() || null;
   if (input.medicalSchool !== undefined) updates.medical_school = input.medicalSchool.trim() || null;
-  if (input.targetExamDate !== undefined) updates.target_exam_date = input.targetExamDate || null;
+  if (input.targetExamDate !== undefined || input.examDatePrecision !== undefined) {
+    const choice = validateExamDate(input.examDatePrecision ?? (input.targetExamDate ? "exact" : "unknown"), input.targetExamDate, torontoDateKey());
+    updates.target_exam_date = choice.date;
+    updates.exam_date_precision = choice.precision;
+  }
   if (input.dailyReminder !== undefined) updates.daily_reminder = input.dailyReminder;
   if (input.showShortcuts !== undefined) updates.show_shortcuts = input.showShortcuts;
   if (input.explanationAutoScroll !== undefined) updates.explanation_auto_scroll = input.explanationAutoScroll;
-  if (input.examId !== undefined) {
-    if (!/^[a-z0-9-]{2,32}$/.test(input.examId)) throw new Error("Choose a valid exam.");
-    updates.exam_id = input.examId;
-  }
   const { error } = await supabase.from("profiles").upsert({ id: userId, ...updates }, { onConflict: "id" });
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");

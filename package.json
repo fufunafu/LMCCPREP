@@ -17,6 +17,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test:unit": "vitest run",
+    "test:migration:exam-access": "node scripts/test-exam-access-migration.mjs",
     "test:migration:dedup": "node scripts/test-reviewed-deduplication-migration.mjs",
     "test:billing-e2e": "playwright test --config playwright.billing.config.ts",
     "test:billing-rollback": "playwright test --config playwright.billing-rollback.config.ts",

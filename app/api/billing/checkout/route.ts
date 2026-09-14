@@ -17,7 +17,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json() as { plan?: BillingPlanKey };
-    if (!body.plan || !billingPlans().some((plan) => plan.key === body.plan)) {
+    const selectedPlan = billingPlans().find((plan) => plan.key === body.plan);
+    if (!body.plan || !selectedPlan) {
       return NextResponse.json({ error: "Choose a valid billing plan." }, { status: 400 });
     }
 
@@ -62,8 +63,9 @@ export async function POST(request: Request) {
 
     const stripe = getStripe();
     const price = await stripe.prices.retrieve(priceId);
-    const expectedInterval = body.plan === "monthly" ? "month" : "year";
-    if (!price.active || price.currency !== "cad" || price.type !== "recurring" || price.recurring?.interval !== expectedInterval) {
+    const expectedInterval = selectedPlan.months === 12 ? "year" : "month";
+    const expectedIntervalCount = selectedPlan.months === 3 ? 3 : 1;
+    if (!price.active || price.currency !== "cad" || price.type !== "recurring" || price.recurring?.interval !== expectedInterval || (price.recurring.interval_count ?? 1) !== expectedIntervalCount) {
       return NextResponse.json({ error: "That billing plan is not configured correctly." }, { status: 503 });
     }
 
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
     const origin = new URL(request.url).origin;
     const taxEnabled = automaticTaxEnabled();
     const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
-      metadata: { supabase_user_id: userId },
+      metadata: { supabase_user_id: userId, exam_id: selectedPlan.examId ?? "mccqe" },
     };
     const configuredTrialDays = billingTrialDays();
     if (configuredTrialDays) subscriptionData.trial_period_days = configuredTrialDays;
@@ -119,7 +121,7 @@ export async function POST(request: Request) {
       allow_promotion_codes: true,
       success_url: `${origin}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing?checkout=canceled`,
-      metadata: { supabase_user_id: userId, plan: body.plan },
+      metadata: { supabase_user_id: userId, plan: body.plan, exam_id: selectedPlan.examId ?? "mccqe" },
     }, { idempotencyKey: `lmcc-checkout-${userId}-${body.plan}-${Math.floor(Date.now() / 300_000)}` });
     if (!session.url) throw new Error("Stripe did not return a Checkout URL.");
     return NextResponse.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } });

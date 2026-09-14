@@ -13,6 +13,7 @@ type SubscriptionRow = {
   stripe_subscription_id: string;
   stripe_customer_id: string;
   stripe_price_id: string;
+  exam_id: "mccqe" | "usmle";
   status: BillingSubscriptionStatus;
   current_period_end: string | null;
   access_until: string | null;
@@ -89,7 +90,7 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
     supabase.from("billing_customers").select("stripe_customer_id").eq("user_id", userId).maybeSingle(),
     supabase
       .from("billing_subscriptions")
-      .select("stripe_subscription_id,stripe_customer_id,stripe_price_id,status,current_period_end,access_until,cancel_at_period_end,trial_end,payment_failed_at")
+      .select("stripe_subscription_id,stripe_customer_id,stripe_price_id,exam_id,status,current_period_end,access_until,cancel_at_period_end,trial_end,payment_failed_at")
       .eq("user_id", userId)
       .order("access_until", { ascending: false, nullsFirst: false })
       .limit(1)
@@ -131,6 +132,8 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
     subscriptionId: subscription?.stripe_subscription_id,
     priceId: subscription?.stripe_price_id,
     plan: planForPrice(subscription?.stripe_price_id),
+    planName: billingPlan(planForPrice(subscription?.stripe_price_id))?.name,
+    examId: subscription?.exam_id,
     status: subscription?.status,
     currentPeriodEnd: subscription?.current_period_end ?? undefined,
     accessUntil: subscription?.access_until ?? undefined,
@@ -145,7 +148,7 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
 
 export function checkoutPrice(plan: BillingPlanKey) {
   const selected = billingPlan(plan);
-  if (!selected?.priceId) throw new Error("That billing plan is not configured.");
+  if (!selected?.configured || !selected.priceId) throw new Error("That billing plan is not configured.");
   return selected.priceId;
 }
 

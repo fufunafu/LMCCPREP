@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
+  upsert: vi.fn(),
   sessionRow: { question_ids: [101, 102, 103] } as { question_ids: number[] } | null,
   questionRow: { answer_index: 1, options: ["A", "B", "C"] } as { answer_index: number; options: string[] } | null,
 }));
@@ -22,6 +23,7 @@ vi.mock("next/navigation", () => ({
 
 function table(name: string) {
   const chain = {
+    upsert: async (value: unknown) => { mocks.upsert(name, value); return { error: null }; },
     select: () => chain,
     eq: () => chain,
     maybeSingle: async () => ({ data: name === "sessions" ? mocks.sessionRow : mocks.questionRow, error: null }),
@@ -46,7 +48,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { createSession, recordAttempt, setSessionProgress } from "@/lib/actions";
+import { createSession, recordAttempt, setSessionProgress, updateProfile } from "@/lib/actions";
 
 describe("recordAttempt validation", () => {
   beforeEach(() => {
@@ -151,5 +153,28 @@ describe("setSessionProgress validation", () => {
     mocks.sessionRow = null;
     await expect(setSessionProgress("missing", 0)).rejects.toThrow("no longer available");
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("study profile updates", () => {
+  beforeEach(() => { mocks.demo = false; mocks.upsert.mockReset(); });
+
+  it("keeps subscription exam assignment out of learner profile mutations", async () => {
+    await updateProfile({ displayName: "Learner", examId: "usmle" } as Parameters<typeof updateProfile>[0]);
+    expect(mocks.upsert).toHaveBeenCalledWith("profiles", { id: "00000000-0000-4000-8000-000000000001", display_name: "Learner" });
+  });
+
+  it("persists unknown as an answered question and clears any target date", async () => {
+    await updateProfile({ examDatePrecision: "unknown", targetExamDate: "2099-01-01" });
+    expect(mocks.upsert).toHaveBeenCalledWith("profiles", expect.objectContaining({ target_exam_date: null, exam_date_precision: "unknown" }));
+  });
+
+  it("persists approximate dates and rejects invalid dates before writing", async () => {
+    await updateProfile({ examDatePrecision: "approximate", targetExamDate: "2099-01-01" });
+    expect(mocks.upsert).toHaveBeenCalledWith("profiles", expect.objectContaining({ target_exam_date: "2099-01-01", exam_date_precision: "approximate" }));
+    mocks.upsert.mockReset();
+    await expect(updateProfile({ examDatePrecision: "exact", targetExamDate: "2099-02-30" })).rejects.toThrow("valid exam date");
+    expect(mocks.upsert).not.toHaveBeenCalled();
   });
 });

@@ -28,7 +28,7 @@ vi.mock("@/lib/billing", () => ({
 vi.mock("@/lib/billing-core", () => ({
   automaticTaxEnabled: () => false,
   billingCheckoutMode: () => (mocks.configured ? "api" : undefined),
-  billingPlans: () => [{ key: "monthly" }, { key: "annual" }],
+  billingPlans: () => [{ key: "monthly", months: 1, examId: "mccqe" }, { key: "annual", months: 12, examId: "mccqe" }, { key: "usmle-monthly", months: 1, examId: "usmle" }, { key: "usmle-quarterly", months: 3, examId: "usmle" }],
   billingServerConfigured: () => mocks.configured,
   billingTrialDays: () => undefined,
   stripePaymentLinks: () => ({ monthly: undefined, quarterly: undefined, annual: undefined }),
@@ -131,6 +131,21 @@ describe("billing route security", () => {
     expect(response.status).toBe(400);
     expect(mocks.checkoutPrice).not.toHaveBeenCalled();
     expect(mocks.checkoutCreate).not.toHaveBeenCalled();
+  });
+
+  it("selects the USMLE exam from the plan and ignores a conflicting client exam", async () => {
+    const response = await checkoutPost(request("/api/billing/checkout", { plan: "usmle-monthly", examId: "mccqe" }));
+    expect(response.status).toBe(200);
+    expect(mocks.checkoutPrice).toHaveBeenCalledWith("usmle-monthly");
+    expect(mocks.checkoutCreate).toHaveBeenCalledWith(expect.objectContaining({
+      subscription_data: { metadata: { supabase_user_id: "00000000-0000-4000-8000-000000000001", exam_id: "usmle" } },
+    }), expect.any(Object));
+  });
+
+  it("requires a three-month Stripe interval for quarterly plans", async () => {
+    expect((await checkoutPost(request("/api/billing/checkout", { plan: "usmle-quarterly" }))).status).toBe(503);
+    mocks.priceRetrieve.mockResolvedValue({ active: true, currency: "cad", type: "recurring", recurring: { interval: "month", interval_count: 3 } });
+    expect((await checkoutPost(request("/api/billing/checkout", { plan: "usmle-quarterly" }))).status).toBe(200);
   });
 
   it("creates Checkout with only the server-selected price and trusted user identity", async () => {

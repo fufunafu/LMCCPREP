@@ -8,6 +8,7 @@ import {
   billingServerConfigured,
   billingTrialDays,
   deriveAccessUntil,
+  examForPrice,
   hasCurrentEntitlement,
   planForPrice,
   stripePaymentLinks,
@@ -18,6 +19,15 @@ import {
 import { safeReturnPath } from "@/lib/urls";
 
 describe("billing configuration", () => {
+  it("assigns exactly one exam to each trusted price and rejects ambiguous prices", () => {
+    const env = { STRIPE_PRICE_MONTHLY: "price_mccqe", STRIPE_PRICE_USMLE_MONTHLY: "price_usmle", NEXT_PUBLIC_BILLING_USMLE_MONTHLY_CAD: "30" };
+    expect(examForPrice("price_mccqe", env)).toBe("mccqe");
+    expect(examForPrice("price_usmle", env)).toBe("usmle");
+    expect(planForPrice("price_usmle", env)).toBe("usmle-monthly");
+    expect(examForPrice("untrusted", env)).toBeUndefined();
+    expect(examForPrice("price_mccqe", { ...env, STRIPE_PRICE_USMLE_MONTHLY: "price_mccqe" })).toBeUndefined();
+  });
+
   it("defaults to disabled and clamps grace days", () => {
     expect(billingRequired({})).toBe(false);
     expect(billingRequired({ BILLING_REQUIRED: "true" })).toBe(true);

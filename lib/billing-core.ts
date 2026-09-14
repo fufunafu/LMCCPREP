@@ -83,10 +83,29 @@ export function billingPlans(env: BillingEnvironment = process.env): BillingPlan
       trialDays,
     },
   ];
-  return plans.map((plan) => ({ ...plan, configured: Boolean(plan.priceId) }));
+  for (const [cadence, name, months] of [["monthly", "Monthly", 1], ["quarterly", "3 months", 3], ["annual", "Annual", 12]] as const) {
+    const suffix = cadence.toUpperCase();
+    const priceId = env[`STRIPE_PRICE_USMLE_${suffix}`]?.trim() || undefined;
+    const amountCad = optionalCadAmount(env[`NEXT_PUBLIC_BILLING_USMLE_${suffix}_CAD`]);
+    if (!priceId && amountCad === undefined) continue;
+    plans.push({
+      key: `usmle-${cadence}`,
+      examId: "usmle",
+      name,
+      cadence: months === 12 ? "per year" : months === 3 ? "per 3 months" : "per month",
+      months, priceId, amountCad,
+      formattedPrice: amountCad === undefined ? undefined : formatCad(amountCad),
+      trialDays,
+    });
+  }
+  return plans.map((plan) => ({
+    ...plan,
+    examId: plan.examId ?? "mccqe",
+    configured: Boolean(plan.priceId) && plans.filter((other) => other.priceId === plan.priceId).length === 1,
+  }));
 }
 
-export function billingPlan(plan: BillingPlanKey, env: BillingEnvironment = process.env) {
+export function billingPlan(plan: BillingPlanKey | undefined, env: BillingEnvironment = process.env) {
   return billingPlans(env).find((candidate) => candidate.key === plan);
 }
 
@@ -113,6 +132,9 @@ export function stripePaymentLinks(env: BillingEnvironment = process.env) {
     monthly: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_MONTHLY, "buy.stripe.com", env),
     quarterly: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_QUARTERLY, "buy.stripe.com", env),
     annual: stripeHostedUrl(env.STRIPE_PAYMENT_LINK_ANNUAL, "buy.stripe.com", env),
+    "usmle-monthly": stripeHostedUrl(env.STRIPE_PAYMENT_LINK_USMLE_MONTHLY, "buy.stripe.com", env),
+    "usmle-quarterly": stripeHostedUrl(env.STRIPE_PAYMENT_LINK_USMLE_QUARTERLY, "buy.stripe.com", env),
+    "usmle-annual": stripeHostedUrl(env.STRIPE_PAYMENT_LINK_USMLE_ANNUAL, "buy.stripe.com", env),
   };
 }
 
@@ -124,6 +146,7 @@ export function stripePortalLoginUrl(env: BillingEnvironment = process.env) {
 export function publicBillingPlans(env: BillingEnvironment = process.env) {
   return billingPlans(env).map((plan) => ({
     key: plan.key,
+    examId: plan.examId,
     name: plan.name,
     cadence: plan.cadence,
     months: plan.months,
@@ -136,7 +159,7 @@ export function publicBillingPlans(env: BillingEnvironment = process.env) {
 
 export function planForPrice(priceId: string | undefined, env: BillingEnvironment = process.env): BillingPlanKey | undefined {
   if (!priceId) return undefined;
-  return billingPlans(env).find((plan) => plan.priceId === priceId)?.key;
+  return billingPlans(env).find((plan) => plan.configured && plan.priceId === priceId)?.key;
 }
 
 export function billingServerConfigured(env: BillingEnvironment = process.env) {
@@ -232,4 +255,10 @@ export function hasCurrentEntitlement(input: {
  */
 export function billingMarketingAvailable(env: BillingEnvironment = process.env) {
   return billingPlans(env).every((plan) => plan.amountCad !== undefined);
+}
+
+/** The trusted price configuration defines exam access, never client metadata. */
+export function examForPrice(priceId: string | undefined, env: BillingEnvironment = process.env) {
+  const key = planForPrice(priceId, env);
+  return key ? billingPlan(key, env)?.examId : undefined;
 }

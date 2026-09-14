@@ -9,9 +9,9 @@ export type QuestionSummary = Pick<Question, "id" | "qid" | "subjectId" | "topic
 export type SessionMode = 'tutor' | 'timed'
 export type Session = { id: string; mode: SessionMode; questionIds: string[]; createdAt: string;
                    finishedAt?: string; secondsPerQuestion?: number; currentIndex?: number; attempted?: number; correct?: number; durationMs?: number }
-export type BillingPlanKey = "monthly" | "quarterly" | "annual"
+export type BillingPlanKey = "monthly" | "quarterly" | "annual" | "usmle-monthly" | "usmle-quarterly" | "usmle-annual"
 export type BillingSubscriptionStatus = "incomplete" | "incomplete_expired" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "paused"
-export type BillingPlan = { key: BillingPlanKey; name: string; cadence: string; months: number; priceId?: string; amountCad?: number; formattedPrice?: string; trialDays?: number; configured: boolean }
+export type BillingPlan = { key: BillingPlanKey; examId?: "mccqe" | "usmle"; name: string; cadence: string; months: number; priceId?: string; amountCad?: number; formattedPrice?: string; trialDays?: number; configured: boolean }
 export type BillingSummary = {
   mode: "demo" | "disabled" | "enabled" | "configuration_error"
   configured: boolean
@@ -22,6 +22,8 @@ export type BillingSummary = {
   subscriptionId?: string
   priceId?: string
   plan?: BillingPlanKey
+  planName?: string
+  examId?: "mccqe" | "usmle"
   status?: BillingSubscriptionStatus
   currentPeriodEnd?: string
   accessUntil?: string
@@ -38,7 +40,7 @@ export type QuestionStatus = 'unused' | 'correct' | 'incorrect' | 'flagged'
 export type SubjectStats = { subjectId: string; attempted: number; correct: number; avgTimeMs: number }
 export type TopicStats   = { topicId: string;   attempted: number; correct: number; avgTimeMs: number }
 export type DailyActivity = { date: string; attempted: number; correct: number }
-export type DashboardStats = { totalQuestions: number; attempted: number; correct: number; streakDays: number;
+export type DashboardStats = { totalQuestions: number; remainingQuestions?: number; attempted: number; correct: number; streakDays: number;
                           subjects: SubjectStats[]; weakestTopics: TopicStats[]; activity: DailyActivity[] }
 export type Profile = { id: string; name: string; email: string; streakDays: number; medicalSchool: string;
-                    targetExamDate: string; dailyReminder: boolean; showShortcuts: boolean; explanationAutoScroll: boolean; examId: string }
+                    targetExamDate: string; examDatePrecision?: "exact" | "approximate" | "unknown" | null; dailyReminder: boolean; showShortcuts: boolean; explanationAutoScroll: boolean; examId: string }

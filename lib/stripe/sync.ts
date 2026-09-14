@@ -1,7 +1,7 @@
 import "server-only";
 
 import type Stripe from "stripe";
-import { billingGraceDays, deriveAccessUntil, isoFromUnix, planForPrice, subscriptionPeriodEnd } from "@/lib/billing-core";
+import { billingGraceDays, examForPrice, deriveAccessUntil, isoFromUnix, planForPrice, subscriptionPeriodEnd } from "@/lib/billing-core";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyCoachingPayment, isCoachingCheckout } from "@/lib/coaching-payments";
 import { getOptionalStripe, getStripe } from "@/lib/stripe/server";
@@ -79,6 +79,7 @@ export async function syncStripeSubscription(
     p_user_id: userId,
     p_stripe_customer_id: stripeCustomerId,
     p_stripe_price_id: firstItem.price.id,
+    p_exam_id: examForPrice(firstItem.price.id),
     p_status: status,
     p_current_period_end: isoFromUnix(currentPeriodEnd),
     p_access_until: isoFromUnix(accessUntil),
