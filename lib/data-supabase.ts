@@ -70,11 +70,11 @@ async function getQuestionImageIndexes(
 // ---------- content ----------
 export const DEFAULT_EXAM_ID = "mccqe";
 
-export async function getExams(): Promise<Exam[]> {
+export const getExams = cache(async (): Promise<Exam[]> => {
   const supabase = await createClient();
   const { data } = await supabase.from("exams").select("id,name,short_name,seconds_per_question,section_size").order("sort");
   return (data ?? []).map((r: { id: string; name: string; short_name: string; seconds_per_question: number; section_size: number }) => ({ id: r.id, name: r.name, shortName: r.short_name, secondsPerQuestion: r.seconds_per_question, sectionSize: r.section_size }));
-}
+});
 
 /** The signed-in learner's active exam; content queries are scoped to it. */
 export const getCurrentExamId = cache(async (): Promise<string> => {
@@ -92,12 +92,12 @@ export async function getCurrentExam(): Promise<Exam | undefined> {
   return (await getExams()).find((exam) => exam.id === examId);
 }
 
-export async function getSubjects(): Promise<Subject[]> {
+export const getSubjects = cache(async (): Promise<Subject[]> => {
   const supabase = await createClient();
   const examId = await getCurrentExamId();
   const { data } = await supabase.from("subject_counts").select("id,name,question_count,exam_id").eq("exam_id", examId);
   return (data ?? []).map((r: { id: string; name: string; question_count: number; exam_id: string }) => ({ id: r.id, name: r.name, questionCount: r.question_count, examId: r.exam_id }));
-}
+});
 
 const getSubjectIds = cache(async (): Promise<string[]> => (await getSubjects()).map((subject) => subject.id));
 
@@ -108,13 +108,13 @@ export async function getPublicSubjects(): Promise<Subject[]> {
   return fetchApprovedPublicSubjects(url, key);
 }
 
-export async function getTopics(subjectId?: string): Promise<Topic[]> {
+export const getTopics = cache(async (subjectId?: string): Promise<Topic[]> => {
   const supabase = await createClient();
   let q = supabase.from("topic_counts").select("id,subject_id,name,question_count").range(0, 4999);
   q = subjectId ? q.eq("subject_id", subjectId) : q.in("subject_id", await getSubjectIds());
   const { data } = await q;
   return (data ?? []).map((r: { id: string; subject_id: string; name: string; question_count: number }) => ({ id: r.id, subjectId: r.subject_id, name: r.name, questionCount: r.question_count }));
-}
+});
 
 const QUESTION_SELECT = "qid,subject_id,topic_id,stem,options,answer_index,explanation,tags,figure_url,references_text,key_points,answer_key,option_explanations,editorial_status,last_reviewed_at,reviewer_role,reference_exception,source";
 
@@ -312,3 +312,5 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
     examId: await getCurrentExamId(),
   };
 });
+
+export { getQuestionLibraryFilters, getQuestionPage } from "@/lib/question-library-supabase";

@@ -62,7 +62,7 @@ export async function authenticatedBillingUser(supabase?: ServerSupabaseClient) 
   return { userId, email: email ?? "", supabase: client };
 }
 
-export async function requireEntitledUserId(supabase?: ServerSupabaseClient) {
+export const requireEntitledUserId = cache(async (supabase?: ServerSupabaseClient) => {
   const client = supabase ?? await createClient();
   const { userId } = await authenticatedBillingUser(client);
   if (!(await isBillingRequired())) return userId;
@@ -70,7 +70,7 @@ export async function requireEntitledUserId(supabase?: ServerSupabaseClient) {
   if (error) throw new Error("Billing access could not be verified. Try again shortly.");
   if (!data) throw new SubscriptionRequiredError();
   return userId;
-}
+});
 
 export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
   const configured = billingConfigured();

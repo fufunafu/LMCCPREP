@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-/** Supabase client for Server Components, Server Actions and Route Handlers. */
-export async function createClient() {
+/** Reuses the client within a server render, never across users or requests. */
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -18,11 +19,11 @@ export async function createClient() {
       },
     },
   });
-}
+});
 
 /** Current user's id, or null when signed out. */
-export async function currentUserId() {
+export const currentUserId = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   return (data?.claims?.sub as string | undefined) ?? null;
-}
+});

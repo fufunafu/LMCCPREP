@@ -62,3 +62,6 @@ export async function getTopicStats(): Promise<TopicStats[]> { return (await pai
 export async function getDashboardStats(): Promise<DashboardStats> { return (await paidSource()).getDashboardStats(); }
 export async function getUserId(): Promise<string | null> { return (await accountSource()).getUserId(); }
 export async function getProfile(): Promise<Profile | null> { return (await accountSource()).getProfile(); }
+
+export async function getQuestionLibraryFilters() { return (await paidSource()).getQuestionLibraryFilters(); }
+export async function getQuestionPage(filters: import("@/lib/question-library").QuestionFilters) { return (await paidSource()).getQuestionPage(filters); }

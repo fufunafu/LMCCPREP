@@ -1,3 +1,4 @@
+import { paginateQuestions, type QuestionFilters } from "@/lib/question-library";
 import type { Question } from "@/lib/types";
 import { dashboardStats, demoAttempts, demoSession, questionStatuses, questions, recentSessions, subjects, topicStats, topics } from "@/lib/mock";
 
@@ -26,3 +27,6 @@ export function getFlaggedQuestionIds(questionIds?: string[]) { const ids = getF
 export function getNotes(questionIds?: string[]) { const notes = { q2: "Review the Ottawa ankle rules and their exclusions." }; return questionIds ? Object.fromEntries(Object.entries(notes).filter(([id]) => questionIds.includes(id))) : notes; }
 export function getUserId() { return "demo-user"; }
 export function getProfile() { return { id: "demo-user", name: "Demo Learner", email: "demo@lmccprep.ca", streakDays: dashboardStats.streakDays, medicalSchool: "University of Toronto", targetExamDate: "2027-04-15", dailyReminder: true, showShortcuts: true, explanationAutoScroll: false, examId: "mccqe" }; }
+
+export function getQuestionLibraryFilters() { return { subjects: subjects.map(({ id, name }) => ({ id, name })), topics: topics.map(({ id, subjectId, name }) => ({ id, subjectId, name })) }; }
+export function getQuestionPage(filters: QuestionFilters) { return paginateQuestions(getQuestionSummaries(), questionStatuses, filters); }
