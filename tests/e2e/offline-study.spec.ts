@@ -20,7 +20,7 @@ test("offline reload keeps answers, replacement skips, notes, plans and statisti
   await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
-  await page.getByRole("button", { name: "Next question" }).click();
+  await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   const beforeSkip = await page.getByText(/^Question ID /).textContent();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(page.getByText(/^Question ID /)).not.toHaveText(beforeSkip!);

@@ -18,6 +18,22 @@ async function painted(page: Page) {
   return page.evaluate(() => Array.from(CSS.highlights.entries()).filter(([name]) => name.startsWith("question-")).flatMap(([, highlights]) => Array.from(highlights).map((range) => range.toString())));
 }
 
+async function expectSavedNote(page: Page, body: string) {
+  await expect.poll(() => page.evaluate(async (expected) => {
+    return new Promise<boolean>((resolve, reject) => {
+      const open = indexedDB.open("montreal-study-v1", 1);
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction("records", "readonly");
+        const read = tx.objectStore("records").get("demo-user:mccqe");
+        tx.oncomplete = () => { resolve(Object.values(read.result?.notes ?? {}).includes(expected)); db.close(); };
+        tx.onerror = () => { reject(tx.error); db.close(); };
+      };
+    });
+  }, body)).toBe(true);
+}
+
 test("question highlights and sidebar notes survive navigation and offline reload", async ({ page, context }) => {
   test.setTimeout(120_000);
   page.setDefaultTimeout(15_000);
@@ -32,15 +48,14 @@ test("question highlights and sidebar notes survive navigation and offline reloa
   await page.getByRole("button", { name: "Download offline study", exact: true }).click();
   await expect(page.getByText("Offline study is ready.", { exact: false })).toBeVisible({ timeout: 60_000 });
   await page.goto("/session/demo?mode=tutor");
-  await expect(page.getByText("Select question or explanation text to highlight.")).toBeVisible();
+  await expect(page.getByText("Select question or explanation text to highlight.")).toHaveCount(0);
   await selectText(page, "stem", 2, 30);
   await page.getByRole("button", { name: "Highlight", exact: true }).click();
   await expect.poll(() => painted(page)).toEqual(["bold clinical finding needs "]);
   await expect(page.getByText(/saved highlight/)).toHaveCount(0);
   await expect(page.getByText("0 of 20 answered", { exact: true })).toBeVisible();
   await page.getByLabel("Notes for this question", { exact: true }).fill("Compare the clinical findings first.");
-  await page.getByRole("button", { name: "Save notes", exact: true }).click();
-  await expect(page.getByText("Note saved", { exact: true })).toBeVisible();
+  await expectSavedNote(page, "Compare the clinical findings first.");
   await page.getByRole("button", { name: "Go to question 2, unanswered", exact: true }).first().click();
   await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Review the Ottawa ankle rules and their exclusions.");
   await expect.poll(() => painted(page)).toEqual([]);
@@ -55,10 +70,14 @@ test("question highlights and sidebar notes survive navigation and offline reloa
   await page.getByRole("button", { name: "Highlight", exact: true }).click();
   await expect.poll(async () => (await painted(page)).length).toBe(2);
   await page.getByLabel("Notes for this question", { exact: true }).fill("Updated offline.");
-  await page.getByRole("button", { name: "Save notes", exact: true }).click();
-  await expect(page.getByText("Note saved", { exact: true })).toBeVisible();
+  await page.getByLabel("Notes for this question", { exact: true }).pressSequentially(" More detail.");
+  await page.getByRole("button", { name: "Go to question 2, unanswered", exact: true }).first().click();
+  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Review the Ottawa ankle rules and their exclusions.");
+  await expectSavedNote(page, "Updated offline. More detail.");
+  await page.getByRole("button", { name: /^Go to question 1,/ }).first().click();
+  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Updated offline. More detail.");
   await page.reload();
-  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Updated offline.");
+  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Updated offline. More detail.");
   await expect.poll(async () => (await painted(page)).length).toBe(2);
   await selectText(page, "stem", 4, 10);
   await page.getByRole("button", { name: "Remove", exact: true }).click();
@@ -67,8 +86,12 @@ test("question highlights and sidebar notes survive navigation and offline reloa
   await page.getByRole("button", { name: "Remove", exact: true }).click();
   await expect.poll(() => painted(page)).toEqual([]);
   await page.reload();
-  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Updated offline.");
+  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("Updated offline. More detail.");
   await expect(page.getByText(/saved highlight/)).toHaveCount(0);
+  await page.getByLabel("Notes for this question", { exact: true }).fill("");
+  await expectSavedNote(page, "");
+  await page.reload();
+  await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("");
   await context.setOffline(false);
 });
 
@@ -85,9 +108,9 @@ test("@mobile selection toolbar and notes fit a narrow screen", async ({ page })
   await page.getByRole("button", { name: "Highlight", exact: true }).tap();
   await expect.poll(async () => (await painted(page)).length).toBe(1);
   await expect(page.getByText(/saved highlight/)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Save notes", exact: true })).toHaveCount(0);
   await page.getByLabel("Notes for this question", { exact: true }).fill("A mobile note.");
-  await page.getByRole("button", { name: "Save notes", exact: true }).tap();
-  await expect(page.getByText("Note saved", { exact: true })).toBeVisible();
+  await expectSavedNote(page, "A mobile note.");
   await page.reload();
   await expect(page.getByLabel("Notes for this question", { exact: true })).toHaveValue("A mobile note.");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

@@ -51,7 +51,7 @@ test("conflicted sessions preserve dependent work while notes sync and recovery 
   await page.goto("/session/demo");
   await page.getByRole("radio").first().click();
   await expect(page.getByRole("link", { name: "Resolve sync conflicts" })).toBeVisible();
-  await page.getByRole("button", { name: "Next question", exact: true }).click();
+  await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   await page.getByLabel("Question tools", { exact: true }).click();
   await page.getByRole("button", { name: "Open notes" }).click();
   await page.getByPlaceholder(/Write a clinical pearl/).fill("This note must still sync");

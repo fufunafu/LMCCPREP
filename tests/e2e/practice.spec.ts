@@ -3,6 +3,31 @@ import { expect, signInDemo, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => { await signInDemo(page); });
 
+test("header Next preserves unanswered questions and stays available after answering", async ({ page, consoleErrors }) => {
+  void consoleErrors;
+  await page.goto("/session/demo?mode=tutor");
+  const navigation = page.getByRole("group", { name: "Question navigation" });
+  const questionId = page.getByText(/^Question ID /);
+  const firstId = await questionId.textContent();
+  await navigation.getByRole("button", { name: "Next question", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Question 2 of 20", exact: true })).toBeFocused();
+  const secondId = await questionId.textContent();
+  await expect(page.getByText("0 of 20 answered", { exact: true })).toBeVisible();
+  await navigation.getByRole("button", { name: "Previous question" }).click();
+  await expect(questionId).toHaveText(firstId!);
+  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ })).toBeEnabled();
+  await page.reload();
+  await expect(questionId).toHaveText(firstId!);
+  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await expect(navigation.getByRole("button", { name: "Skip question" })).toHaveCount(0);
+  await navigation.getByRole("button", { name: "Next question", exact: true }).click();
+  await expect(questionId).toHaveText(secondId!);
+  await expect(page.getByText("1 of 20 answered", { exact: true })).toBeVisible();
+  await navigation.getByRole("button", { name: "Previous question" }).click();
+  await expect(questionId).toHaveText(firstId!);
+  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
+});
+
 test("creates a tutor session and supports answer elimination", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/create");
@@ -21,7 +46,7 @@ test("creates a tutor session and supports answer elimination", async ({ page, c
   await page.reload();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit answer" })).toHaveCount(0);
-  await page.getByRole("button", { name: /Next question/ }).click();
+  await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Question 2 of 20" })).toBeFocused();
   await page.locator("aside").getByRole("button", { name: /^Go to question 1(?:,|$)/ }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
