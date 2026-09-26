@@ -60,7 +60,7 @@ test("keeps the default explanation compact on a phone", async ({ page, consoleE
   expect(collapsedHeight).toBeLessThan(667 / 2);
   await expect(page.getByText("Standing reduces venous return and often makes an innocent Still murmur quieter.")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Full explanation", exact: true }).click();
+  await page.getByRole("button", { name: "Show full explanation", exact: true }).click();
   await expect(page.getByText("Standing reduces venous return and often makes an innocent Still murmur quieter.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Hide full explanation" })).toHaveAttribute("aria-expanded", "true");
 });
