@@ -1,6 +1,6 @@
 "use client";
 
-import { applyStudyOperation, mergeStudySnapshot, nextSyncOperation, operationSessionId, resolveSessionConflict, validateStudyPlan, type StudyOperation, type StudyPlan, type StudySnapshot } from "@/lib/study-core";
+import { applyStudyOperation, isSessionRemoved, mergeStudySnapshot, nextSyncOperation, operationSessionId, resolveSessionConflict, validateStudyPlan, type StudyOperation, type StudyPlan, type StudySnapshot } from "@/lib/study-core";
 import type { Attempt, Profile, Question } from "@/lib/types";
 
 const DB = "montreal-study-v1";
@@ -205,19 +205,21 @@ export const studyStore = {
       if (generation !== token || keyFor(data) !== key) throw new Error("The signed-in account or exam changed.");
       await change((s) => {
         if (data.session && data.session.id !== sessionId) throw new Error("The online session did not match.");
-        return resolveSessionConflict(s, sessionId, data.session, data.attempts);
+        return resolveSessionConflict(data.removedAt ? { ...s, deletedSessions: { ...s.deletedSessions, [sessionId]: data.removedAt } } : s, sessionId, data.session, data.attempts);
       });
       publish({ error: null });
     });
     await this.sync();
   },
   async loadSession(id: string) {
+    if (state.snapshot && isSessionRemoved(state.snapshot, id)) throw new Error("This session was removed. Your answers are kept.");
     const token = generation;
     const response = await fetch(`/api/study/session/${encodeURIComponent(id)}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     if (generation !== token || data.userId !== state.snapshot?.userId) throw new Error("The account changed.");
     await change((s) => {
+      if (isSessionRemoved(s, id)) throw new Error("This session was removed. Your answers are kept.");
       if (!data.session.questionIds.every((id: string) => s.questions.some((q) => q.id === id))) throw new Error("This session contains unavailable questions.");
       return { ...s, sessions: { ...s.sessions, [id]: s.sessions[id] ?? data.session }, attempts: [...s.attempts.filter((a) => a.sessionId !== id), ...data.attempts] };
     });

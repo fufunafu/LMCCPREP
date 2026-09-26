@@ -20,6 +20,7 @@ function query(table: string) {
   const filters: Record<string, unknown> = {};
   const chain = {
     select: () => chain, eq: (key: string, value: unknown) => { filters[key] = value; return chain; },
+    is: (key: string, value: unknown) => { filters[key] = value; return chain; },
     order: () => chain, limit: () => chain,
     maybeSingle: () => { single = true; return chain; },
     insert: (row: Row) => { action = "insert"; value = row; return chain; },
@@ -32,7 +33,8 @@ function query(table: string) {
         writes.push({ table, action, value });
         if (action === "insert" || action === "upsert") source.push(value);
       }
-      const rows = source.filter((row) => Object.entries(filters).every(([key, value]) => key === "question_ids" || row[key] === value));
+      const rows = source.filter((row) => Object.entries(filters).every(([key, value]) => key === "question_ids" || (row[key] ?? null) === value));
+      if (action === "update") for (const row of rows) Object.assign(row, value);
       return Promise.resolve(resolve({ data: single ? rows[0] ?? null : rows, error: null }));
     },
   };
@@ -82,5 +84,36 @@ describe("study sync authorization and validation", () => {
     const filters = readSessionFilters({ subjectIds: ["medicine"], topicIds: ["cardiology"], status: "unused", skipped_question_ids: [101, 102], bank: "full" });
     expect(databaseSessionFilters(filters)).toEqual({ subject_ids: ["medicine"], topic_ids: ["cardiology"], status: "unused", skipped_question_ids: [101, 102], bank: "full" });
     expect(readSessionFilters(databaseSessionFilters(filters))).toEqual(filters);
+  });
+});
+
+
+describe("session removal preserves linked history", () => {
+  const removal = (): StudyOperation => ({ id: opId, createdAt: new Date().toISOString(), kind: "remove-session", sessionId });
+  it("only marks the owned session removed and retries without changing answers", async () => {
+    await syncStudyOperation("user-one", "mccqe", attemptOperation());
+    const history = structuredClone(attempts);
+    writes = [];
+    await syncStudyOperation("user-one", "mccqe", removal());
+    await syncStudyOperation("user-one", "mccqe", removal());
+    expect(attempts).toEqual(history);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({ table: "sessions", action: "update", value: { deleted_at: expect.any(String) } });
+    expect(sessions[0].question_ids).toEqual([101]);
+  });
+  it("rejects another account's session and does not require currently available question text", async () => {
+    sessions[0].user_id = "other";
+    await expect(syncStudyOperation("user-one", "mccqe", removal())).rejects.toThrow("unavailable");
+    expect(writes).toEqual([]);
+    sessions[0].user_id = "user-one";
+    mocks.questions.mockResolvedValue([]);
+    await syncStudyOperation("user-one", "mccqe", removal());
+    expect(writes).toHaveLength(1);
+  });
+  it("accepts a previously saved offline answer after removal without restoring the session", async () => {
+    await syncStudyOperation("user-one", "mccqe", removal());
+    await syncStudyOperation("user-one", "mccqe", attemptOperation());
+    expect(attempts).toHaveLength(1);
+    expect(sessions[0].deleted_at).toEqual(expect.any(String));
   });
 });

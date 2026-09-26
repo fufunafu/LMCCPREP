@@ -9,6 +9,7 @@ export type StudyOperation = { id: string; createdAt: string } & (
   | { kind: "attempt"; attempt: Attempt }
   | { kind: "replace"; sessionId: string; index: number; oldId: string; newId: string }
   | { kind: "progress"; sessionId: string; index: number; finished: boolean }
+  | { kind: "remove-session"; sessionId: string }
   | { kind: "flag"; questionId: string; flagged: boolean }
   | { kind: "note"; questionId: string; body: string }
   | { kind: "report"; questionId: string; body: string }
@@ -16,7 +17,7 @@ export type StudyOperation = { id: string; createdAt: string } & (
 export type StudySnapshot = {
   version: 1; userId: string; examId: string; demo: boolean; profile: Profile; exam: Exam;
   subjects: Subject[]; topics: Topic[]; questions: Question[]; attempts: Attempt[];
-  sessions: Record<string, SavedSession>; flags: string[]; notes: Record<string, string>;
+  sessions: Record<string, SavedSession>; deletedSessions?: Record<string, string>; flags: string[]; notes: Record<string, string>;
   highlights?: Record<string, TextHighlight[]>;
   reviewedGroups?: string[][];
   plan?: StudyPlan; tutorialSeen?: boolean; downloadedAt: string; validUntil: string;
@@ -29,7 +30,10 @@ export type StudySnapshot = {
 export function operationSessionId(operation: StudyOperation): string | undefined {
   if (operation.kind === "session") return operation.session.id;
   if (operation.kind === "attempt") return operation.attempt.sessionId;
-  if (operation.kind === "progress" || operation.kind === "replace") return operation.sessionId;
+  if (operation.kind === "progress" || operation.kind === "replace" || operation.kind === "remove-session") return operation.sessionId;
+}
+export function isSessionRemoved(snapshot: StudySnapshot, id: string): boolean {
+  return Boolean(snapshot.deletedSessions?.[id] || snapshot.sessions[id]?.deletedAt);
 }
 export function conflictedSessions(snapshot: StudySnapshot): Map<string, string> {
   const sessions = new Map<string, string>();
@@ -52,7 +56,7 @@ export function resolveSessionConflict(snapshot: StudySnapshot, id: string, sess
   else delete sessions[id];
   const removedIds = new Set(removed.map((op) => op.id));
   return { ...snapshot, sessions, attempts: [...snapshot.attempts.filter((a) => a.sessionId !== id), ...attempts],
-    outbox: snapshot.outbox.filter((op) => !removedIds.has(op.id)),
+    outbox: snapshot.outbox.filter((op) => !removedIds.has(op.id) || op.kind === "remove-session"),
     conflicts: Object.fromEntries(Object.entries(snapshot.conflicts ?? {}).filter(([opId]) => !removedIds.has(opId))),
     recoveredOperations: [...(snapshot.recoveredOperations ?? []), ...removed] };
 }
@@ -168,7 +172,17 @@ export function applyStudyOperation(snapshot: StudySnapshot, operation: StudyOpe
   const question = (id: string) => { const q = next.questions.find((item) => item.id === id); if (!q) throw new Error("This question is unavailable in the current exam."); return q; };
   const session = (id: string) => { const s = next.sessions[id]; if (!s) throw new Error("This session is unavailable."); return s; };
   switch (operation.kind) {
-    case "session": next.sessions[operation.session.id] ??= operation.session; break;
+    case "session": {
+      const removedAt = next.deletedSessions?.[operation.session.id];
+      next.sessions[operation.session.id] ??= { ...operation.session, ...(removedAt ? { deletedAt: removedAt } : {}) };
+      break;
+    }
+    case "remove-session": {
+      const removedAt = next.deletedSessions?.[operation.sessionId] ?? operation.createdAt;
+      next.deletedSessions = { ...next.deletedSessions, [operation.sessionId]: removedAt };
+      if (next.sessions[operation.sessionId]) next.sessions[operation.sessionId].deletedAt = removedAt;
+      break;
+    }
     case "attempt": {
       const a = operation.attempt; const s = session(a.sessionId); const q = question(a.questionId);
       const prior = next.attempts.find((prior) => prior.sessionId === a.sessionId && prior.questionId === a.questionId);
@@ -205,7 +219,7 @@ export function applyStudyOperation(snapshot: StudySnapshot, operation: StudyOpe
 export function mergeStudySnapshot(local: StudySnapshot | null, remote: StudySnapshot, acknowledged: StudyOperation[] = []): StudySnapshot {
   if (!local || local.userId !== remote.userId || local.examId !== remote.examId) return remote;
   if (remote.demo) return { ...local, validUntil: remote.validUntil };
-  const next: StudySnapshot = { ...remote, sessions: { ...remote.sessions }, highlights: local.highlights, plan: local.plan, tutorialSeen: local.tutorialSeen, conflicts: local.conflicts, recoveredOperations: local.recoveredOperations, profileRevision: local.profileRevision, outbox: [] };
+  const next: StudySnapshot = { ...remote, sessions: { ...remote.sessions }, deletedSessions: { ...local.deletedSessions, ...remote.deletedSessions }, highlights: local.highlights, plan: local.plan, tutorialSeen: local.tutorialSeen, conflicts: local.conflicts, recoveredOperations: local.recoveredOperations, profileRevision: local.profileRevision, outbox: [] };
   const blocked = conflictedSessions(local);
   // Preserve local navigation and crossed-out choices without overwriting a server roster.
   for (const [id, saved] of Object.entries(local.sessions)) {
@@ -219,7 +233,13 @@ export function mergeStudySnapshot(local: StudySnapshot | null, remote: StudySna
   // An answer may finish syncing while the download is in flight. Keep it locally
   // if the server snapshot predates it, without putting it back in the upload queue.
   const pending = new Set(local.outbox.map((op) => op.id));
-  return { ...merged, outbox: merged.outbox.filter((op) => pending.has(op.id)) };
+  const outbox = merged.outbox.filter((op) => pending.has(op.id));
+  for (const [id, removedAt] of Object.entries(merged.deletedSessions ?? {})) {
+    // Keep a private roster only while saved offline answers still need it for replay.
+    if (outbox.some((op) => operationSessionId(op) === id) && merged.sessions[id]) merged.sessions[id].deletedAt = removedAt;
+    else delete merged.sessions[id];
+  }
+  return { ...merged, outbox };
 }
 
 export function studyStatistics(snapshot: StudySnapshot, now = new Date()) {
@@ -243,6 +263,6 @@ export function studyStatistics(snapshot: StudySnapshot, now = new Date()) {
   const stats: DashboardStats = { totalQuestions: snapshot.questions.length, remainingQuestions: snapshot.questions.length - latest.size, attempted: latest.size, correct: [...latest.values()].filter((a) => a.correct).length, streakDays,
     activity: [...days.values()], weakestTopics: [...topicStats].sort((a, b) => a.correct / a.attempted - b.correct / b.attempted).slice(0, 4),
     subjects: snapshot.subjects.flatMap((s) => { const rows = topicStats.filter((t) => snapshot.topics.some((topic) => topic.id === t.topicId && topic.subjectId === s.id)); const attempted = rows.reduce((n, r) => n + r.attempted, 0); return attempted ? [{ subjectId: s.id, attempted, correct: rows.reduce((n, r) => n + r.correct, 0), avgTimeMs: rows.reduce((n, r) => n + r.avgTimeMs * r.attempted, 0) / attempted }] : []; }) };
-  const sessions = Object.values(snapshot.sessions).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((s) => { const rows = attempts.filter((a) => a.sessionId === s.id); return { ...s, attempted: rows.length, correct: rows.filter((a) => a.correct).length, durationMs: rows.reduce((n, a) => n + a.timeMs, 0) }; });
+  const sessions = Object.values(snapshot.sessions).filter((session) => !isSessionRemoved(snapshot, session.id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((s) => { const rows = attempts.filter((a) => a.sessionId === s.id); return { ...s, attempted: rows.length, correct: rows.filter((a) => a.correct).length, durationMs: rows.reduce((n, a) => n + a.timeMs, 0) }; });
   return { stats, topicStats, sessions };
 }

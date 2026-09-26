@@ -33,6 +33,7 @@ export async function studySnapshot(metadataOnly = false): Promise<StudySnapshot
   let validUntil = new Date(Date.now() + 72 * 3600_000).toISOString();
   let attempts: Attempt[] = [];
   const sessions: Record<string, SavedSession> = {};
+  const deletedSessions: Record<string, string> = {};
   if (demo) {
     const sample = mock.getSession("demo")!;
     sessions.demo = savedSession({ ...sample, secondsPerQuestion: exam.secondsPerQuestion });
@@ -42,12 +43,23 @@ export async function studySnapshot(metadataOnly = false): Promise<StudySnapshot
     if (!access.data.allowed) throw new SubscriptionRequiredError();
     validUntil = access.data.valid_until;
     if (!Number.isFinite(Date.parse(validUntil)) || Date.parse(validUntil) <= Date.now()) throw new Error("Offline study access could not be verified.");
-    const result = await client.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at,filters").eq("user_id", userId).order("created_at", { ascending: false }).limit(100);
+    const result = await client.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at,filters").eq("user_id", userId).is("deleted_at", null).order("created_at", { ascending: false }).limit(100);
     if (result.error) throw new Error(result.error.message);
     const ids = new Set(questions.map((q) => q.id));
     for (const row of result.data ?? []) {
       if (!row.question_ids.every((id: number) => ids.has(String(id)))) continue;
       sessions[row.id] = savedSession({ id: row.id, mode: row.mode, questionIds: row.question_ids.map(String), currentIndex: row.current_index, createdAt: row.created_at, finishedAt: row.finished_at ?? undefined, secondsPerQuestion: row.seconds_per_question ?? undefined }, row.filters);
+    }
+    // Removal markers prevent an older offline copy from restoring a removed session.
+    let removedAfter: string | undefined;
+    for (;;) {
+      let query = client.from("sessions").select("id,deleted_at").eq("user_id", userId).not("deleted_at", "is", null).order("id").limit(1000);
+      if (removedAfter) query = query.gt("id", removedAfter);
+      const page = await query;
+      if (page.error) throw new Error(page.error.message);
+      for (const row of page.data ?? []) deletedSessions[row.id] = row.deleted_at;
+      if (!page.data || page.data.length < 1000) break;
+      removedAfter = page.data.at(-1)!.id;
     }
     // Keyset pagination avoids row shifts while another device saves an answer.
     let after: string | undefined;
@@ -63,7 +75,7 @@ export async function studySnapshot(metadataOnly = false): Promise<StudySnapshot
     attempts = uniqueAttempts(attempts);
   }
   const paged = metadataOnly && !demo;
-  return { version: 1, userId, examId: profile.examId, demo, profile, exam, questions: paged ? [] : questions, subjects, topics, flags, notes: paged ? {} : notes, sessions, attempts,
+  return { version: 1, userId, examId: profile.examId, demo, profile, exam, questions: paged ? [] : questions, subjects, topics, flags, notes: paged ? {} : notes, sessions, deletedSessions, attempts,
     ...(paged ? { download: { questionIds: questions.map((q) => q.id) } } : {}), reviewedGroups: verifiedQuestionGroups(questions), downloadedAt: new Date().toISOString(), validUntil, outbox: [] };
 }
 
@@ -118,7 +130,7 @@ export async function syncStudyOperation(userId: string, examId: string, raw: un
   };
   const session = async (id: string) => {
     if (!uuid.test(id)) throw new Error("Invalid session.");
-    const result = await client.from("sessions").select("id,mode,question_ids,filters,current_index,finished_at").eq("id", id).eq("user_id", userId).maybeSingle();
+    const result = await client.from("sessions").select("id,mode,question_ids,filters,current_index,finished_at,deleted_at").eq("id", id).eq("user_id", userId).maybeSingle();
     if (result.error) throw new Error(result.error.message);
     if (!result.data) throw new StudyConflictError("The session no longer exists online. Your saved work remains on this device.");
     const [questions, subjects] = await Promise.all([data.getQuestionsByIds(result.data.question_ids.map(String)), data.getSubjects()]);
@@ -127,6 +139,16 @@ export async function syncStudyOperation(userId: string, examId: string, raw: un
   };
   const check = (result: { error: { message: string } | null }) => { if (result.error) throw new Error(result.error.message); };
   switch (op.kind) {
+    case "remove-session": {
+      if (!uuid.test(op.sessionId ?? "")) throw new Error("Invalid session.");
+      // Do not delete the row: attempts reference it with ON DELETE CASCADE.
+      // Keeping that link also lets an older offline device upload saved answers.
+      const row = await client.from("sessions").select("id,deleted_at").eq("id", op.sessionId).eq("user_id", userId).maybeSingle();
+      check(row);
+      if (!row.data) throw new StudyConflictError("This session is unavailable for the current account.");
+      if (!row.data.deleted_at) check(await client.from("sessions").update({ deleted_at: new Date().toISOString() }).eq("id", op.sessionId).eq("user_id", userId).is("deleted_at", null));
+      break;
+    }
     case "session": {
       const s = op.session;
       if (!s || !uuid.test(s.id) || !["tutor", "timed"].includes(s.mode) || !Array.isArray(s.questionIds) || !s.questionIds.length || s.questionIds.length > 200 || new Set(s.questionIds).size !== s.questionIds.length || s.questionIds.some((id) => !/^\d+$/.test(id))) throw new Error("Invalid session.");

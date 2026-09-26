@@ -199,3 +199,62 @@ describe("snapshot merging and replay safety", () => {
     expect(() => mergeStudySnapshot(local, conflict)).toThrow("different answer");
   });
 });
+
+describe("removing a session without resetting learning progress", () => {
+  function setup() {
+    const snapshot = fixture();
+    const session = makeStudySession(snapshot, { mode: "tutor", count: 2, exactIds: snapshot.questions.slice(0, 2).map((q) => q.id), filters: { subjectIds: [], topicIds: [], status: "unused" } }, "remove-me", now);
+    snapshot.sessions[session.id] = session;
+    snapshot.flags = [session.questionIds[0]];
+    snapshot.notes[session.questionIds[0]] = "Keep this note";
+    const attempt: StudyOperation = { id: "saved-answer", createdAt: now.toISOString(), kind: "attempt", attempt: answer(session.questionIds[0], session.id, true) };
+    const removal: StudyOperation = { id: "remove-operation", createdAt: new Date(+now + 1000).toISOString(), kind: "remove-session", sessionId: session.id };
+    return { snapshot, session, attempt, removal };
+  }
+  it("keeps answers, status, notes, flags and statistics while returning unanswered questions to practice", () => {
+    const { snapshot, session, attempt, removal } = setup();
+    const answered = applyStudyOperation(snapshot, attempt);
+    const removed = applyStudyOperation(answered, removal);
+    expect(studyStatistics(removed, now).stats).toEqual(studyStatistics(answered, now).stats);
+    expect(studyStatistics(removed, now).sessions).toHaveLength(0);
+    expect(removed.attempts).toEqual(answered.attempts);
+    expect(removed.notes).toEqual(answered.notes);
+    expect(removed.flags).toEqual(answered.flags);
+    const pool = questionPool(removed, { subjectIds: [], topicIds: [], status: "unused" }).map((q) => q.id);
+    expect(pool).toContain(session.questionIds[1]);
+    expect(pool).not.toContain(session.questionIds[0]);
+    expect(removed.outbox.map((op) => op.kind)).toEqual(["attempt", "remove-session"]);
+    expect(applyStudyOperation(removed, removal).outbox).toHaveLength(2);
+  });
+  it("does not restore removed sessions after stale refreshes or an acknowledged removal", () => {
+    const { snapshot, session, attempt, removal } = setup();
+    const local = applyStudyOperation(applyStudyOperation(snapshot, attempt), removal);
+    const refreshed = mergeStudySnapshot(local, snapshot);
+    expect(studyStatistics(refreshed, now).sessions).toHaveLength(0);
+    expect(refreshed.attempts).toHaveLength(1);
+    expect(refreshed.outbox).toHaveLength(2);
+    const acknowledged = { ...local, outbox: [] };
+    const merged = mergeStudySnapshot(acknowledged, { ...snapshot, attempts: local.attempts }, [removal]);
+    expect(studyStatistics(merged, now).sessions).toHaveLength(0);
+    expect(merged.sessions[session.id]).toBeUndefined();
+    expect(merged.attempts).toHaveLength(1);
+  });
+  it("keeps an offline answer when another device removes its session", () => {
+    const { snapshot, session, attempt } = setup();
+    const local = applyStudyOperation(snapshot, attempt);
+    const remote = { ...snapshot, sessions: {}, deletedSessions: { [session.id]: new Date(+now + 1000).toISOString() } };
+    const merged = mergeStudySnapshot(local, remote);
+    expect(studyStatistics(merged, now).sessions).toHaveLength(0);
+    expect(merged.attempts).toHaveLength(1);
+    expect(merged.outbox).toEqual([attempt]);
+    const afterSync = mergeStudySnapshot({ ...merged, outbox: [] }, { ...remote, attempts: merged.attempts });
+    expect(afterSync.sessions[session.id]).toBeUndefined();
+    expect(afterSync.attempts).toHaveLength(1);
+  });
+  it("never imports session removal markers from another account or exam", () => {
+    const { snapshot, removal } = setup();
+    const local = applyStudyOperation(snapshot, removal);
+    expect(mergeStudySnapshot(local, { ...fixture(), userId: "other" }).deletedSessions).toBeUndefined();
+    expect(mergeStudySnapshot(local, { ...fixture(), examId: "usmle" }).deletedSessions).toBeUndefined();
+  });
+});

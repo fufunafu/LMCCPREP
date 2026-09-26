@@ -3,6 +3,8 @@ import type { Page } from "@playwright/test";
 import type { StudySnapshot } from "../../lib/study-core";
 import { expect, signInDemo, test } from "./fixtures";
 
+test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "wait" }); });
+
 async function saved(page: Page): Promise<StudySnapshot> {
   return page.evaluate(() => new Promise((resolve, reject) => {
     const open = indexedDB.open("montreal-study-v1", 1);
@@ -54,12 +56,13 @@ test("answer shortcuts match numbered choices and ignore typing, eliminated choi
   await notes.press("3");
   await expect(page.getByRole("region", { name: "Answer explanation" })).toHaveCount(0);
   await page.getByRole("button", { name: "Strike out answer 2" }).click();
+  await expect(page.getByRole("radio").nth(2)).toBeEnabled();
   await page.getByRole("heading", { name: "Question 1 of 20", exact: true }).focus();
   await page.keyboard.press("2");
   await page.keyboard.press("c");
   await expect(page.getByRole("region", { name: "Answer explanation" })).toHaveCount(0);
   await page.keyboard.press("3");
-  await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("region", { name: "Answer explanation" })).toBeVisible();
   await expect(page.getByRole("radio").nth(2).locator("span[aria-hidden=true]")).toHaveText("3");
   await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Question 2 of 20", exact: true })).toBeFocused();

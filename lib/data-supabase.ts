@@ -212,7 +212,7 @@ export async function getNotes(questionIds?: string[]): Promise<Record<string, s
 // ---------- sessions ----------
 export async function getSession(id: string): Promise<Session | undefined> {
   const supabase = await createClient();
-  const { data } = await supabase.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at").eq("id", id).maybeSingle();
+  const { data } = await supabase.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at").eq("id", id).is("deleted_at", null).maybeSingle();
   return data ? toSession(data) : undefined;
 }
 
@@ -229,7 +229,7 @@ export async function getSessionAttempts(id: string): Promise<Attempt[]> {
 
 export async function getRecentSessions(limit = 8): Promise<Session[]> {
   const supabase = await createClient();
-  const { data } = await supabase.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at").order("created_at", { ascending: false }).limit(limit);
+  const { data } = await supabase.from("sessions").select("id,mode,question_ids,seconds_per_question,current_index,created_at,finished_at").is("deleted_at", null).order("created_at", { ascending: false }).limit(limit);
   const sessions = (data ?? []).map(toSession);
   if (!sessions.length) return sessions;
   const { data: attempts } = await supabase.from("attempts").select("session_id,correct,time_ms").in("session_id", sessions.map((s) => s.id));

@@ -8,7 +8,7 @@ export type Question = { id: string; qid: number; subjectId: string; topicId: st
 export type QuestionSummary = Pick<Question, "id" | "qid" | "subjectId" | "topicId" | "stem"> & { optionCount: number; tags: string[] }
 export type SessionMode = 'tutor' | 'timed'
 export type Session = { id: string; mode: SessionMode; questionIds: string[]; createdAt: string;
-                   finishedAt?: string; secondsPerQuestion?: number; currentIndex?: number; attempted?: number; correct?: number; durationMs?: number }
+                   finishedAt?: string; deletedAt?: string; secondsPerQuestion?: number; currentIndex?: number; attempted?: number; correct?: number; durationMs?: number }
 export type BillingPlanKey = "monthly" | "quarterly" | "annual" | "usmle-monthly" | "usmle-quarterly" | "usmle-annual"
 export type BillingSubscriptionStatus = "incomplete" | "incomplete_expired" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "paused"
 export type BillingPlan = { key: BillingPlanKey; examId?: "mccqe" | "usmle"; name: string; cadence: string; months: number; priceId?: string; amountCad?: number; formattedPrice?: string; trialDays?: number; configured: boolean }
