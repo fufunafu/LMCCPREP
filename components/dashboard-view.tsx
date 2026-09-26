@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { ArrowRight, BookOpen, CheckCircle2, Clock3, Flame, Play, Target } from "lucide-react";
 import { AccuracyTrendCard } from "@/components/accuracy-trend-card";
 import { PersonalStudyCard } from "@/components/study-tools";
 import { useStudy } from "@/components/study-provider";
-import { studyStatistics } from "@/lib/study-core";
+import { makeStudySession, studyStatistics } from "@/lib/study-core";
+import { saveStudy } from "@/lib/study-store";
+import { useStudyNavigation } from "@/lib/study-navigation";
 import { StudyActivityCard } from "@/components/study-activity-card";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { DashboardStats, Profile, Session, Subject, Topic } from "@/lib/types";
@@ -24,6 +28,9 @@ const minutes = (ms?: number) => (ms ? `${Math.max(1, Math.round(ms / 60000))} m
 
 export function DashboardView({ stats: initialStats, subjects, topics, recentSessions: initialSessions, userName, examName }: { stats: DashboardStats; subjects: Subject[]; topics: Topic[]; recentSessions: Session[]; userName?: string; examName?: string; profile?: Profile }) {
   const { snapshot } = useStudy();
+  const navigate = useStudyNavigation();
+  const [practicingTopic, setPracticingTopic] = useState<string | null>(null);
+  const practiceBusy = useRef(false);
   const local = snapshot ? studyStatistics(snapshot) : null;
   const stats = local?.stats ?? initialStats;
   const sessions = local?.sessions ?? initialSessions;
@@ -39,6 +46,16 @@ export function DashboardView({ stats: initialStats, subjects, topics, recentSes
   const firstName = (userName ?? "").split(" ")[0];
   const topicName = (id: string) => topics.find((topic) => topic.id === id)?.name ?? id;
   const subjectName = (id: string) => subjects.find((subject) => subject.id === id)?.name ?? id;
+  const practiceTopic = async (topicId: string) => {
+    if (!snapshot || practiceBusy.current) return;
+    practiceBusy.current = true; setPracticingTopic(topicId);
+    try {
+      const session = makeStudySession(snapshot, { mode: "tutor", count: 20, filters: { subjectIds: [], topicIds: [topicId], status: "all" } }, crypto.randomUUID());
+      await saveStudy({ kind: "session", session });
+      navigate(`/session/${session.id}?mode=tutor`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not start topic practice. Please try again."); }
+    finally { practiceBusy.current = false; setPracticingTopic(null); }
+  };
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 md:px-8 md:py-8">
@@ -61,7 +78,7 @@ export function DashboardView({ stats: initialStats, subjects, topics, recentSes
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
         <StudyActivityCard activity={stats.activity} />
-        <Card><CardHeader><CardTitle className="text-base">Weakest topics</CardTitle><p className="text-xs text-muted-foreground">Prioritize these next</p></CardHeader><CardContent className="space-y-4">{stats.weakestTopics.length === 0 && <p className="text-sm text-muted-foreground">Answer a few questions and your weakest topics will show up here.</p>}{stats.weakestTopics.map((topic, index) => { const pct = pctOf(topic.correct, topic.attempted); return <div key={topic.topicId} className="flex items-center gap-3"><span className="grid size-7 place-items-center rounded-lg bg-amber-50 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">{index + 1}</span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="truncate text-sm font-medium">{topicName(topic.topicId)}</p><span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{pct}%</span></div><p className="text-xs text-muted-foreground">{topic.attempted} attempted</p></div></div>})}<Link href="/stats" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">View all analytics <ArrowRight className="size-4" /></Link></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-base">Weakest topics</CardTitle><p className="text-xs text-muted-foreground">Prioritize these next</p></CardHeader><CardContent className="space-y-4">{stats.weakestTopics.length === 0 && <p className="text-sm text-muted-foreground">Answer a few questions and your weakest topics will show up here.</p>}{stats.weakestTopics.map((topic, index) => { const pct = pctOf(topic.correct, topic.attempted); return <div key={topic.topicId} className="flex items-center gap-3"><span className="grid size-7 place-items-center rounded-lg bg-amber-50 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">{index + 1}</span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="truncate text-sm font-medium">{topicName(topic.topicId)}</p><span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{pct}%</span></div><p className="text-xs text-muted-foreground">{topic.attempted} attempted</p></div><Button variant="outline" size="sm" aria-label={`Practice ${topicName(topic.topicId)}`} title="Start up to 20 tutor questions from this topic" disabled={!snapshot || practicingTopic !== null} onClick={() => void practiceTopic(topic.topicId)}>{practicingTopic === topic.topicId ? "Starting…" : "Practice"}<ArrowRight className="size-3.5" /></Button></div>})}<Link href="/stats" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">View all analytics <ArrowRight className="size-4" /></Link></CardContent></Card>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[.85fr_1.15fr]">
