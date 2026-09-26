@@ -62,8 +62,8 @@ export function AuthorQuestion({ subjects }: { subjects: Subject[] }) {
           <div className="space-y-2"><Label>Options. Tap the circle to mark the correct one</Label>
             {options.map((option, i) => (
               <div key={i} className="flex items-center gap-3">
-                <button type="button" aria-label={`Mark option ${i + 1} correct`} aria-pressed={answer === i} onClick={() => setAnswer(i)} className={cn("grid size-7 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold", answer === i ? "border-emerald-800 bg-emerald-800 text-white" : "text-muted-foreground")}>{String.fromCharCode(65 + i)}</button>
-                <Input value={option} onChange={(e) => setOption(i, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + i)}`} />
+                <button type="button" aria-label={`Mark option ${i + 1} correct`} aria-pressed={answer === i} onClick={() => setAnswer(i)} className={cn("grid size-7 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold", answer === i ? "border-emerald-800 bg-emerald-800 text-white" : "text-muted-foreground")}>{i + 1}</button>
+                <Input value={option} onChange={(e) => setOption(i, e.target.value)} placeholder={`Option ${i + 1}`} />
                 {options.length > 2 && <Button variant="ghost" size="icon" aria-label="Remove option" onClick={() => removeOption(i)}><Trash2 className="size-4" /></Button>}
               </div>
             ))}

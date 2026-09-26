@@ -43,25 +43,27 @@ async function endSession(page: Page) {
   await button.click();
 }
 
-test("answer shortcuts match letters and ignore typing, eliminated choices and numbers", async ({ page, consoleErrors }) => {
+test("answer shortcuts match numbered choices and ignore typing, eliminated choices and letters", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await signInDemo(page);
   await page.goto("/session/demo?mode=tutor");
-  await expect(page.getByText("Tap an answer or press A–E to submit.")).toBeVisible();
+  await expect(page.getByText("Tap an answer or press 1–5 to submit.")).toBeVisible();
+  await expect(page.getByRole("radio").locator("span[aria-hidden=true]")).toHaveText(["1", "2", "3", "4", "5"]);
   const notes = page.getByRole("textbox", { name: "Notes for this question" });
-  await notes.fill("ABCDE");
-  await notes.press("a");
+  await notes.fill("12345");
+  await notes.press("3");
   await expect(page.getByRole("region", { name: "Answer explanation" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Strike out answer B" }).click();
+  await page.getByRole("button", { name: "Strike out answer 2" }).click();
   await page.getByRole("heading", { name: "Question 1 of 20", exact: true }).focus();
-  await page.keyboard.press("b");
-  await page.keyboard.press("3");
+  await page.keyboard.press("2");
+  await page.keyboard.press("c");
   await expect(page.getByRole("region", { name: "Answer explanation" })).toHaveCount(0);
-  await page.keyboard.press("C");
+  await page.keyboard.press("3");
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("radio").nth(2).locator("span[aria-hidden=true]")).toHaveText("3");
   await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Question 2 of 20", exact: true })).toBeFocused();
-  await page.keyboard.press("a");
+  await page.keyboard.press("1");
   await expect(page.getByRole("region", { name: "Answer explanation" })).toBeVisible();
   const attempts = (await saved(page)).attempts;
   expect(attempts.map((attempt) => attempt.chosenIdx)).toEqual([2, 0]);
@@ -75,7 +77,7 @@ test("finish check returns to unanswered questions and fully answered sessions f
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("heading", { name: "2 questions unanswered" })).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Review unanswered" })).toBeFocused();
-  await page.keyboard.press("a");
+  await page.keyboard.press("1");
   expect((await saved(page)).attempts).toHaveLength(1);
   expect((await saved(page)).sessions.demo.finishedAt).toBeFalsy();
   const accessibility = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();

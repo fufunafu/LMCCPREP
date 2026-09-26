@@ -18,12 +18,12 @@ test("offline reload keeps answers, replacement skips, notes, plans and statisti
   await expect(page.getByText("Offline study is ready.", { exact: false })).toBeVisible({ timeout: 60_000 });
   await page.goto("/session/demo?mode=tutor");
   const originalId = await page.getByText(/^Question ID /).textContent();
-  await page.getByRole("button", { name: "Strike out answer B" }).click();
-  await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Strike out answer 2" }).click();
+  await expect(page.getByRole("button", { name: "Restore answer 2" })).toHaveAttribute("aria-pressed", "true");
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await expect(page.getByRole("button", { name: "Restore answer 2" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
   const beforeSkip = await page.getByText(/^Question ID /).textContent();
@@ -156,7 +156,7 @@ test("downloaded figures survive offline reload and expired access keeps saved w
   await context.setOffline(true);
   await page.reload();
   await expect.poll(() => page.getByRole("img", { name: /Clinical figure 1/ }).evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(1);
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
   await expect(page.getByRole("region", { name: "Answer explanation" })).toBeVisible();
   await page.clock.fastForward(73 * 3600_000);
   await expect(page.getByRole("heading", { name: "Refresh your study access" })).toBeVisible();

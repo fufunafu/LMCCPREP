@@ -13,7 +13,7 @@ for (const offline of [false, true]) {
       await expect(page.getByText("Offline study is ready.", { exact: false })).toBeVisible({ timeout: 60_000 });
     }
     await page.goto("/session/demo?mode=tutor");
-    await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+    await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
     await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Next question", exact: true }).click();
     await expect(page.getByText("Q 2 / 20", { exact: true })).toBeVisible();
     const qid = await page.getByText(/^Question ID /).textContent();
@@ -27,7 +27,7 @@ for (const offline of [false, true]) {
     await resume.getByRole("link", { name: "Continue session", exact: true }).click();
     await expect(page.getByText(/^Question ID /)).toHaveText(qid!);
     await page.getByRole("group", { name: "Question navigation" }).getByRole("button", { name: "Previous question" }).click();
-    await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
     await expect(page.getByText("1 of 20 answered", { exact: true })).toHaveCount(1);
     expect(pageErrors).toEqual([]);
     if (offline) await context.setOffline(false);

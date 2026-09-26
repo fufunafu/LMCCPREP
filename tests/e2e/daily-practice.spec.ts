@@ -62,7 +62,7 @@ test("tutor timer counts up, freezes on answer, and restores saved time", async 
   await expect(timer).toHaveAttribute("aria-label", /elapsed$/);
   await page.clock.fastForward(8000);
   await expect(timer).toHaveText(/00:0[89]/);
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
   await expect(page.getByRole("region", { name: "Answer explanation" })).toBeVisible();
   const savedTime = await timer.textContent();
   await page.clock.fastForward(65_000);

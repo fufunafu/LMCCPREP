@@ -15,17 +15,17 @@ test("header Next preserves unanswered questions and stays available after answe
   await expect(page.getByText("0 of 20 answered", { exact: true })).toBeVisible();
   await navigation.getByRole("button", { name: "Previous question" }).click();
   await expect(questionId).toHaveText(firstId!);
-  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ })).toBeEnabled();
+  await expect(page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ })).toBeEnabled();
   await page.reload();
   await expect(questionId).toHaveText(firstId!);
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
   await expect(navigation.getByRole("button", { name: "Skip question" })).toHaveCount(0);
   await navigation.getByRole("button", { name: "Next question", exact: true }).click();
   await expect(questionId).toHaveText(secondId!);
   await expect(page.getByText("1 of 20 answered", { exact: true })).toBeVisible();
   await navigation.getByRole("button", { name: "Previous question" }).click();
   await expect(questionId).toHaveText(firstId!);
-  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
 });
 
 test("creates a tutor session and supports answer elimination", async ({ page, consoleErrors }) => {
@@ -34,13 +34,13 @@ test("creates a tutor session and supports answer elimination", async ({ page, c
   await page.getByRole("button", { name: /Start session/ }).click();
   await expect(page).toHaveURL(/\/session\/demo\?mode=tutor$/);
   await expect(page.getByText(/Could not create the session/)).toHaveCount(0);
-  await page.getByRole("button", { name: "Strike out answer B" }).click();
-  await expect(page.getByRole("button", { name: "Restore answer B" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("radio", { name: /B Radiation to the back/ })).toBeDisabled();
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
-  const feedback = page.locator('[role="status"]').filter({ hasText: "Correct. The best answer is C." });
+  await page.getByRole("button", { name: "Strike out answer 2" }).click();
+  await expect(page.getByRole("button", { name: "Restore answer 2" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("radio", { name: /2 Radiation to the back/ })).toBeDisabled();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
+  const feedback = page.locator('[role="status"]').filter({ hasText: "Correct. The best answer is 3." });
   await expect(feedback).toBeFocused();
-  await expect(page.getByRole("radio", { name: /C A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound, correct answer/ })).toBeVisible();
   await expect(page.locator("aside").getByRole("button", { name: "Go to question 1, correct, current" })).toHaveAttribute("aria-current", "step");
   await expect(page.getByText("Correct", { exact: true }).first()).toBeVisible();
   await page.reload();
@@ -61,7 +61,7 @@ test("timed mode records an answer and advances without showing feedback", async
   await expect(page).toHaveURL(/\/session\/demo\?mode=timed$/);
   await expect(page.getByText("01:23")).toBeVisible();
   await expect(page.getByText(/01:2[12]/)).toBeVisible({ timeout: 3_000 });
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
   await expect(page.getByText("Review the reasoning", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Q 2 / 20")).toBeVisible();
   await page.reload();
@@ -70,6 +70,7 @@ test("timed mode records an answer and advances without showing feedback", async
   await page.getByRole("button", { name: "End session" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Finish anyway", exact: true }).click();
   await expect(page).toHaveURL(/\/session\/demo\/review\?mode=timed$/);
+  await expect(page.getByRole("cell", { name: /^3\. A soft, position-dependent/ })).toHaveCount(2);
   await page.getByRole("link", { name: "Review all" }).click();
   await expect(page).toHaveURL(/\/session\/demo\?mode=timed&q=1&review=1$/);
   await expect(page.getByText("Q 1 / 20")).toBeVisible();
@@ -79,7 +80,7 @@ test("keeps the default explanation compact on a phone", async ({ page, consoleE
   void consoleErrors;
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto("/session/demo?mode=tutor");
-  await page.getByRole("radio", { name: /C A soft, position-dependent systolic sound/ }).click();
+  await page.getByRole("radio", { name: /3 A soft, position-dependent systolic sound/ }).click();
 
   const explanation = page.getByRole("region", { name: "Answer explanation" });
   const collapsedHeight = await explanation.evaluate((element) => element.getBoundingClientRect().height);
@@ -113,7 +114,7 @@ test("opens notes, toggles a flag, and reaches session review", async ({ page, c
   await expect(page.getByPlaceholder(/Write a clinical pearl/)).toHaveValue("Review this clinical distinction.");
   await page.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: "Report an issue" }).click();
-  await page.getByPlaceholder(/option C is cut off/).fill("The wording needs review.");
+  await page.getByPlaceholder(/option 3 is cut off/).fill("The wording needs review.");
   await page.getByRole("button", { name: "Send report" }).click();
   await expect(page.getByText("Reports are not sent from the demo")).toBeVisible();
   await page.getByRole("button", { name: "End session" }).click();
