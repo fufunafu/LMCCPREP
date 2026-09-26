@@ -68,6 +68,7 @@ test("timed mode records an answer and advances without showing feedback", async
   await expect(page.getByText("Q 2 / 20")).toBeVisible();
   await page.getByLabel("Question tools", { exact: true }).click();
   await page.getByRole("button", { name: "End session" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Finish anyway", exact: true }).click();
   await expect(page).toHaveURL(/\/session\/demo\/review\?mode=timed$/);
   await page.getByRole("link", { name: "Review all" }).click();
   await expect(page).toHaveURL(/\/session\/demo\?mode=timed&q=1&review=1$/);
@@ -116,6 +117,7 @@ test("opens notes, toggles a flag, and reaches session review", async ({ page, c
   await page.getByRole("button", { name: "Send report" }).click();
   await expect(page.getByText("Reports are not sent from the demo")).toBeVisible();
   await page.getByRole("button", { name: "End session" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Finish anyway", exact: true }).click();
   await expect(page).toHaveURL(/\/session\/demo\/review\?mode=tutor$/);
   await expect(page.getByRole("heading", { name: /Strong work/ })).toBeVisible();
   await page.getByRole("link", { name: "Review all" }).click();
