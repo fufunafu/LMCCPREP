@@ -70,6 +70,26 @@ describe("sync conflict recovery", () => {
 });
 
 describe("time and pace study plans", () => {
+  it("uses only unanswered questions, including when due reviews and duplicate variants exist", () => {
+    const s = fixture();
+    const [missed, correct, duplicate] = s.questions;
+    s.reviewedGroups = [[missed.id, duplicate.id]];
+    s.attempts = [answer(missed.id, "old-miss", false, shiftDay(now, -2)), answer(correct.id, "old-correct", true, shiftDay(now, -2))];
+    expect(dueReviews(s, now)).toContain(missed.id);
+    const planned = plannedQuestionIds(s, now);
+    expect(planned).toHaveLength(20);
+    for (const id of [missed.id, correct.id, duplicate.id]) expect(planned).not.toContain(id);
+    const session = makeStudySession(s, { mode: "tutor", count: 20, exactIds: planned, filters: { subjectIds: [], topicIds: [], status: "unused" } }, "new-only", now);
+    expect([missed.id, correct.id, duplicate.id]).not.toContain(eligibleReplacement(s, session, 0).id);
+  });
+  it("does not fill a short or exhausted new-question pool with previously answered questions", () => {
+    const s = fixture();
+    s.attempts = s.questions.slice(0, -2).map((q) => answer(q.id, "previous", false, shiftDay(now, -2)));
+    expect(plannedQuestionIds(s, now)).toEqual(s.questions.slice(-2).map((q) => q.id));
+    s.attempts.push(...s.questions.slice(-2).map((q) => answer(q.id, "previous", true, shiftDay(now, -2))));
+    expect(plannedQuestionIds(s, now)).toEqual([]);
+    expect(dueReviews(s, now).length).toBeGreaterThan(0);
+  });
   it("calculates a feasible daily target, caps blocks at 20 and stops at the target", () => {
     const s = fixture(); expect(dailyTarget(plan)).toBe(30); expect(planDays(plan, now)).toBe(30);
     expect(plannedQuestionIds(s, now)).toHaveLength(20);
@@ -147,7 +167,7 @@ describe("review schedules and learning statistics", () => {
     expect(dueReviews(s, now)).toEqual([q]);
     s.attempts.push(answer(q, "review", true)); expect(dueReviews(s, now)).toEqual([]);
     expect(dueReviews(s, shiftDay(now, 3))).toEqual([q]);
-    expect(plannedQuestionIds({ ...s, attempts: s.attempts.slice(0, 1) }, now)[0]).toBe(q);
+    expect(plannedQuestionIds({ ...s, attempts: s.attempts.slice(0, 1) }, now)).not.toContain(q);
   });
 });
 

@@ -24,11 +24,11 @@ export function PersonalStudyCard() {
   const target = plan ? dailyTarget(plan) : 0;
   const unused = questionPool(snapshot, { subjectIds: [], topicIds: [], status: "unused" }).length;
   const due = dueReviews(snapshot);
-  const start = async (ids: string[]) => {
+  const start = async (ids: string[], status: "unused" | "review") => {
     if (!ids.length) return;
     setBusy(true); setError("");
     try {
-      const session = makeStudySession(snapshot, { mode: "tutor", count: 20, exactIds: ids, filters: { subjectIds: [], topicIds: [], status: "review" } }, crypto.randomUUID());
+      const session = makeStudySession(snapshot, { mode: "tutor", count: 20, exactIds: ids, filters: { subjectIds: [], topicIds: [], status } }, crypto.randomUUID());
       await saveStudy({ kind: "session", session }); navigate(`/session/${session.id}`);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not start your session."); }
     finally { setBusy(false); }
@@ -48,9 +48,9 @@ export function PersonalStudyCard() {
       <Progress aria-label="Daily study target" value={Math.min(100, done / target * 100)} />
       <p className="text-sm text-muted-foreground">{days > 0 ? `${days} days to your exam. ${unused} new questions remain; about ${Math.ceil(unused / days)} new questions per day would cover them.` : "Your target exam date has arrived. Edit your plan to set a future date."}</p>
       {days > 0 && Math.ceil(unused / days) > target && <p className="text-sm text-amber-800 dark:text-amber-300">Your current study time may not cover the remaining bank before this date. Adjust your time or prioritize your weakest topics.</p>}
-      <Button disabled={busy || done >= target || days <= 0} onClick={() => { try { void start(plannedQuestionIds(snapshot)); } catch (e) { setError((e as Error).message); } }}>{done >= target ? "Daily target complete" : `Start today’s ${Math.min(20, target - done)} questions`}</Button>
+      <Button disabled={busy || done >= target || days <= 0 || !unused} onClick={() => { try { void start(plannedQuestionIds(snapshot), "unused"); } catch (e) { setError((e as Error).message); } }}>{done >= target ? "Daily target complete" : !unused ? "No new questions remaining" : `Start today’s ${Math.min(20, target - done, unused)} new questions`}</Button>
     </>}
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"><div><p className="text-sm font-medium">{due.length} questions due for review</p><p className="text-xs text-muted-foreground">Missed questions return after 1 day. Successful spaced reviews extend the interval to 3, 7, 14 and 30 days.</p></div><Button variant="outline" disabled={!due.length || busy} onClick={() => void start(due)}>Start due review</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"><div><p className="text-sm font-medium">{due.length} questions due for review</p><p className="text-xs text-muted-foreground">Missed questions return after 1 day. Successful spaced reviews extend the interval to 3, 7, 14 and 30 days.</p></div><Button variant="outline" disabled={!due.length || busy} onClick={() => void start(due, "review")}>Start due review</Button></div>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}<p className="text-xs text-muted-foreground">This plan is saved for this account and exam in this browser. Synced answers from your other devices count toward your progress.</p>
   </CardContent></Card>;
 }

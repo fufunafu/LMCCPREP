@@ -160,9 +160,8 @@ export function makeStudySession(snapshot: StudySnapshot, input: { mode: Session
 export function plannedQuestionIds(snapshot: StudySnapshot, now = new Date()): string[] {
   if (!snapshot.plan || planDays(snapshot.plan, now) <= 0) throw new Error("Set a future exam date before starting your plan.");
   const remaining = Math.max(0, dailyTarget(snapshot.plan) - completedToday(snapshot, now));
-  const all = questionPool(snapshot, { subjectIds: [], topicIds: [], status: "all" }).map((q) => q.id);
   const unused = questionPool(snapshot, { subjectIds: [], topicIds: [], status: "unused" }).map((q) => q.id);
-  return [...new Set([...dueReviews(snapshot, now), ...unused, ...all])].slice(0, Math.min(20, remaining));
+  return unused.slice(0, Math.min(20, remaining));
 }
 export function applyStudyOperation(snapshot: StudySnapshot, operation: StudyOperation, enqueue = true): StudySnapshot {
   const next = { ...snapshot, sessions: structuredClone(snapshot.sessions), attempts: [...snapshot.attempts], flags: [...snapshot.flags], notes: { ...snapshot.notes }, outbox: [...snapshot.outbox] };

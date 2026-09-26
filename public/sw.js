@@ -1,5 +1,5 @@
-const SHELL = "montreal-study-shell-v11";
-const STATIC = "montreal-study-static-v11";
+const SHELL = "montreal-study-shell-v13";
+const STATIC = "montreal-study-static-v13";
 async function prepareShell() {
   const response = await fetch("/offline", { cache: "reload", credentials: "omit" });
   if (!response.ok || response.redirected) throw new Error("Offline page download failed.");
