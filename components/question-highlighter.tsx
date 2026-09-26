@@ -88,7 +88,7 @@ export function QuestionHighlighter({ questionId, children }: { questionId: stri
   };
 
   return <div ref={root}>
-    <style>{`::highlight(${name}) { background-color: #fde68a; color: #422006; } .dark ::highlight(${name}) { background-color: #854d0e; color: #fef3c7; }`}</style>
+    <style>{`::highlight(${name}) { background-color: #bbf7d0; color: #14532d; } .dark ::highlight(${name}) { background-color: #166534; color: #dcfce7; }`}</style>
     {children}
     {selection && enabled && <div ref={toolbar} role="group" aria-label="Text highlighting" className="fixed z-50 flex items-center gap-1 rounded-xl border bg-background p-1.5 shadow-lg" style={{ left: selection.left, top: selection.top }} onPointerDown={(event) => event.preventDefault()}>
       <Button size="sm" disabled={busy} onClick={() => void persist((items) => addHighlight(items, { ...selection.anchor, id: crypto.randomUUID() }, selection.text))}><Highlighter />Highlight</Button>

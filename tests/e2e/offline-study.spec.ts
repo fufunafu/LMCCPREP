@@ -5,9 +5,14 @@ test("offline reload keeps answers, replacement skips, notes, plans and statisti
   test.setTimeout(120_000);
   await signInDemo(page);
   await page.getByLabel("Minutes per day", { exact: true }).fill("30");
-  await page.getByLabel("Minutes per question", { exact: true }).fill("2");
+  await expect(page.getByLabel("Seconds per question", { exact: true })).toHaveValue("120");
+  await page.getByLabel("Seconds per question", { exact: true }).fill("90");
   await page.getByRole("button", { name: "Save study plan", exact: true }).click();
-  await expect(page.getByText("0 / 15", { exact: true })).toBeVisible();
+  await expect(page.getByText("0 / 20", { exact: true })).toBeVisible();
+  await expect(page.getByText(/30 minutes at 90 seconds per question/)).toBeVisible();
+  await page.getByRole("button", { name: "Edit study plan", exact: true }).click();
+  await expect(page.getByLabel("Seconds per question", { exact: true })).toHaveValue("90");
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.goto("/settings");
   await page.getByRole("button", { name: "Download offline study", exact: true }).click();
   await expect(page.getByText("Offline study is ready.", { exact: false })).toBeVisible({ timeout: 60_000 });
@@ -40,7 +45,8 @@ test("offline reload keeps answers, replacement skips, notes, plans and statisti
   await expect(page.getByPlaceholder(/Write a clinical pearl/)).toHaveValue("Saved while offline.");
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Dashboard", exact: true }).click();
-  await expect(page.getByText("1 / 15", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 / 20", { exact: true })).toBeVisible();
+  await expect(page.getByText(/30 minutes at 90 seconds per question/)).toBeVisible();
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Statistics", exact: true }).click();
   await expect(page.getByText("First attempts", { exact: true })).toBeVisible();
   await expect(page.getByText("1 correct of 1 attempts", { exact: true })).toBeVisible();

@@ -26,7 +26,13 @@ export function DashboardView({ stats: initialStats, subjects, topics, recentSes
   const { snapshot } = useStudy();
   const local = snapshot ? studyStatistics(snapshot) : null;
   const stats = local?.stats ?? initialStats;
-  const recentSessions = local?.sessions.slice(0, 4) ?? initialSessions;
+  const sessions = local?.sessions ?? initialSessions;
+  const recentSessions = sessions.slice(0, 4);
+  const availableIds = snapshot ? new Set(snapshot.questions.map((question) => question.id)) : null;
+  const unfinishedSessions = sessions.filter((session) => !session.finishedAt && session.questionIds.length > 0 && (!availableIds || session.questionIds.every((id) => availableIds.has(id)))).sort((a, b) => Number((b.attempted ?? 0) > 0) - Number((a.attempted ?? 0) > 0) || b.createdAt.localeCompare(a.createdAt));
+  const activeSession = unfinishedSessions[0];
+  const sessionPosition = (session: Session) => Math.min(session.questionIds.length, (snapshot?.sessions[session.id]?.cursor ?? session.currentIndex ?? 0) + 1);
+  const sessionHref = (session: Session) => `/session/${session.id}?mode=${session.mode}`;
   const accuracy = pctOf(stats.correct, stats.attempted);
   const referenceDate = stats.activity.at(-1)?.date ?? torontoDateKey();
   const today = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${referenceDate}T12:00:00Z`));
@@ -36,7 +42,16 @@ export function DashboardView({ stats: initialStats, subjects, topics, recentSes
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 md:px-8 md:py-8">
-      <PageHeader eyebrow={examName ? `${today} · ${examName}` : today} title={firstName ? `Welcome back, ${firstName}` : "Welcome back"} description={stats.attempted ? "You are building real momentum. Keep the next session focused and manageable." : "Start with a short tutor session to get your first numbers on the board."} action={<Link href="/create" className={buttonVariants({ size: "lg", className: "h-10 bg-emerald-800 px-4 hover:bg-emerald-900" })}><Play className="fill-current" />Start practicing</Link>} />
+      <PageHeader eyebrow={examName ? `${today} · ${examName}` : today} title={firstName ? `Welcome back, ${firstName}` : "Welcome back"} description={stats.attempted ? "You are building real momentum. Keep the next session focused and manageable." : "Start with a short tutor session to get your first numbers on the board."} action={<Link href={activeSession ? sessionHref(activeSession) : "/create"} className={buttonVariants({ size: "lg", className: "h-10 bg-emerald-800 px-4 hover:bg-emerald-900" })}><Play className="fill-current" />{activeSession ? "Resume session" : "Start practicing"}</Link>} />
+      {activeSession && <Card className="mb-5 border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/30" role="region" aria-labelledby="resume-session-heading">
+        <CardContent className="space-y-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div><h2 id="resume-session-heading" className="text-lg font-semibold">Continue where you left off</h2><p className="mt-1 text-sm text-muted-foreground">{activeSession.mode === "timed" ? "Timed" : "Tutor"} practice · {activeSession.attempted ?? 0} of {activeSession.questionIds.length} answered · Question {sessionPosition(activeSession)}</p><p className="mt-1 text-sm text-muted-foreground">Your saved answers and place in this session are kept.</p></div>
+            <div className="flex flex-wrap gap-2"><Link href={sessionHref(activeSession)} className={buttonVariants({ className: "h-10 bg-emerald-800 px-4 text-white hover:bg-emerald-900" })}>Continue session<ArrowRight /></Link><Link href="/create" className={buttonVariants({ variant: "outline", className: "h-10" })}>New session</Link></div>
+          </div>
+          {unfinishedSessions.length > 1 && <details className="border-t border-emerald-200 pt-3 dark:border-emerald-800"><summary className="cursor-pointer text-sm font-medium">Other unfinished sessions ({unfinishedSessions.length - 1})</summary><ul className="mt-2 divide-y">{unfinishedSessions.slice(1).map((session) => <li key={session.id}><Link href={sessionHref(session)} className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-3 text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900"><span>{session.mode === "timed" ? "Timed" : "Tutor"} practice · {session.attempted ?? 0} of {session.questionIds.length} answered · {relativeDay(session.createdAt, referenceDate)}</span><span className="inline-flex items-center gap-1 font-medium">Resume<ArrowRight className="size-4" /></span></Link></li>)}</ul></details>}
+        </CardContent>
+      </Card>}
       <PersonalStudyCard />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="sm:row-span-2"><CardHeader className="pb-0"><CardTitle className="text-sm font-medium text-muted-foreground">Overall accuracy</CardTitle></CardHeader><CardContent className="flex h-[224px] flex-col items-center justify-center"><div className="relative grid size-36 place-items-center rounded-full" style={{ background: `conic-gradient(#059669 ${accuracy * 3.6}deg, color-mix(in oklch, var(--muted) 90%, transparent) 0)` }}><div className="grid size-[116px] place-items-center rounded-full bg-card text-center"><div><p className="text-3xl font-semibold tracking-tight">{accuracy}%</p><p className="text-xs text-muted-foreground">{stats.correct} correct</p></div></div></div><p className="mt-4 text-xs text-muted-foreground">Across all attempted questions</p></CardContent></Card>

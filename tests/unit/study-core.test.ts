@@ -79,8 +79,18 @@ describe("time and pace study plans", () => {
     expect(plannedQuestionIds(s, now)).toEqual([]);
   });
   it("rejects invalid dates, past dates, and unsupported time or pace", () => {
-    for (const patch of [{ examDate: "2026-02-30" }, { examDate: "2026-09-25" }, { minutesPerDay: 14 }, { minutesPerDay: 241 }, { minutesPerQuestion: 0 }, { minutesPerQuestion: 2.5 }]) expect(() => validateStudyPlan({ ...plan, ...patch }, now)).toThrow();
+    for (const patch of [{ examDate: "2026-02-30" }, { examDate: "2026-09-25" }, { minutesPerDay: 14 }, { minutesPerDay: 241 }, { minutesPerQuestion: 14 / 60 }, { minutesPerQuestion: 601 / 60 }, { minutesPerQuestion: 90.5 / 60 }, { minutesPerQuestion: NaN }, { minutesPerQuestion: Infinity }]) expect(() => validateStudyPlan({ ...plan, ...patch }, now)).toThrow();
     expect(() => validateStudyPlan(plan, now)).not.toThrow();
+  });
+  it("accepts whole-second paces and preserves targets for existing minute-based plans", () => {
+    expect(dailyTarget(plan)).toBe(30);
+    expect(dailyTarget({ ...plan, minutesPerQuestion: 1.5 })).toBe(40);
+    expect(dailyTarget({ ...plan, minutesPerQuestion: 83 / 60 })).toBe(43);
+    for (let seconds = 15; seconds <= 600; seconds++) {
+      const next = { ...plan, minutesPerQuestion: seconds / 60 };
+      expect(() => validateStudyPlan(next, now)).not.toThrow();
+      expect(dailyTarget(next)).toBe(Math.min(240, Math.floor(3600 / seconds)));
+    }
   });
   it("counts calendar days across a daylight saving transition", () => {
     const previous = process.env.TZ; process.env.TZ = "America/Toronto";

@@ -2,7 +2,7 @@
 
 September 26, 2026
 
-Select text in a question stem or explanation and choose **Highlight**. Select an existing highlight and choose **Remove**. Highlights appear directly on the text without an instruction row, saved-highlight counter or panel. Highlighting excludes answer buttons so selecting text cannot submit an answer.
+Select text in a question stem or explanation and choose **Highlight**. Select an existing highlight and choose **Remove**. Green highlights appear directly on the text in light and dark mode, without an instruction row, saved-highlight counter or panel. Highlighting excludes answer buttons so selecting text cannot submit an answer.
 
 Highlights are stored in this browser for the current account, exam and question. They survive question navigation, reloads and offline practice. They do not sync to other devices. The existing clear-download and sign-out flows clear their local study storage. Highlighting requires the CSS Custom Highlight API. Quote and context anchors reattach highlights after compatible text changes, while ambiguous or removed passages do not mark unrelated text.
 

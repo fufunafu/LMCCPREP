@@ -62,13 +62,15 @@ export function dayKey(value = new Date()): string {
 }
 export function dayNumber(value: string): number { return Date.parse(`${value}T12:00:00Z`) / 86_400_000; }
 export function shiftDay(value: Date, days: number): Date { const next = new Date(value); next.setHours(0, 0, 0, 0); next.setDate(next.getDate() + days); return next; }
-export function dailyTarget(plan: StudyPlan): number { return Math.min(240, Math.max(1, Math.floor(plan.minutesPerDay / plan.minutesPerQuestion))); }
+export function dailyTarget(plan: StudyPlan): number { return Math.min(240, Math.max(1, Math.floor(plan.minutesPerDay * 60 / Math.round(plan.minutesPerQuestion * 60)))); }
 export function planDays(plan: StudyPlan, now = new Date()): number { return Math.max(0, dayNumber(plan.examDate) - dayNumber(dayKey(now))); }
 export function validateStudyPlan(plan: StudyPlan, now = new Date()): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(plan.examDate) || !Number.isFinite(dayNumber(plan.examDate)) || new Date(`${plan.examDate}T12:00:00Z`).toISOString().slice(0, 10) !== plan.examDate || planDays(plan, now) <= 0)
     throw new Error("Choose a future exam date.");
-  if (![plan.minutesPerDay, plan.minutesPerQuestion].every(Number.isInteger) || plan.minutesPerDay < 15 || plan.minutesPerDay > 240 || plan.minutesPerQuestion < 1 || plan.minutesPerQuestion > 10)
-    throw new Error("Choose 15 to 240 minutes per day and 1 to 10 minutes per question.");
+  // Keep existing saved plans in minutes while accepting whole-second input.
+  const seconds = plan.minutesPerQuestion * 60;
+  if (!Number.isInteger(plan.minutesPerDay) || plan.minutesPerDay < 15 || plan.minutesPerDay > 240 || !Number.isFinite(seconds) || seconds < 15 || seconds > 600 || Math.abs(seconds - Math.round(seconds)) > 1e-9)
+    throw new Error("Choose 15 to 240 minutes per day and 15 to 600 whole seconds per question.");
 }
 export function uniqueAttempts(attempts: Attempt[]): Attempt[] {
   const seen = new Set<string>();
