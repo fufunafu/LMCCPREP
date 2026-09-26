@@ -8,6 +8,10 @@ const PUBLIC_ASSET = /\.(?:png|jpg|jpeg|gif|webp|svg|ico|txt|xml|webmanifest)$/;
 /** Refreshes the Supabase session cookie and gates app routes behind sign-in. */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // This static shell contains no personal content. It reads authorized local data after hydration.
+  if (pathname === "/offline" || pathname === "/sw.js") return NextResponse.next({ request });
+  // Apple endpoints authenticate their own bearer tokens or signed notifications.
+  if (pathname === "/api/apple/transactions" || pathname === "/api/apple/notifications") return NextResponse.next({ request });
   const isDemo = request.cookies.get(DEMO_COOKIE)?.value === DEMO_COOKIE_VALUE;
   if (isDemo) {
     if (pathname === "/login" || pathname === "/forgot-password" || pathname.startsWith("/auth/")) {

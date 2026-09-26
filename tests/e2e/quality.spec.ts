@@ -186,10 +186,10 @@ test("marketing navigation routes to dedicated pages and stays sticky", async ({
   }
 });
 
-test("unapproved public catalog stays withheld during demo, and private landmarks expose state", async ({ page, consoleErrors }) => {
+test("demo does not change the public catalog, and private landmarks expose state", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
-  await expect(page.locator("#subjects")).toHaveCount(0);
+  const catalogBeforeDemo = await page.locator("#subjects").allTextContents();
   await signInDemo(page);
   await expect(page.getByRole("status").filter({ hasText: "Simulated demo data" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Daily accuracy for the last 28 calendar days" })).toBeAttached();
@@ -199,7 +199,7 @@ test("unapproved public catalog stays withheld during demo, and private landmark
   await page.goto("/session/demo?mode=tutor");
   await expect(page.locator("main")).toHaveCount(1);
   await page.goto("/");
-  await expect(page.locator("#subjects")).toHaveCount(0);
+  expect(await page.locator("#subjects").allTextContents()).toEqual(catalogBeforeDemo);
 });
 
 test("registered service worker serves the offline fallback", async ({ page, context }) => {
@@ -211,7 +211,7 @@ test("registered service worker serves the offline fallback", async ({ page, con
   await context.setOffline(true);
   try {
     await page.goto(`/unavailable-offline-${Date.now()}`);
-    await expect(page.getByRole("heading", { name: "You are offline" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No offline study data saved" })).toBeVisible();
   } finally {
     await context.setOffline(false);
   }

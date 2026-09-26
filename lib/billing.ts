@@ -86,7 +86,7 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
     return { mode: "configuration_error", configured, required, hasAccess: false, subscriptionHasAccess: false, error: "Sign in to view billing." };
   }
 
-  const [customerResult, subscriptionResult, grantResult, accessResult] = await Promise.all([
+  const [customerResult, subscriptionResult, grantResult, accessResult, appleResult] = await Promise.all([
     supabase.from("billing_customers").select("stripe_customer_id").eq("user_id", userId).maybeSingle(),
     supabase
       .from("billing_subscriptions")
@@ -97,9 +97,13 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
       .maybeSingle(),
     supabase.from("billing_access_grants").select("expires_at").eq("user_id", userId).maybeSingle(),
     required ? supabase.rpc("has_billing_access") : Promise.resolve({ data: true, error: null }),
+    createAdminClient().from("apple_current_subscriptions")
+      .select("exam_id,access_until,auto_renew").eq("user_id", userId).eq("revoked", false)
+      .gt("access_until", new Date().toISOString()).order("environment", { ascending: true })
+      .order("purchase_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
-  const queryError = customerResult.error ?? subscriptionResult.error ?? grantResult.error ?? accessResult.error;
+  const queryError = customerResult.error ?? subscriptionResult.error ?? grantResult.error ?? accessResult.error ?? appleResult.error;
   if (queryError) {
     if (!required) return { mode: "disabled", configured, required: false, hasAccess: true, subscriptionHasAccess: false };
     return {
@@ -127,7 +131,10 @@ export const getBillingSummary = cache(async (): Promise<BillingSummary> => {
     configured,
     required,
     hasAccess: Boolean(accessResult.data),
-    subscriptionHasAccess,
+    subscriptionHasAccess: subscriptionHasAccess || Boolean(appleResult.data),
+    appleSubscription: appleResult.data ? {
+      examId: appleResult.data.exam_id, accessUntil: appleResult.data.access_until, autoRenew: appleResult.data.auto_renew,
+    } : undefined,
     customerId: customerResult.data?.stripe_customer_id,
     subscriptionId: subscription?.stripe_subscription_id,
     priceId: subscription?.stripe_price_id,

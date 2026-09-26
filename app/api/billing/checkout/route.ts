@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const priceId = checkoutPrice(body.plan);
     const admin = createAdminClient();
     const now = new Date().toISOString();
-    const [subscriptionResult, grantResult] = await Promise.all([
+    const [subscriptionResult, grantResult, appleResult] = await Promise.all([
       admin
         .from("billing_subscriptions")
         .select("stripe_subscription_id")
@@ -40,8 +40,11 @@ export async function POST(request: Request) {
         .eq("user_id", userId)
         .or(`expires_at.is.null,expires_at.gt.${now}`)
         .maybeSingle(),
+      admin.from("apple_current_subscriptions").select("transaction_id").eq("user_id", userId)
+        .eq("revoked", false).gt("access_until", now).limit(1).maybeSingle(),
     ]);
-    if (subscriptionResult.error || grantResult.error) throw new Error("Could not check current billing access.");
+    if (appleResult?.data) return NextResponse.json({ error: "Your account already has an Apple subscription. Manage it in your Apple Account settings." }, { status: 409 });
+    if (subscriptionResult.error || grantResult.error || appleResult.error) throw new Error("Could not check current billing access.");
     const activeSubscription = subscriptionResult.data;
     if (activeSubscription) {
       return NextResponse.json({ error: "A billing subscription already exists. Manage or repair it from Settings." }, { status: 409 });

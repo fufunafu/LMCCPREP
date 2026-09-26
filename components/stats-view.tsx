@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { LearningProgress } from "@/components/study-tools";
+import { useStudy } from "@/components/study-provider";
+import { studyStatistics } from "@/lib/study-core";
 import { Bookmark, ChevronRight, Clock3, Target, TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { PageHeader } from "@/components/page-header";
@@ -11,7 +14,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { DailyActivity, Question, Subject, Topic, TopicStats } from "@/lib/types";
 import { torontoDateKey } from "@/lib/utils";
 
-export function StatsView({ subjects, topics, stats, activity, flagged, flaggedTotal }: { subjects: Subject[]; topics: Topic[]; stats: TopicStats[]; activity: DailyActivity[]; flagged: Pick<Question, "id" | "qid" | "stem" | "topicId">[]; flaggedTotal: number }) {
+export function StatsView({ subjects, topics, stats: initialStats, activity: initialActivity, flagged: initialFlagged, flaggedTotal: initialFlaggedTotal }: { subjects: Subject[]; topics: Topic[]; stats: TopicStats[]; activity: DailyActivity[]; flagged: Pick<Question, "id" | "qid" | "stem" | "topicId">[]; flaggedTotal: number }) {
+  const { snapshot } = useStudy();
+  const local = snapshot ? studyStatistics(snapshot) : null;
+  const stats = local?.topicStats ?? initialStats;
+  const activity = local?.stats.activity ?? initialActivity;
+  const flagged = snapshot ? snapshot.questions.filter((q) => snapshot.flags.includes(q.id)).slice(0, 8) : initialFlagged;
+  const flaggedTotal = snapshot?.flags.length ?? initialFlaggedTotal;
   const lineData = activity.reduce<{ week: string; accuracy: number; attempted: number }[]>((weeks, day, index) => { if (index % 7 === 6) { const slice = activity.slice(index - 6, index + 1); const attempted = slice.reduce((sum, item) => sum + item.attempted, 0); const correct = slice.reduce((sum, item) => sum + item.correct, 0); weeks.push({ week: `W${weeks.length + 1}`, accuracy: attempted ? Math.round(correct / attempted * 100) : 0, attempted }); } return weeks; }, []);
   const totals = stats.reduce((acc, item) => ({ attempted: acc.attempted + item.attempted, correct: acc.correct + item.correct, time: acc.time + item.avgTimeMs * item.attempted }), { attempted: 0, correct: 0, time: 0 });
   const overall = totals.attempted ? Math.round((totals.correct / totals.attempted) * 100) : 0;
@@ -30,6 +39,7 @@ export function StatsView({ subjects, topics, stats, activity, flagged, flaggedT
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-8">
       <PageHeader eyebrow="Performance" title="Your statistics" description="Use trends to choose the next topic, not to judge the last session." />
+      <LearningProgress />
       <div className="grid gap-4 sm:grid-cols-3">{[{ icon: Target, label: "Overall accuracy", value: `${overall}%`, detail: delta === null ? `${totals.attempted} attempted` : `${delta >= 0 ? "+" : ""}${delta}% vs previous 30 days`, color: "text-emerald-600" }, { icon: Clock3, label: "Average response", value: `${avgSec} sec`, detail: "per question", color: "text-cyan-600" }, { icon: TrendingUp, label: "Questions this month", value: thisMonth.toLocaleString(), detail: `${lastMonth.toLocaleString()} last month`, color: "text-violet-600" }].map(({ icon: Icon, label, value, detail, color }) => <Card key={label}><CardContent className="flex items-start justify-between p-5"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div><div className={`grid size-10 place-items-center rounded-xl bg-muted ${color}`}><Icon className="size-5" /></div></CardContent></Card>)}</div>
       <Card className="mt-5"><CardHeader><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><CardTitle className="text-lg">Accuracy over time</CardTitle><p className="mt-1 text-xs text-muted-foreground">Weekly accuracy across the last 12 weeks</p></div>{lineData.length >= 2 && <Badge className="w-fit bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><TrendingUp />{trend >= 0 ? "Improving" : "Slipping"}</Badge>}</div></CardHeader><CardContent className="h-[300px] pt-2"><div aria-hidden="true" className="h-full"><ResponsiveContainer width="100%" height="100%"><LineChart accessibilityLayer={false} data={lineData} margin={{ left: -12, right: 12, top: 5 }}><CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.25} /><XAxis dataKey="week" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} /><YAxis domain={[0, 100]} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(value) => `${value}%`} /><Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} formatter={(value, name) => [name === "accuracy" ? `${value}%` : value, name === "accuracy" ? "Accuracy" : "Attempted"]} /><Line type="monotone" dataKey="accuracy" stroke="#059669" strokeWidth={3} dot={{ r: 3, fill: "#059669" }} activeDot={{ r: 5 }} /></LineChart></ResponsiveContainer></div><table className="sr-only"><caption>Weekly accuracy for the last 12 weeks</caption><thead><tr><th>Week</th><th>Attempted</th><th>Accuracy</th></tr></thead><tbody>{lineData.map((week) => <tr key={week.week}><td>{week.week}</td><td>{week.attempted}</td><td>{week.attempted ? `${week.accuracy}%` : "No attempts"}</td></tr>)}</tbody></table></CardContent></Card>
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_360px]">

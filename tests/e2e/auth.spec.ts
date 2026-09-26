@@ -1,29 +1,39 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, signInDemo, test } from "./fixtures";
 
-test("public landing withholds unapproved catalog and links pricing as a separate page", async ({ page, consoleErrors }) => {
+test("public catalog navigation matches availability and links pricing as a separate page", async ({ page, consoleErrors }) => {
   void consoleErrors;
   await page.goto("/");
   const navigation = page.getByRole("navigation", { name: "Marketing navigation" });
-  await expect(navigation.getByRole("link", { name: "Subjects" })).toHaveCount(0);
+  const hasCatalog = await page.locator("#subjects").count() > 0;
+  await expect(navigation.getByRole("link", { name: "Subjects" })).toHaveCount(hasCatalog ? 1 : 0);
   await expect(navigation.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-  await expect(page.locator("#subjects")).toHaveCount(0);
+  if (hasCatalog) {
+    const counts = await page.locator("#subjects [data-question-count]").evaluateAll((rows) => rows.map((row) => Number(row.getAttribute("data-question-count"))));
+    expect(counts.length).toBeGreaterThan(0);
+    expect(counts.every((count) => Number.isSafeInteger(count) && count > 0)).toBe(true);
+  }
   await expect(page.locator("#pricing")).toHaveCount(1);
-  expect((await page.request.get("/subjects")).status()).toBe(404);
+  expect((await page.request.get("/subjects")).status()).toBe(hasCatalog ? 200 : 404);
   await page.goto("/pricing");
   await expect(page.locator("#pricing")).toHaveCount(1);
+  const checkoutAvailable = await page.locator('#pricing a[href^="/billing?plan="]').count() > 0;
   await page.goto("/faq");
   await page.locator("#faq summary").filter({ hasText: "What is included?" }).click();
   await expect(page.getByText(/Obstetrics and Gynecology is not included/)).toBeVisible();
 
   await page.goto("/refund-policy");
   await expect(page.getByRole("heading", { name: "Current availability" })).toBeVisible();
-  await expect(page.getByText(/does not offer purchases or subscriptions/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Initial-purchase refunds" })).toBeVisible();
+  await expect(page.getByText(/no more than 25 questions/)).toBeVisible();
+  await expect(page.getByText(checkoutAvailable ? /subscriptions are available through our website/ : /New question-bank subscriptions are temporarily unavailable/)).toBeVisible();
 
   await page.goto("/terms");
   await expect(page.getByText("Montreal QBank is operated by 15041074 Canada Inc.")).toBeVisible();
   await expect(page.getByText("67 Westmore Dr, Unit 19, Etobicoke, ON M9V 3Y6, Canada")).toBeVisible();
-  await expect(page.getByText(/paid-distribution rights have not been approved/)).toBeVisible();
+  await expect(page.getByText(/Subscriptions renew automatically until canceled/)).toBeVisible();
+  await expect(page.getByText(/Unapproved material is withheld from the paid bank/)).toBeVisible();
+  await expect(page.getByText(/does not offer purchases or subscriptions/)).toHaveCount(0);
   await expect(page.getByText(/questions, choices, and explanations are original content/)).toHaveCount(0);
 
   await page.goto("/support");

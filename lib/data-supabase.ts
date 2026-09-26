@@ -126,6 +126,17 @@ export async function getQuestions(): Promise<Question[]> {
   return rows.map((row) => toQuestion(row, images.get(row.qid)));
 }
 
+/** Bounded transport for offline downloads, below hosted response-size limits. */
+export async function getStudyQuestionPage(after = 0): Promise<Question[]> {
+  const supabase = await createClient();
+  const subjectIds = await getSubjectIds();
+  const { data, error } = await supabase.from("questions").select(QUESTION_SELECT).in("subject_id", subjectIds).gt("qid", after).order("qid").limit(100);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as QuestionRow[];
+  const images = await getQuestionImageIndexes(supabase, rows.map((row) => row.qid));
+  return rows.map((row) => toQuestion(row, images.get(row.qid)));
+}
+
 export async function getQuestionSummaries(): Promise<QuestionSummary[]> {
   const supabase = await createClient();
   const subjectIds = await getSubjectIds();

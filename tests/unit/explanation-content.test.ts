@@ -71,6 +71,14 @@ describe("markdown key points and bold", () => {
 });
 
 describe("formatting", () => {
+  it("keeps table and nested-list line boundaries through explanation preparation", () => {
+    const table = "| Test | Result |\n|---|---|\n| Calcium | 3.2 mmol/L |";
+    const points = "- **First finding**\n  - Nested detail\n- Second finding";
+    const content = buildExplanationContent({ ...base, explanation: [table], keyPoints: points }, 0);
+    expect(content.fullBlocks).toEqual([{ type: "markdown", text: table }]);
+    expect(content.richSummary).toBe(points);
+  });
+
   it("drops answer restatements from verdicts and keeps the reason", () => {
     expect(cleanVerdict("Incorrect. The best answer is Severe depression. ECT is indicated when suicide risk is high.")).toBe("ECT is indicated when suicide risk is high.");
     expect(cleanVerdict("Incorrect.")).toBeUndefined();

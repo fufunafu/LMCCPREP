@@ -18,6 +18,7 @@ export type BillingSummary = {
   required: boolean
   hasAccess: boolean
   subscriptionHasAccess: boolean
+  appleSubscription?: { examId: "mccqe" | "usmle"; accessUntil: string; autoRenew: boolean }
   customerId?: string
   subscriptionId?: string
   priceId?: string

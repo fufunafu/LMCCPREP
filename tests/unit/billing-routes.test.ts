@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   demo: false,
   configured: true,
   activeSubscription: null as { stripe_subscription_id: string } | null,
+  appleSubscription: null as { transaction_id: string } | null,
   grant: null as { user_id: string } | null,
   customer: { stripe_customer_id: "cus_existing" } as { stripe_customer_id: string } | null,
   checkoutPrice: vi.fn(),
@@ -57,6 +58,7 @@ function query(result: () => unknown) {
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (table: string) => {
+      if (table === "apple_current_subscriptions") return query(() => mocks.appleSubscription);
       if (table === "billing_subscriptions") return query(() => mocks.activeSubscription);
       if (table === "billing_access_grants") return query(() => mocks.grant);
       if (table === "billing_customers") return query(() => mocks.customer);
@@ -91,6 +93,7 @@ describe("billing route security", () => {
     mocks.demo = false;
     mocks.configured = true;
     mocks.activeSubscription = null;
+    mocks.appleSubscription = null;
     mocks.grant = null;
     mocks.customer = { stripe_customer_id: "cus_existing" };
     mocks.checkoutPrice.mockReset().mockReturnValue("price_trusted_monthly");
@@ -180,6 +183,14 @@ describe("billing route security", () => {
     const response = await checkoutPost(request("/api/billing/checkout", { plan: "monthly" }));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "That billing plan is not configured correctly." });
+    expect(mocks.checkoutCreate).not.toHaveBeenCalled();
+  });
+
+  it("prevents a website purchase when Apple already provides access", async () => {
+    mocks.appleSubscription = { transaction_id: "apple_verified" };
+    const response = await checkoutPost(request("/api/billing/checkout", { plan: "monthly" }));
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "Your account already has an Apple subscription. Manage it in your Apple Account settings." });
     expect(mocks.checkoutCreate).not.toHaveBeenCalled();
   });
 

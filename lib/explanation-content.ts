@@ -2,6 +2,7 @@ import type { Question } from "@/lib/types";
 
 /** A block of the long explanation, formatted for reading. */
 export type ExplanationBlock =
+  | { type: "markdown"; text: string }
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "bullets"; items: string[] };
@@ -11,6 +12,8 @@ export type OptionVerdict = { index: number; isCorrect: boolean; text?: string }
 export type ExplanationContent = {
   /** Short, always-visible summary (1 to 3 points). */
   short: string[];
+  /** Preserve tables and nested lists in structured learning points. */
+  richSummary?: string;
   /** Why the learner's own (wrong) choice was wrong, when the bank knows. */
   yourAnswer?: string;
   /** The full explanation, formatted. */
@@ -87,6 +90,8 @@ function isAnswerRestatement(paragraph: string, answerText: string) {
 
 /** Turn one raw paragraph (possibly OCR-flattened with inline bullet glyphs) into blocks. */
 export function formatParagraph(raw: string): ExplanationBlock[] {
+  // Do not collapse line boundaries before parsing a table or nested list.
+  if (raw.trim().includes("\n")) return [{ type: "markdown", text: raw.trim() }];
   // Markdown-style "- item" runs become a bullet list before any OCR handling.
   const firstMarker = raw.search(LIST_MARKER);
   const listItems = firstMarker >= 0 ? splitListItems(raw.slice(firstMarker)) : null;
@@ -117,7 +122,7 @@ export function buildExplanationContent(question: Pick<Question, "options" | "an
   const answerText = question.options[question.answerIdx] ?? "";
   const seen = new Set<string>();
   const paragraphs = question.explanation
-    .map(squash)
+    .map((paragraph) => paragraph.trim())
     .filter((paragraph) => {
       if (!paragraph || isAnswerRestatement(paragraph, answerText)) return false;
       const key = normalizeExplanationKey(paragraph);
@@ -141,6 +146,7 @@ export function buildExplanationContent(question: Pick<Question, "options" | "an
 
   return {
     short,
+    richSummary: rawKeyPoints.trim().includes("\n") ? rawKeyPoints.trim() : undefined,
     yourAnswer,
     fullBlocks: paragraphs.flatMap(formatParagraph),
     optionVerdicts: question.options.map((_, index) => ({

@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Clock3, Flame, Play, Target } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { StudyPlanCard } from "@/components/study-plan-card";
+import { AccuracyTrendCard } from "@/components/accuracy-trend-card";
+import { PersonalStudyCard } from "@/components/study-tools";
+import { useStudy } from "@/components/study-provider";
+import { studyStatistics } from "@/lib/study-core";
+import { StudyActivityCard } from "@/components/study-activity-card";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,42 +22,30 @@ const relativeDay = (iso: string, referenceDate: string) => {
 };
 const minutes = (ms?: number) => (ms ? `${Math.max(1, Math.round(ms / 60000))} min` : "Not available");
 
-export function DashboardView({ stats, subjects, topics, recentSessions, userName, examName, profile }: { stats: DashboardStats; subjects: Subject[]; topics: Topic[]; recentSessions: Session[]; userName?: string; examName?: string; profile?: Profile }) {
+export function DashboardView({ stats: initialStats, subjects, topics, recentSessions: initialSessions, userName, examName }: { stats: DashboardStats; subjects: Subject[]; topics: Topic[]; recentSessions: Session[]; userName?: string; examName?: string; profile?: Profile }) {
+  const { snapshot } = useStudy();
+  const local = snapshot ? studyStatistics(snapshot) : null;
+  const stats = local?.stats ?? initialStats;
+  const recentSessions = local?.sessions.slice(0, 4) ?? initialSessions;
   const accuracy = pctOf(stats.correct, stats.attempted);
-  const last12Weeks = stats.activity.slice(-84);
-  const recentTotal = last12Weeks.reduce((sum, day) => sum + day.attempted, 0);
-  const byWeekday = last12Weeks.reduce((acc, day) => { const d = new Date(day.date + "T12:00:00").getDay(); acc[d] = (acc[d] ?? 0) + day.attempted; return acc; }, {} as Record<number, number>);
-  const bestDay = recentTotal ? ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"][Number(Object.entries(byWeekday).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0)] : null;
   const referenceDate = stats.activity.at(-1)?.date ?? torontoDateKey();
   const today = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${referenceDate}T12:00:00Z`));
   const firstName = (userName ?? "").split(" ")[0];
   const topicName = (id: string) => topics.find((topic) => topic.id === id)?.name ?? id;
   const subjectName = (id: string) => subjects.find((subject) => subject.id === id)?.name ?? id;
-  const activityLine = stats.activity.slice(-28).map((day) => ({ ...day, accuracy: day.attempted ? Math.round((day.correct / day.attempted) * 100) : 0 }));
-  const activityWeeks = last12Weeks.reduce<{ label: string; attempted: number; correct: number }[]>((weeks, day, index) => {
-    if (index % 7 !== 0) return weeks;
-    const slice = last12Weeks.slice(index, index + 7);
-    weeks.push({
-      label: `${slice[0]?.date ?? ""} to ${slice.at(-1)?.date ?? ""}`,
-      attempted: slice.reduce((sum, item) => sum + item.attempted, 0),
-      correct: slice.reduce((sum, item) => sum + item.correct, 0),
-    });
-    return weeks;
-  }, []);
-  const heat = (count: number) => count === 0 ? "bg-muted" : count < 7 ? "bg-emerald-200 dark:bg-emerald-950" : count < 14 ? "bg-emerald-400 dark:bg-emerald-700" : count < 21 ? "bg-emerald-500" : "bg-emerald-700 dark:bg-emerald-400";
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 md:px-8 md:py-8">
       <PageHeader eyebrow={examName ? `${today} · ${examName}` : today} title={firstName ? `Welcome back, ${firstName}` : "Welcome back"} description={stats.attempted ? "You are building real momentum. Keep the next session focused and manageable." : "Start with a short tutor session to get your first numbers on the board."} action={<Link href="/create" className={buttonVariants({ size: "lg", className: "h-10 bg-emerald-800 px-4 hover:bg-emerald-900" })}><Play className="fill-current" />Start practicing</Link>} />
-      <StudyPlanCard profile={profile} remainingQuestions={stats.remainingQuestions ?? Math.max(0, stats.totalQuestions - stats.attempted)} />
+      <PersonalStudyCard />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="sm:row-span-2"><CardHeader className="pb-0"><CardTitle className="text-sm font-medium text-muted-foreground">Overall accuracy</CardTitle></CardHeader><CardContent className="flex h-[224px] flex-col items-center justify-center"><div className="relative grid size-36 place-items-center rounded-full" style={{ background: `conic-gradient(#059669 ${accuracy * 3.6}deg, color-mix(in oklch, var(--muted) 90%, transparent) 0)` }}><div className="grid size-[116px] place-items-center rounded-full bg-card text-center"><div><p className="text-3xl font-semibold tracking-tight">{accuracy}%</p><p className="text-xs text-muted-foreground">{stats.correct} correct</p></div></div></div><p className="mt-4 text-xs text-muted-foreground">Across all attempted questions</p></CardContent></Card>
         {[{ icon: CheckCircle2, label: "Questions done", value: stats.attempted.toLocaleString(), detail: `${pctOf(stats.attempted, stats.totalQuestions)}% of the bank`, color: "text-emerald-600" }, { icon: BookOpen, label: "Remaining", value: (stats.totalQuestions - stats.attempted).toLocaleString(), detail: `of ${stats.totalQuestions.toLocaleString()} total`, color: "text-cyan-600" }, { icon: Flame, label: "Current streak", value: `${stats.streakDays} ${stats.streakDays === 1 ? "day" : "days"}`, detail: stats.streakDays ? "Keep it going" : "Practice today to start one", color: "text-orange-500" }].map(({ icon: Icon, label, value, detail, color }) => <Card key={label}><CardContent className="flex items-start justify-between p-5"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div><div className={`grid size-9 place-items-center rounded-xl bg-muted ${color}`}><Icon className="size-[18px]" /></div></CardContent></Card>)}
-        <Card className="sm:col-span-2 xl:col-span-3"><CardHeader className="flex-row items-center justify-between pb-2"><div><CardTitle className="text-base">Accuracy trend</CardTitle><p className="mt-1 text-xs text-muted-foreground">Last 28 calendar days</p></div><Badge variant="secondary">{accuracy}% overall</Badge></CardHeader><CardContent className="h-[130px] pt-1"><div aria-hidden="true" className="h-full"><ResponsiveContainer width="100%" height="100%"><AreaChart accessibilityLayer={false} data={activityLine}><defs><linearGradient id="dashboardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.35} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="date" hide /><Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} formatter={(value) => [`${value}%`, "Accuracy"]} /><Area type="monotone" dataKey="accuracy" stroke="#059669" fill="url(#dashboardFill)" strokeWidth={2.5} dot={false} /></AreaChart></ResponsiveContainer></div><table className="sr-only"><caption>Daily accuracy for the last 28 calendar days</caption><thead><tr><th>Date</th><th>Attempted</th><th>Accuracy</th></tr></thead><tbody>{activityLine.map((day) => <tr key={day.date}><td>{day.date}</td><td>{day.attempted}</td><td>{day.attempted ? `${day.accuracy}%` : "No attempts"}</td></tr>)}</tbody></table></CardContent></Card>
+        <AccuracyTrendCard activity={stats.activity} />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
-        <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle className="text-base">Study activity</CardTitle><p className="mt-1 text-xs text-muted-foreground">Questions attempted over the last 12 weeks</p></div><div aria-hidden="true" className="hidden items-center gap-1.5 text-[10px] text-muted-foreground sm:flex"><span>Less</span>{["bg-muted", "bg-emerald-200", "bg-emerald-400", "bg-emerald-600"].map((color) => <span key={color} className={`size-[11px] rounded-[2px] ${color}`} />)}<span>More</span></div></CardHeader><CardContent><div aria-hidden="true" className="overflow-x-auto pb-1"><div className="grid w-max grid-flow-col grid-rows-7 gap-[3px] md:gap-1 2xl:gap-[5px]">{stats.activity.map((day) => <span key={day.date} title={`${day.date}: ${day.attempted} questions`} className={`size-[11px] rounded-[2px] md:size-5 md:rounded-[3px] 2xl:size-6 ${heat(day.attempted)}`} />)}</div></div><table className="sr-only"><caption>Weekly study activity for the last 12 weeks</caption><thead><tr><th>Week</th><th>Attempted</th><th>Correct</th></tr></thead><tbody>{activityWeeks.map((week) => <tr key={week.label}><td>{week.label}</td><td>{week.attempted}</td><td>{week.correct}</td></tr>)}</tbody></table><div className="mt-4 flex items-center justify-between text-xs text-muted-foreground"><span>{recentTotal.toLocaleString()} questions in the last 12 weeks</span><span className="font-medium text-foreground">{bestDay ? `Most active on ${bestDay}` : "No activity yet"}</span></div></CardContent></Card>
+        <StudyActivityCard activity={stats.activity} />
         <Card><CardHeader><CardTitle className="text-base">Weakest topics</CardTitle><p className="text-xs text-muted-foreground">Prioritize these next</p></CardHeader><CardContent className="space-y-4">{stats.weakestTopics.length === 0 && <p className="text-sm text-muted-foreground">Answer a few questions and your weakest topics will show up here.</p>}{stats.weakestTopics.map((topic, index) => { const pct = pctOf(topic.correct, topic.attempted); return <div key={topic.topicId} className="flex items-center gap-3"><span className="grid size-7 place-items-center rounded-lg bg-amber-50 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">{index + 1}</span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="truncate text-sm font-medium">{topicName(topic.topicId)}</p><span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{pct}%</span></div><p className="text-xs text-muted-foreground">{topic.attempted} attempted</p></div></div>})}<Link href="/stats" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">View all analytics <ArrowRight className="size-4" /></Link></CardContent></Card>
       </div>
 

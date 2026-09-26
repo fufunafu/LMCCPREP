@@ -1,5 +1,5 @@
 import { getPublicSubjects } from "@/lib/data";
-import { billingConfigured, billingMarketingAvailable, publicBillingPlans } from "@/lib/billing-core";
+import { publicCheckoutAvailable, billingMarketingAvailable, publicBillingPlans } from "@/lib/billing-core";
 
 /** Shared server data for the public marketing shell: which nav items to show. */
 export async function marketingShellData() {
@@ -7,6 +7,6 @@ export async function marketingShellData() {
   const showSubjects = subjects.some((subject) => subject.questionCount > 0);
   const showPricing = billingMarketingAvailable();
   // Checkout is live once a Stripe integration (API or hosted links) is configured.
-  const checkoutAvailable = showPricing && billingConfigured();
+  const checkoutAvailable = publicCheckoutAvailable();
   return { subjects, showSubjects, showPricing, checkoutAvailable, plans: showPricing ? publicBillingPlans() : [] };
 }

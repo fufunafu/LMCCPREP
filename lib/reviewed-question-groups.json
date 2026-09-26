@@ -1,0 +1,2273 @@
+{
+  "version": 1,
+  "groups": [
+    [
+      {
+        "qid": 13671,
+        "fingerprint": "d5065b594e03fd80f9c0a2b3fdfceb81aceb86b06087f79981255124bc2b801d"
+      },
+      {
+        "qid": 18752,
+        "fingerprint": "c07a7506cbdee6f116e39095403075a310cf5fe64cb308753180bac7a48342eb"
+      }
+    ],
+    [
+      {
+        "qid": 12451,
+        "fingerprint": "0eecf497e9c66c8c6a2ebee828e11ea24aec16ccd2d1b605bd7ba39f3ba562cd"
+      },
+      {
+        "qid": 19165,
+        "fingerprint": "fc5d43f502f07fa61a42b3134afb3ef88f4627ad378eb62e321cbb4794e5393b"
+      }
+    ],
+    [
+      {
+        "qid": 15060,
+        "fingerprint": "feea5bd69f5a5d40d3c3144b064193243c5cbb3f3a36f309873d4211a178957f"
+      },
+      {
+        "qid": 15044,
+        "fingerprint": "91ac662e9abd5814cb7c5b87982d5e179490b33e0ccaeae6c92a0b82f99d19bd"
+      }
+    ],
+    [
+      {
+        "qid": 1475,
+        "fingerprint": "1837ce6b429b913e8edc9c40494db04b6c63fa59dfb6deba04a6c15d04ca511a"
+      },
+      {
+        "qid": 13514,
+        "fingerprint": "a4697ff6dbe1738808b759286d2aad26a008133863f84babe1b166ee81bbef31"
+      }
+    ],
+    [
+      {
+        "qid": 14131,
+        "fingerprint": "1adc89fc82ae53b37eeb2e4eccab9b7164bcc4bba6fbd05fc997c7b7b83a3cc4"
+      },
+      {
+        "qid": 15917,
+        "fingerprint": "b460e28235092cdd62168ef5b1455f85aabe9f910e5ca0c44079c5b1fe5ec794"
+      }
+    ],
+    [
+      {
+        "qid": 16295,
+        "fingerprint": "10e2e6d1728a55e75cfe9ced10e820d8dd1ff65b5937a473f801475ed883e046"
+      },
+      {
+        "qid": 11838,
+        "fingerprint": "275cfd5552b9aed809cbdc01112070a3f5f83c2897aad2445a8713d13bda8b2d"
+      },
+      {
+        "qid": 12696,
+        "fingerprint": "ba43439d7330785b0bf6cfb02ba1d5332bd9f7b8f2d7e6f93a1b766756eab254"
+      },
+      {
+        "qid": 16559,
+        "fingerprint": "a9059815d5820bfadcef5a8bda2d3470e4f00635e813b08f52957d035f00dc46"
+      }
+    ],
+    [
+      {
+        "qid": 12214,
+        "fingerprint": "ad4ff1a5b063a87d1a6e43b4d87d9e41ecb05c299b1674c5fad1442490a24d00"
+      },
+      {
+        "qid": 14229,
+        "fingerprint": "3913a9240cbb46e961e61137d89ed738a47ae52b252a06c7ceb206bf6051bb8a"
+      }
+    ],
+    [
+      {
+        "qid": 14363,
+        "fingerprint": "ece7b96cd7549c459bed2706974c1589fc32f025502ef0a0571a21ea85f0d884"
+      },
+      {
+        "qid": 19871,
+        "fingerprint": "a8fb7b7985b695f3adfec72e7817646f122e5b1b774a7507b65ac9e02fef27cb"
+      }
+    ],
+    [
+      {
+        "qid": 13586,
+        "fingerprint": "60e622f83b07ca43ff5d4540b1301679e474723d1668781ae66ca9972b6fba76"
+      },
+      {
+        "qid": 13928,
+        "fingerprint": "34503c3bff920b3d0af2d033c160cdc69d177a4829187009f0bab1ce19342a25"
+      }
+    ],
+    [
+      {
+        "qid": 13333,
+        "fingerprint": "3181faf05978a01dfb97b98561fd4e35d1dd856ab77632d2b81f44ab3fd90f20"
+      },
+      {
+        "qid": 12429,
+        "fingerprint": "bf4291cfa3799ba3adfc7e757f6e36e537541e89086aee9db9bb18a4380a22d8"
+      }
+    ],
+    [
+      {
+        "qid": 1216,
+        "fingerprint": "26e99b3b2368f03f5e08b37bfebe12ce5d2cdbdd8b8c5bcbc585d76e999d1099"
+      },
+      {
+        "qid": 14225,
+        "fingerprint": "062575a007101b4514e66e690ee1d36f21babdf74d14a5212b577caa16e1d998"
+      }
+    ],
+    [
+      {
+        "qid": 15786,
+        "fingerprint": "d2f8fc12596f0a06daa2e072969f1ca7281c1715d031edaf2d6cdc6bc3f12423"
+      },
+      {
+        "qid": 17318,
+        "fingerprint": "1507c8a7da642629fa9c3a2e4c672ac5245ad1cc5287ebebe391c94f32771c78"
+      }
+    ],
+    [
+      {
+        "qid": 14840,
+        "fingerprint": "70455372568eb9531e894f82ae226c48b26b41de62fc329c3b86502628abe550"
+      },
+      {
+        "qid": 13299,
+        "fingerprint": "20b7c1c0778b6bab5c5415c0cd64f9f279213ea11386fb4a8a93d61870a015d7"
+      }
+    ],
+    [
+      {
+        "qid": 12303,
+        "fingerprint": "82adc2d42a14a01ca824fbdf994f7d78c01a649f358d4f6cd1c9614a4ebddbd6"
+      },
+      {
+        "qid": 13504,
+        "fingerprint": "13aa5af8ca955309d52ffe6a8668d81982fb8de6db84ecf46a82ca6ca60ef70e"
+      }
+    ],
+    [
+      {
+        "qid": 15306,
+        "fingerprint": "4dd05c12ce68f301a639a2e59d5ae71d448200f6bf439ba41799b5416ad34d17"
+      },
+      {
+        "qid": 14045,
+        "fingerprint": "e56128b16afea40f3b6215635b13fff86e68752c4b60e9a1a88793c75f216ef2"
+      }
+    ],
+    [
+      {
+        "qid": 13505,
+        "fingerprint": "edfde4736a4fa1c24e56abc765efa9d94c99f3731fc04aca5cdb4d005a6c2c95"
+      },
+      {
+        "qid": 19800,
+        "fingerprint": "a4ceb321294a93bda8675cbc6606a54141ece6aa2b9220f3b0e54710dd76d7fe"
+      }
+    ],
+    [
+      {
+        "qid": 13867,
+        "fingerprint": "fd28beab84f16ef1e874f9f8708263f768c82627b46d51a38d2ebd28a8a85f8a"
+      },
+      {
+        "qid": 18629,
+        "fingerprint": "92730bd7a21de2cf4188bb55eedc6f45017e1d90afbe1c07a1584b8abad62c00"
+      }
+    ],
+    [
+      {
+        "qid": 17442,
+        "fingerprint": "df30300ceb1ebdbb427594632e6eb24af9990cb0d75e27944e73174a3bb77e41"
+      },
+      {
+        "qid": 13607,
+        "fingerprint": "7c546daa17a61ebfeadc9212061a9a424c55999e137f8970d6778e95d42e63ac"
+      }
+    ],
+    [
+      {
+        "qid": 16544,
+        "fingerprint": "8519011887c3ea2c7362339c62001c957a5fd8af60d89b084324db9e7ae3c34a"
+      },
+      {
+        "qid": 14436,
+        "fingerprint": "310faf396c538090a3c8715e1b7f900a856b49c6ee3e6cda17f2b92c0f325220"
+      }
+    ],
+    [
+      {
+        "qid": 17821,
+        "fingerprint": "1614d87157a2d31761b0caf33b2b657f04cc919da31216f52d2e0e66baee5499"
+      },
+      {
+        "qid": 17966,
+        "fingerprint": "ff2730e6becf4f0bbf52d3cee3fbf2fd7d67578389919cf5c78f43bd6f7356fd"
+      }
+    ],
+    [
+      {
+        "qid": 13218,
+        "fingerprint": "7f16e8e33becf26846c5133ae35d4148fec698c18f4fb5e8bd3205bb4f9cb11f"
+      },
+      {
+        "qid": 12104,
+        "fingerprint": "2d3c4e0b8598c02613e8837a1cb6d1f521a8b1253588fb630f0c8ac71f514057"
+      }
+    ],
+    [
+      {
+        "qid": 12321,
+        "fingerprint": "efec801bdde2d6692afa0f00b4418246d1e61d19b99ca623f13c04080b00957f"
+      },
+      {
+        "qid": 14667,
+        "fingerprint": "4a11e27fb33a4d5c99f42ab6b4b641fd7aea931041c86d14b4b2ce63e6d8db68"
+      },
+      {
+        "qid": 17432,
+        "fingerprint": "8d6b5ee8606b7d1601b22e55f3a882e070e23ab408301a377e00635f5faee56d"
+      }
+    ],
+    [
+      {
+        "qid": 12276,
+        "fingerprint": "eb5463e247e6ececcb3cfbd21c30029f753fc284b6238cb5e431c74e5e217dac"
+      },
+      {
+        "qid": 14476,
+        "fingerprint": "bea4b4941fef356b43ef305f936dd1ff6bd4cabdacd4b5ad9dfb71d05356e14e"
+      },
+      {
+        "qid": 14706,
+        "fingerprint": "825b8a50c1d06708f139e06591ec1898f495cd8e7cc0fa4351773cac41da29f9"
+      },
+      {
+        "qid": 14888,
+        "fingerprint": "58396aeb00efb9096040ed7ffbf1b3a10295ce311d33c77efd64dbc394e550a2"
+      },
+      {
+        "qid": 15506,
+        "fingerprint": "84632db4d08316cd677d8299c1d0f181b50705051d7a005c421a819ae4500c3b"
+      }
+    ],
+    [
+      {
+        "qid": 15231,
+        "fingerprint": "0df9adf58fc2cf62d53c5b3f4e8e9ca0797752bce0e66942be819be2ca2c135b"
+      },
+      {
+        "qid": 14403,
+        "fingerprint": "e892f4f24baeb20b96bf20ce05020220be45f20490eb21eebc0015a6c7352470"
+      }
+    ],
+    [
+      {
+        "qid": 14174,
+        "fingerprint": "d19ca5e303f913abfc53bc2331123f4b28248a20b27962d72a77904db878060d"
+      },
+      {
+        "qid": 13264,
+        "fingerprint": "162c796b8adc94ebe572ee0b8bac1e4cb978ab48150cc5700801ba704e904a04"
+      },
+      {
+        "qid": 14713,
+        "fingerprint": "840f82b20ba610c7a2dea508ee9a20b3dc15ebecc2b6fa7eef9981fd4bb2cd5f"
+      }
+    ],
+    [
+      {
+        "qid": 13552,
+        "fingerprint": "c6c00d845fec4163efaaf01c67da30d99ec5ea77c4fd95105fe7fd5612c28625"
+      },
+      {
+        "qid": 14761,
+        "fingerprint": "05c4c25574a997c2dc453dbcc3ad0e182b478697650f1cc71293800d0ec5e4e5"
+      }
+    ],
+    [
+      {
+        "qid": 15437,
+        "fingerprint": "909aad0152887774a68b57acadf875ac979eebde0d3e4df6056e0b35da431b25"
+      },
+      {
+        "qid": 14368,
+        "fingerprint": "1787ac52379d09f8b7f37d5a883c9289487e508f6123d9c11c9826582b459aae"
+      }
+    ],
+    [
+      {
+        "qid": 11935,
+        "fingerprint": "e381f35e437786da12ddeb21e011cee8054c943a572998e48ffbbab5bbd5237e"
+      },
+      {
+        "qid": 12433,
+        "fingerprint": "622651fa154505674f266d010c1a39f7c00890e90e8fca77441882852262d564"
+      },
+      {
+        "qid": 13463,
+        "fingerprint": "32baf46329588e5b88e981cc55e06af83483fd103096b288a774f6c6d66332cc"
+      },
+      {
+        "qid": 18978,
+        "fingerprint": "455016f28d7dccf445d6097a5915217477705370a966a763d7eaab551b49d4e4"
+      }
+    ],
+    [
+      {
+        "qid": 15263,
+        "fingerprint": "ffa5e497d51e400e40b774e626f0af5c4e994ce603cd108ae3845319aed6c250"
+      },
+      {
+        "qid": 18504,
+        "fingerprint": "c5165723d492cfd7ae7fd9dfdb4097637e6350b60874beae50028fc075992aa0"
+      }
+    ],
+    [
+      {
+        "qid": 17508,
+        "fingerprint": "745cad021592bfa8732428efff6798c48ef42d528d7c17676dbdf4657ab09785"
+      },
+      {
+        "qid": 12736,
+        "fingerprint": "a10c066573b1c9a04f1407cb5a1ddf3201a7775404f4c305781989bc8c90bb63"
+      }
+    ],
+    [
+      {
+        "qid": 18970,
+        "fingerprint": "a4e67cb730d63cf3d2dc896829598799dbd8d011aea3cbc2525d4154cdbbc85a"
+      },
+      {
+        "qid": 13476,
+        "fingerprint": "3adca66fd0b71e69e5ae552739b4c62458581a611c21a96ea0b67cae502e86bf"
+      }
+    ],
+    [
+      {
+        "qid": 14953,
+        "fingerprint": "e1391204d6131b91d977da1b65525be009d38165102cf7855bdf7f8485177100"
+      },
+      {
+        "qid": 11811,
+        "fingerprint": "1fed5819086ca5e63bbf5d18656c89acb55449abd552d2f5245d6ea8241c2a39"
+      }
+    ],
+    [
+      {
+        "qid": 15299,
+        "fingerprint": "d39a4065e412befe91aa593fef336f78d331db518abf681aad3291d062ee2c8e"
+      },
+      {
+        "qid": 15211,
+        "fingerprint": "5f8be79544196fd9abeaf9c25bfe9bb7bae7a2cd98b2aae081329cc3cea8a962"
+      }
+    ],
+    [
+      {
+        "qid": 17602,
+        "fingerprint": "b08a31ce345cf4f41d89b7e9a80f7cd6bb2edad71ae0b9576d3a4310a226bfaa"
+      },
+      {
+        "qid": 12467,
+        "fingerprint": "5de65f27ce539f4e555fdccaa5f1408c414c8321eaa2eddbc7c5f74f69091410"
+      },
+      {
+        "qid": 16696,
+        "fingerprint": "a57e33cf8e0eb0a16de5095538c0071734dafa544aa5267b0dd2521bde9b4960"
+      }
+    ],
+    [
+      {
+        "qid": 13012,
+        "fingerprint": "ad676bf54dd29859a175c42896aac12d45d6c7b75a76ead7cb9d3d681931def4"
+      },
+      {
+        "qid": 20176,
+        "fingerprint": "61c8d8bd9ba9019ffc0368d725107cb47ee637b8562c0919bb51be2812421cb8"
+      }
+    ],
+    [
+      {
+        "qid": 13387,
+        "fingerprint": "0b7ca27b8404740c6fc52387199dc183c51176e6bfc414fe65922b81fd05376d"
+      },
+      {
+        "qid": 14073,
+        "fingerprint": "9b7fc0bc4fdbee5072fa2fad0004b5f00c7d30f5014d74cbfdac6e2e2ff98845"
+      }
+    ],
+    [
+      {
+        "qid": 19239,
+        "fingerprint": "77fc29a43f6158d7d893a2fd481ce38baf4d0bedd7308bfebb3956444a8c1e49"
+      },
+      {
+        "qid": 18788,
+        "fingerprint": "f48e431609237519a5ba1e9836310c5c1bbb2fe119e561d110e5ab0dd191cfc7"
+      },
+      {
+        "qid": 91612,
+        "fingerprint": "3ce514c01c7fbd97a1d664644f5f8be78a4d4db2b864445951d4107081af88ab"
+      },
+      {
+        "qid": 14464,
+        "fingerprint": "18141b40b7d6d827739379f0322d26817cc8e90cfe7349092c8334fe43056117"
+      },
+      {
+        "qid": 19725,
+        "fingerprint": "0e7e964e536e4e0e693fb85a4b9b230a35520fb69d3f694ed6aaac826c95d8a9"
+      }
+    ],
+    [
+      {
+        "qid": 1513,
+        "fingerprint": "240877217001740253b342e30265ce1884885c5bb7eba19109417f911c4af7da"
+      },
+      {
+        "qid": 18261,
+        "fingerprint": "5cdf1985171c49a614489d39e0c88cb1ade31347cbde0513e8d048309105e462"
+      }
+    ],
+    [
+      {
+        "qid": 19507,
+        "fingerprint": "29277ce9a6093d935c177da4969b246ac34e6a202016ee9eb220478a2ce2c707"
+      },
+      {
+        "qid": 20048,
+        "fingerprint": "5469ff849a73047fc98cd241922cd4793bb544ffa6cf28f9f8d10e948c20872d"
+      }
+    ],
+    [
+      {
+        "qid": 16277,
+        "fingerprint": "89d9cfa8e7c43c9b66052339d774465eefb97d91c6b411c758effa9393523e8e"
+      },
+      {
+        "qid": 14440,
+        "fingerprint": "65dcf2f66231102dcd825319ec73f141a71fc7ff925b2a8de6e4f93d83a3f105"
+      }
+    ],
+    [
+      {
+        "qid": 18029,
+        "fingerprint": "2a14765f5ce7be1b2ece26b98470d0ea008b5379adbc5f80a1d89dfaf6bbdbd1"
+      },
+      {
+        "qid": 12208,
+        "fingerprint": "9c298c4fa7660a01a742e4ce63fdd2e39ddfd83b931fddbce698c81a26325df5"
+      }
+    ],
+    [
+      {
+        "qid": 14634,
+        "fingerprint": "ee3798568becd86f9df5b9f22d38b619a5abad0fc768c66f5fbafe3f3ce165ae"
+      },
+      {
+        "qid": 12447,
+        "fingerprint": "d2a79c5c988dbe5761b6747d62a1e2cb849c216f6b2ff3a299b081fe3f993cae"
+      }
+    ],
+    [
+      {
+        "qid": 20082,
+        "fingerprint": "74013c70797afcde2fd68d902aeb41e521619d211aa36a1613b65619c357308f"
+      },
+      {
+        "qid": 11826,
+        "fingerprint": "085a76f1762f56ccc31ac021bc65c0e7cb07f487a8afab786c6c5d2dd0f87916"
+      }
+    ],
+    [
+      {
+        "qid": 18637,
+        "fingerprint": "c01e576b8f0982155fe6c8f0df210326802e82ea5021e00e6d598ed9fac4ec86"
+      },
+      {
+        "qid": 16795,
+        "fingerprint": "33fccef2a381be6f841a67f6f3da7a0aaa3cef761c884313b3f62f05b794fedb"
+      }
+    ],
+    [
+      {
+        "qid": 17703,
+        "fingerprint": "8b889970013a338dc38c431b2ce1b4d721972b0f42ddc63a4b756435753ae327"
+      },
+      {
+        "qid": 19903,
+        "fingerprint": "ea856eb05db79479c5e5e88de9d4d3c26d0a1aef5e785ede671dcd9b8009bb1d"
+      }
+    ],
+    [
+      {
+        "qid": 13005,
+        "fingerprint": "ffa62a832acd75da19c2b8d83d2e18aae7c4613a74911592ddae0b79a8205c92"
+      },
+      {
+        "qid": 92682,
+        "fingerprint": "d6e7ed7fc7ddfefe81f248a8fe140728de8ea6d806acbc005923a6c725b67681"
+      }
+    ],
+    [
+      {
+        "qid": 19331,
+        "fingerprint": "111d1e6ac67f58c1963ea62519614ba6487307ec5f8e8dab416854265a17682c"
+      },
+      {
+        "qid": 18795,
+        "fingerprint": "268ef023a2a1c045f1072beb5dd8b339f37b8321a3cc9b604a7d797120f28325"
+      }
+    ],
+    [
+      {
+        "qid": 12838,
+        "fingerprint": "482b9569a75eb1c560d295ab4435d6b6e728ea6751ce6a79c61672406fd3d0fc"
+      },
+      {
+        "qid": 14690,
+        "fingerprint": "8717daab7db442e1cd75d747c12e08c0dad4cb2aa377c88dbf2ae892f8d3c48d"
+      }
+    ],
+    [
+      {
+        "qid": 17522,
+        "fingerprint": "53500b1b6dfd8eda2f0cf83453c84f797de333c2c4619b90b86392d13fe9b0da"
+      },
+      {
+        "qid": 723,
+        "fingerprint": "cc4e98bb56842c2c0758e9beefdd33cc0ed2c15588466a3b8798617551416166"
+      },
+      {
+        "qid": 11980,
+        "fingerprint": "7bbe5506a7cf583b90a0d11216632fe7a8d4dead05b24da2e1780a4ad0c257ae"
+      },
+      {
+        "qid": 13530,
+        "fingerprint": "ee3848b4813d32bfdc742e6fdd08eda15b1ca24b0d9243cf944abd91d94d2481"
+      }
+    ],
+    [
+      {
+        "qid": 18856,
+        "fingerprint": "ef938abc524955f7d493cf47a9dd04341fcf6c12d7119adc6b2bfdeab8340de6"
+      },
+      {
+        "qid": 12983,
+        "fingerprint": "5627636d54194374e704ea2b74af22dfa24489cdbc7e3536e4f0af86e18e2b94"
+      }
+    ],
+    [
+      {
+        "qid": 11464,
+        "fingerprint": "2c0bf7446e630ad3542866c518adf0420e9e4f5f546bbf37564a705b6a153705"
+      },
+      {
+        "qid": 13689,
+        "fingerprint": "2f0efe05f42b35d1ecf8c835a713bd58daceba8a107e97a5febbfaf642a0c04b"
+      }
+    ],
+    [
+      {
+        "qid": 16102,
+        "fingerprint": "b12074188cec11e53193bf588a71b45690cf76c69a6d22aea2fe0ba3cf4ea607"
+      },
+      {
+        "qid": 17013,
+        "fingerprint": "9fd6eea3033ffc34e84843c33e46aca6901bc60cb072dba65bc8a364cc07b446"
+      }
+    ],
+    [
+      {
+        "qid": 12291,
+        "fingerprint": "2ec94539e5c6828c79a130a650d5aecc54622c122a0a68e35534fde3fb63bdfa"
+      },
+      {
+        "qid": 13066,
+        "fingerprint": "12763154f4e6128e549554925bffe51d61b4ab9344c2c5d9018fd289afc01dc9"
+      },
+      {
+        "qid": 19611,
+        "fingerprint": "1ff6961144a4baadf64b9ff997a82dabf448faad1addb780a0b111174ac97ad4"
+      }
+    ],
+    [
+      {
+        "qid": 12775,
+        "fingerprint": "4523519d0e11c4765d7675fb208879e0e5da047cad6f8e5a3ec7112d6dfa8e31"
+      },
+      {
+        "qid": 11659,
+        "fingerprint": "92a4145a05c1ef32d5392d4351a969385b1e5f664b3cea5624d4e3f81cbd3e34"
+      },
+      {
+        "qid": 15246,
+        "fingerprint": "be5232f8b9ddb5390792b1e353875e83582a47303c7ccd43cbcce68422eb783d"
+      }
+    ],
+    [
+      {
+        "qid": 18220,
+        "fingerprint": "e1a2c3f4dfef94c2251e000aca2ea8149f60b13a5db1a16cad3b0a317594ffb2"
+      },
+      {
+        "qid": 12652,
+        "fingerprint": "dbe396e7a1b92e88a761bc572d6141385f16a2f1885bf741cd130f142c1b1bf7"
+      }
+    ],
+    [
+      {
+        "qid": 13989,
+        "fingerprint": "fef937eebe4f751a27fcc1d64f6fc35cca79267e7bc04eb5c167fb02f5bf41a1"
+      },
+      {
+        "qid": 18141,
+        "fingerprint": "62f6c2ae4c6241d69b7a3c01002652c11a4e58551d52ed9adb139d64bb46b470"
+      }
+    ],
+    [
+      {
+        "qid": 18702,
+        "fingerprint": "68619f5184ed7db217631bf88d136a5b81e8c8e20aa226b78fe0ecd8c00d5168"
+      },
+      {
+        "qid": 12984,
+        "fingerprint": "c4eb4fa27c1b7e86fe7cf5c3e0e1af89315ff7f2dbdd6e647333e88eee52450f"
+      }
+    ],
+    [
+      {
+        "qid": 12576,
+        "fingerprint": "42de47d47a4f9319d10411aca61ae9c44312ec3e6a30f1d36cf998b66f54ce4a"
+      },
+      {
+        "qid": 14099,
+        "fingerprint": "c49824e784dc2c130b59dfe3bac8f50cfb733f6682335db5d624da2f41167dfb"
+      }
+    ],
+    [
+      {
+        "qid": 12939,
+        "fingerprint": "21a314d847acdaa02937fd3282d89f7cae989523c25559b5a30e2edfcbb39784"
+      },
+      {
+        "qid": 11745,
+        "fingerprint": "3dd8f56d1a5c904fca42642c51f79360e750e607c6e5462a88b79ccbbafc5be4"
+      },
+      {
+        "qid": 12369,
+        "fingerprint": "1eb181c968aa9b3938b6b29f96ceba63b44661ec24146259f0ff9f8ce1e93808"
+      },
+      {
+        "qid": 14598,
+        "fingerprint": "8c857195802e225a9a8cbd6e16ace1403bc968a1a5399b30b99ba61fda5fadd4"
+      }
+    ],
+    [
+      {
+        "qid": 1469,
+        "fingerprint": "61bd3920fa6a87b93e590e0dc8b20e268a9a14f04136a89156cbd660d6642fb6"
+      },
+      {
+        "qid": 20352,
+        "fingerprint": "91f62142d7110bc316c1b17736626e4b9bf4a1cabc921e16d37fe941f8cba5a7"
+      }
+    ],
+    [
+      {
+        "qid": 11405,
+        "fingerprint": "5c3df28315c507c7758777a093374d2ded80fe4127166b129cbfe636e59a67c5"
+      },
+      {
+        "qid": 14760,
+        "fingerprint": "4e09c170b8bf40190d2f07e24742c5e98bbd05847038ac7152a9b09e9f8ff2dd"
+      }
+    ],
+    [
+      {
+        "qid": 12720,
+        "fingerprint": "a2f6c91988ca36751aed30d160149799f871411c8544164a1380253f50e0b556"
+      },
+      {
+        "qid": 14627,
+        "fingerprint": "470188aaebef23da9a5ad7481378027f767ee7f1f18b124d0bc2b2268e49cc0b"
+      },
+      {
+        "qid": 16975,
+        "fingerprint": "cb8d15e8488f0cb9c2772e922e918aa277eb2443c90c57ac470e37b29dc14599"
+      },
+      {
+        "qid": 19389,
+        "fingerprint": "bf1a63b325455092b8aa707bf1a8a76bd5df8fd2259ecfe3ed088faaefc4bce5"
+      },
+      {
+        "qid": 20357,
+        "fingerprint": "4a2d53ddc0f57607eef3c074cca12545356a7fd20141428ed2fc053f24055349"
+      }
+    ],
+    [
+      {
+        "qid": 15265,
+        "fingerprint": "cd9998f19ecefbe7deb41e11b3d19e91940ffd6577ceed8c7e625baa922be3f5"
+      },
+      {
+        "qid": 14614,
+        "fingerprint": "3d20634aa052f9d31db9d9beb57056d5bfa1bade87c56afcdc22ce1c0dc5d4fd"
+      },
+      {
+        "qid": 12458,
+        "fingerprint": "d246ba7559f183d386e6c16c865fc9b9d388fbd6967602aadb2646479f41e452"
+      },
+      {
+        "qid": 11837,
+        "fingerprint": "444223a597289ea5165ada2e788100e7f0cc1eae93b281a81da43bf45d47e769"
+      }
+    ],
+    [
+      {
+        "qid": 17290,
+        "fingerprint": "b0bc8bf01fb1253171804cc458cb0e3c7986fbec9984d06cdb09db19d70aceb8"
+      },
+      {
+        "qid": 14704,
+        "fingerprint": "f3a69ad035abe70e2280d8ea4bddec50acaa3f5f927049ed091efad83feeea1d"
+      }
+    ],
+    [
+      {
+        "qid": 14015,
+        "fingerprint": "fcdc8fe586d8b914383ef8c70eacbb7c50721ec3b1fc67ae5bc0bba103b9285c"
+      },
+      {
+        "qid": 12376,
+        "fingerprint": "2b7efa92d161a715f7ea3a77caa24deba75e686df9db831ea10ec9db126337c4"
+      }
+    ],
+    [
+      {
+        "qid": 900,
+        "fingerprint": "d34f7f4193f47c93ac34ff1b90618ba7b57e67398ee188d75db43160eae086c4"
+      },
+      {
+        "qid": 12386,
+        "fingerprint": "0ea198c58e64bba3562d5b7430c52e103aea25493b34c874ef601687ca0a27a6"
+      },
+      {
+        "qid": 17498,
+        "fingerprint": "f6a04ea70ce37be16aa9c8084592d916800b7c06b45c97389154e8f60267c24a"
+      }
+    ],
+    [
+      {
+        "qid": 17025,
+        "fingerprint": "560b2220dea6200778b9a72c5e76807fd5372ca654e515eba70a6355158ce960"
+      },
+      {
+        "qid": 14721,
+        "fingerprint": "f29fc562383f0ae4e873058b8eee4ae5a84328e4196c37a22ed34ea2f31a1272"
+      }
+    ],
+    [
+      {
+        "qid": 18572,
+        "fingerprint": "c9a2010a21c75339e4019029217511c922f923b1565e952b0f63b66f57f91419"
+      },
+      {
+        "qid": 13022,
+        "fingerprint": "28f7894142afdc25cd987f3c2c7abce5385fc48f876907f0a7f3618fca70a9cb"
+      }
+    ],
+    [
+      {
+        "qid": 12255,
+        "fingerprint": "16ec39c26dde08563423a296a6c1c0e84b559e67f1312d5d1baeba4f005cc5a9"
+      },
+      {
+        "qid": 12465,
+        "fingerprint": "dc04246be00fd01a90fc991ec745b7a53feaf36690d3314dd76c372ec5982e9c"
+      }
+    ],
+    [
+      {
+        "qid": 13775,
+        "fingerprint": "42916ec9966c65bef770d5b72d8ce008f289f696b77884b1392636a4a47b190a"
+      },
+      {
+        "qid": 14633,
+        "fingerprint": "4aaff77df2730d44dc1fe3cbebc6989507a3643755b15080c4cc6a5f2380d3dd"
+      }
+    ],
+    [
+      {
+        "qid": 16500,
+        "fingerprint": "df2548e39d64b8500b69a5a743d6317b6964db718e1ba0a4a3cc4257ced75083"
+      },
+      {
+        "qid": 14602,
+        "fingerprint": "68a95f5461d632ebf3ee58fbd6794cc6b29e0781292d69309b2975e57f4c9da6"
+      }
+    ],
+    [
+      {
+        "qid": 17159,
+        "fingerprint": "0e634d36c768b5ca988b3214c33ea1efbbacdf63503443e8e3114f8f569f680f"
+      },
+      {
+        "qid": 17654,
+        "fingerprint": "ff195314c4c168f6cf02bcc7212f36e6ff449c70a6c02b115c33f3913730a9b2"
+      }
+    ],
+    [
+      {
+        "qid": 1018,
+        "fingerprint": "5bbe4c1537d73134da3a9a6ebb648abc19e48b6a56ab253c8e0a67216fee1f5a"
+      },
+      {
+        "qid": 12526,
+        "fingerprint": "90241207529d8f4000265d1d7698a9d1dc61585675a3e0b118ef8fd1d574e1d1"
+      }
+    ],
+    [
+      {
+        "qid": 11381,
+        "fingerprint": "635007d876cbfb73f15f908d8b076372260e35b735af37b93b53e703d29ded6f"
+      },
+      {
+        "qid": 14548,
+        "fingerprint": "879232b0e65457fe9c315a321084a03e2e0726cf4056b1912f694fa6dd96a2ef"
+      }
+    ],
+    [
+      {
+        "qid": 15950,
+        "fingerprint": "31caced398970be6cccedb3ca528dbd913edb2ff1358d1ce55b1a708b22619ea"
+      },
+      {
+        "qid": 14882,
+        "fingerprint": "9e44ada6e310c6de20b99b933b3668eb79ac9b7abbe8a250bd59a3edb3b81eb7"
+      }
+    ],
+    [
+      {
+        "qid": 1310,
+        "fingerprint": "a11bf7b1db206d1135c3b5693dfe0975f2139397c1befffc828dafd2c4cca37f"
+      },
+      {
+        "qid": 13761,
+        "fingerprint": "1ad8dbf15d1dbf338fcca187d9f938467b675b361e714df23d0721eafd570a49"
+      }
+    ],
+    [
+      {
+        "qid": 20155,
+        "fingerprint": "545203731cd63d8b32d7feb6c6771c91c36613cac043db2a61a71e3201526530"
+      },
+      {
+        "qid": 19894,
+        "fingerprint": "d9cd4ef74a8481970596e722f7d1c8a796801f9d5dbeaddcf9e04d3869b68a6d"
+      }
+    ],
+    [
+      {
+        "qid": 12582,
+        "fingerprint": "b3912b6027342fb3c6b5978e9815f87772da5278571a0160356ba9e7dcf3bcaf"
+      },
+      {
+        "qid": 17572,
+        "fingerprint": "986c4d21ee99109704887d05ad45838894f19c0af89bf944be3f309977907cb0"
+      }
+    ],
+    [
+      {
+        "qid": 15465,
+        "fingerprint": "9de2998a890c6890f1f9bd8e9384dd52d603470f2f68fb07adee525b41e34500"
+      },
+      {
+        "qid": 15234,
+        "fingerprint": "b733b1f027dce7203944922950fc6ce32b9aa325ac672518228512c6922cf176"
+      },
+      {
+        "qid": 17611,
+        "fingerprint": "89a5d3dadb20c74ed6bddbc3faa7446f1935f75c86c5ff6447f5832340a3ac05"
+      }
+    ],
+    [
+      {
+        "qid": 18107,
+        "fingerprint": "27e683e4175d7e7ba32def6c241b274080bf27d8b670ee84b9663d116ebd8608"
+      },
+      {
+        "qid": 18189,
+        "fingerprint": "2bdaa52ca904b8a3ed2251ab7a24882f7b1603906a6a18ecb851a365ce806af9"
+      }
+    ],
+    [
+      {
+        "qid": 13267,
+        "fingerprint": "e4f0f5d5f5d6a7fdfd19e4c7618894d0937db14f5cbd66b3dcc134e0ef2207e4"
+      },
+      {
+        "qid": 16042,
+        "fingerprint": "197ec9e836714dcd7d984be6fe816f9d1176c12892aa19bcb686a4b51d0b918a"
+      }
+    ],
+    [
+      {
+        "qid": 13197,
+        "fingerprint": "02749d964732a9dd84f657254fdb3d39014ad9ce9e0210844ba8ee430a48a396"
+      },
+      {
+        "qid": 12070,
+        "fingerprint": "e16486651608ac789d326ce56d49fe0b74ec8a891014ddb1d1cd708fe74555cb"
+      },
+      {
+        "qid": 15630,
+        "fingerprint": "c4115da0b3b6004a6643cbc9a6334b0a4a91a400ee23d6bec573959267756433"
+      },
+      {
+        "qid": 16534,
+        "fingerprint": "741233713b42305bdb5d7cc83d1ac0860cad7a1f6af6f8eabc3a73c41d2bcf76"
+      },
+      {
+        "qid": 18547,
+        "fingerprint": "9b2307f735667c1779aabbd98888f6b7f98734ab5b30376b3c8cc09255f57f3b"
+      }
+    ],
+    [
+      {
+        "qid": 12119,
+        "fingerprint": "d76bbd08e0194620f892d2ecc8c943426b479979d8abf952e3c8e5245febe215"
+      },
+      {
+        "qid": 14309,
+        "fingerprint": "0939d13cda530348d6e8a82c86904aac16472087990db1a9d8e95f8ec54fe934"
+      }
+    ],
+    [
+      {
+        "qid": 1476,
+        "fingerprint": "c4efc2de6ac9b9b47ee9cca20b7e16f4a00d83f92a98be601cc5311682fbb97b"
+      },
+      {
+        "qid": 12152,
+        "fingerprint": "765e33ff5b1d2b6722c487c531f2f9d02008161bc578a131cd45ebbf1c027c1b"
+      }
+    ],
+    [
+      {
+        "qid": 13684,
+        "fingerprint": "decea7a656f0b5b6c9d635ca5bb1319c74379ea0921be0a9b4b66e1375015d9f"
+      },
+      {
+        "qid": 17374,
+        "fingerprint": "16223fd31f43eb8081c08c8f4f03fd5f077cd5ab8717b642eaf33b07a55ff8ec"
+      },
+      {
+        "qid": 12681,
+        "fingerprint": "b163187bec250fa349199e310d7386aeb82ebb76446e3d22ac6e69c34300ae47"
+      }
+    ],
+    [
+      {
+        "qid": 17886,
+        "fingerprint": "946603723525c2237999b3a31be37cde50d923e7559812e8524a786501f5b678"
+      },
+      {
+        "qid": 14556,
+        "fingerprint": "70ac62ad9ce92f62a8ef7aa0e58fa776180da7d67e90b5819bafdc3f0d750438"
+      }
+    ],
+    [
+      {
+        "qid": 14272,
+        "fingerprint": "9e6f09f7c0c9b61cd49d3b1cb2ff74d02f378e7736d731c57be0d60d6b1026c5"
+      },
+      {
+        "qid": 16887,
+        "fingerprint": "054afc3e138f561ccfafaed1b980b060426ef11f4c338bace1533fe12e292261"
+      },
+      {
+        "qid": 17178,
+        "fingerprint": "6bb5acc494e78d9360bdc517b27f3b6710042eb947d54f0d9bb1b1d026781274"
+      },
+      {
+        "qid": 18076,
+        "fingerprint": "809a83b26c062f830e140e5c96b17847b2b04feabb726eec222ccfee30d50501"
+      },
+      {
+        "qid": 19653,
+        "fingerprint": "3c06aacbc44848350670aaf24771f812ee459558feb4c44906f7857ca997fef6"
+      }
+    ],
+    [
+      {
+        "qid": 11918,
+        "fingerprint": "3e02ee19cd772f337a480f921c6b9030134fcc1b76c8c7b7bb94e71a81ab3674"
+      },
+      {
+        "qid": 17927,
+        "fingerprint": "edeaf2421d54b2e46efc5186a963dad39965331754f816b4b4a9dbf96aeec773"
+      }
+    ],
+    [
+      {
+        "qid": 18926,
+        "fingerprint": "8083374e5504d8be4914824f73af59e68bc4ecda85c1e196f7b4aeb7dc3a1875"
+      },
+      {
+        "qid": 19281,
+        "fingerprint": "8469a2e405553ef502e5e57db223a7eed3d390e04e78709368e0bdf711436670"
+      }
+    ],
+    [
+      {
+        "qid": 13209,
+        "fingerprint": "5dc816644de75ab390def173a4ef20f33fe9971a17ee8cbd75077ed7c2524ceb"
+      },
+      {
+        "qid": 20172,
+        "fingerprint": "b4415308be8250dd972cb738b20475ccc6a9dd501669ac17a35b6688f83fb313"
+      }
+    ],
+    [
+      {
+        "qid": 12894,
+        "fingerprint": "9c7146f04f88b02b3ef9231556a466900a056c2835bbb2765ebcd1a85e4bfcfc"
+      },
+      {
+        "qid": 17208,
+        "fingerprint": "a7b3b85ff28a7685c4f0ef1464aa94cb0145c8656bc758dc12105a8a1313296d"
+      }
+    ],
+    [
+      {
+        "qid": 13622,
+        "fingerprint": "d4039f5a5a9c6a45c71937690a54c20fb4c9628b21852bc91d64f98857a1c3e6"
+      },
+      {
+        "qid": 13245,
+        "fingerprint": "cdb6e0c952be0b1bd79d3d3aaf0ddb51475ad1a58c4ebb6585042e0d37f73b02"
+      },
+      {
+        "qid": 20362,
+        "fingerprint": "4aee21795fb21e9f8ecac10291736f1a1bab930190e78ad5fe892b34f20172f3"
+      }
+    ],
+    [
+      {
+        "qid": 15864,
+        "fingerprint": "355e756bd4b826769ed83c4f13d6e0730ba22dbbc7d16293254e5ecf0daaa752"
+      },
+      {
+        "qid": 11897,
+        "fingerprint": "3bc09d9842649c515a77ace461a4677dbb74249f9b37721c4c14361211301fd7"
+      }
+    ],
+    [
+      {
+        "qid": 719,
+        "fingerprint": "291f5b1a3b56e9d688c1a5acd754cf8ebbcfc53e717a9b3a2fce81fdc2ea06a6"
+      },
+      {
+        "qid": 11971,
+        "fingerprint": "dd4763a494cfd5ce2becab09565dd61e9af2ad76b8838e55cd6f86f7fba3a5fe"
+      },
+      {
+        "qid": 14588,
+        "fingerprint": "d54681e4b364dce2c8bb5d59403229f3a5ed4c255ba8d2aa3c85e77a4483b4a8"
+      }
+    ],
+    [
+      {
+        "qid": 1448,
+        "fingerprint": "2887bef646a2c57154ab4cff2e807d26509a63abf3cb2ed8fa2a8c10820cf392"
+      },
+      {
+        "qid": 20343,
+        "fingerprint": "6896af5fb0a6850f328da30c8364f40d2fc862daee0bb595c8f807ce86f06441"
+      }
+    ],
+    [
+      {
+        "qid": 1460,
+        "fingerprint": "158dce9bc2af4740fc8945d379bbfb822de05b7400cfdcd1a203fb3c9e95795e"
+      },
+      {
+        "qid": 12661,
+        "fingerprint": "2b32e03d2245a40f32c4b4a81a7b8b04f5b36857f32777314805ef110c73b583"
+      }
+    ],
+    [
+      {
+        "qid": 14432,
+        "fingerprint": "a29d8837e4d01f9d25c93527f6c91cef03b8ac8cb985de54754069c2184f66a3"
+      },
+      {
+        "qid": 15282,
+        "fingerprint": "f0fa30b5ae401cf4de0307c007793221ba891353135c74fa76a066e9772af214"
+      }
+    ],
+    [
+      {
+        "qid": 18815,
+        "fingerprint": "7a73b360bc5aeac8e5bfe0426d766362e0dc9cbb47d9404cbe19eb0e80f58361"
+      },
+      {
+        "qid": 13560,
+        "fingerprint": "3f653366140b63625b11e0490015c42e4d62273ceffef5b0f4aa8e0a17cc9f68"
+      },
+      {
+        "qid": 18498,
+        "fingerprint": "39c48a6186d685aebabef517adb66af5c4dbbc7aec2eda03e6796c0b7030e919"
+      }
+    ],
+    [
+      {
+        "qid": 1491,
+        "fingerprint": "ed305e2f4b66b3e6b722cb986b83411cf26dfc0665d54603df8ad3be598b9e0b"
+      },
+      {
+        "qid": 16736,
+        "fingerprint": "599c23e8c9da8456902a778b864a2cc9915f2c7241e78f7a078955f862566c29"
+      }
+    ],
+    [
+      {
+        "qid": 13015,
+        "fingerprint": "0720cbefcd6d53b6e812c74ddfe0dba9f7f66b3ed75d4c46731a2853bf7f1f15"
+      },
+      {
+        "qid": 11870,
+        "fingerprint": "e6d71ba1bdb119da3d4bdd681ce55602ecffee3bdcdf0b9b27731ec99e4f5332"
+      },
+      {
+        "qid": 15549,
+        "fingerprint": "9d58968c461e85ad3eace2b7c70514fed0014ac6c277e063ad3d548834cc3aa8"
+      },
+      {
+        "qid": 16758,
+        "fingerprint": "e2f2dcab23d0d40bf93defa8b6fe588244031a5b2447adeff4aecbe80426f0d5"
+      },
+      {
+        "qid": 19245,
+        "fingerprint": "6de14b793fb1c0aa3bff6b60c7affd6b9e330e3c31851968be76985f205ac83a"
+      }
+    ],
+    [
+      {
+        "qid": 13604,
+        "fingerprint": "37a1806e2b7e5f2c18a06d684c99fd5470744f1b8417691b097eafe4483f2211"
+      },
+      {
+        "qid": 11560,
+        "fingerprint": "aea4a614d39474f4f88d5baf2397d866d318c2f1320b6aed9d45fbd8c97f4423"
+      },
+      {
+        "qid": 11600,
+        "fingerprint": "878890d0568e17b92c0de50d07f401dda57c526fcabc671e3ca35faefb3b510e"
+      },
+      {
+        "qid": 14471,
+        "fingerprint": "dca86317d7edb21142229c3b5eebfefeeaee91685e3b394839431f2f611dd132"
+      }
+    ],
+    [
+      {
+        "qid": 13534,
+        "fingerprint": "d7ff82aa06ef1dd8dec0d94577cf13968f72f3289791b13d1c618a1415cc7eff"
+      },
+      {
+        "qid": 14465,
+        "fingerprint": "ea17c80f3ed0179c2289ec52f4df22f2f2a1618eeeba59e5c038570e45d562de"
+      }
+    ],
+    [
+      {
+        "qid": 12971,
+        "fingerprint": "943390df58ff177307945d7f98c35b9f69383511fd931e88830c5404af9236b9"
+      },
+      {
+        "qid": 17407,
+        "fingerprint": "8be691fbbe264e5a75a3bf46382dc129762b71ffa4b4b1a6ac49277636842946"
+      }
+    ],
+    [
+      {
+        "qid": 15410,
+        "fingerprint": "df6d73dbb0b22ab39098a6678686dfec0d3992d950665a7d9b8d1b42b45e8de3"
+      },
+      {
+        "qid": 19306,
+        "fingerprint": "7480c5c8a36032e4a1316c5f4633b4881bb43ec54ec096cb2c9b57b6e2d5e374"
+      }
+    ],
+    [
+      {
+        "qid": 14289,
+        "fingerprint": "97c8243a3a6a5e2f0bc2475d162fc4bff6fa329f755a46b20eb4898fdff676ca"
+      },
+      {
+        "qid": 19584,
+        "fingerprint": "16b56d794bbef18bcc2ef101fd46d16d8495373417911c6ab5a7fc000920850f"
+      }
+    ],
+    [
+      {
+        "qid": 13632,
+        "fingerprint": "3b2ecf17f2c247e493f8bdd3375ff64189a6ea3aa248d0a59b67c054d71d42a4"
+      },
+      {
+        "qid": 90554,
+        "fingerprint": "feeb90e820c93b97999dbf018ab2f73683df9a650c4b7a9ff28e3f1bc396dcc8"
+      }
+    ],
+    [
+      {
+        "qid": 16800,
+        "fingerprint": "52eea7de1e11b86159d0ea8476afb8d5f63feb094fde8b8316051ab2ae34139b"
+      },
+      {
+        "qid": 14825,
+        "fingerprint": "4aed612ad663e000dceed3b1bb3c726a7eefb85c8cce61386695a38c5a8bfedc"
+      }
+    ],
+    [
+      {
+        "qid": 12575,
+        "fingerprint": "c0198aab71daf2992d7baf2396dcf986ef8e40e95a74d77bf3d9732172b9e1e8"
+      },
+      {
+        "qid": 20190,
+        "fingerprint": "644c52a97c06d64520d2791230193764347b4cc28f465bae8483eb4b5ce181e1"
+      }
+    ],
+    [
+      {
+        "qid": 11397,
+        "fingerprint": "a2378cb812d057053a909b421dd6f876437192be0ef608501f10ce90a8f49c77"
+      },
+      {
+        "qid": 14414,
+        "fingerprint": "28d939dbadcd98dda69c0f634404eff17e0c747e50946c1ee5e1142d3c33fe54"
+      }
+    ],
+    [
+      {
+        "qid": 18598,
+        "fingerprint": "4ed259dc403dcee7af4972ff50a8c9ff1d9e1a6f2d1b49760a2ff2c24ed3bbca"
+      },
+      {
+        "qid": 14453,
+        "fingerprint": "7e7d394f3dbebea003d59c18359a5c0e64e94385d128510db9ff89c001b45325"
+      }
+    ],
+    [
+      {
+        "qid": 1486,
+        "fingerprint": "0fa3c61f8746c4c6b84b3143c1437d8c959b0bf61552edf44ebcb6b30aacb135"
+      },
+      {
+        "qid": 18699,
+        "fingerprint": "114501a5ce339730d885006d3cf8bf26d37ca1f3bc34c652e779f0bace995f42"
+      }
+    ],
+    [
+      {
+        "qid": 16673,
+        "fingerprint": "baa587b0236a10e9bd63b6b494341e98c88e96000a8e03bda8b2dbe3ab2d58a5"
+      },
+      {
+        "qid": 18731,
+        "fingerprint": "9f7e8e67b940e8e40eb26f4c62fd58189b1689a585d0e1471369d8119dbf6655"
+      }
+    ],
+    [
+      {
+        "qid": 11962,
+        "fingerprint": "3f32cca6e3f62ff58fb5687c189e4444e8ea80e4db61b31cced451569325870c"
+      },
+      {
+        "qid": 13885,
+        "fingerprint": "4e1b83b9d87bdf5a4f50f980cb06fe373cbc922d5b427f2880a17b643804721a"
+      },
+      {
+        "qid": 19236,
+        "fingerprint": "d08b505eaf5fcccd0122c445a509b8e09d6bde81e3b698c510311bf6977e8a34"
+      }
+    ],
+    [
+      {
+        "qid": 12475,
+        "fingerprint": "af7ed5a712f3af3699b4b5d9fb6f1d3669eae6d387ccff2d73acb91aca3f6cff"
+      },
+      {
+        "qid": 15796,
+        "fingerprint": "54979bb099275bfc9891340f7f56f07cae818c0e5ae18f539de41da9eb6b1460"
+      }
+    ],
+    [
+      {
+        "qid": 17049,
+        "fingerprint": "ee6150101843678350678b8f019509376709e633d370ee50d8888cd2ad3004b9"
+      },
+      {
+        "qid": 12407,
+        "fingerprint": "cac3b65d7cb954c8c12aa5059a645b55055ef29d730f03d511f91890d641d77d"
+      }
+    ],
+    [
+      {
+        "qid": 13157,
+        "fingerprint": "ff5d7a882203567a022f3361289ea0d294af480f9a510909f093c13a77183d46"
+      },
+      {
+        "qid": 15980,
+        "fingerprint": "8b674497b5f80afbf5995bced4f09410be027e6dcb2e36f14e93300f46e4fa2b"
+      },
+      {
+        "qid": 16117,
+        "fingerprint": "123b0e00c45dd4f7f68ce577c58630c72f3bbd53067c2d9b7546b84e7440e904"
+      },
+      {
+        "qid": 16296,
+        "fingerprint": "cba1226da28ba35c3f45c6de3fa8d193785e2548dfbeade5691dbd3517124312"
+      },
+      {
+        "qid": 17639,
+        "fingerprint": "74d8b4caaa130c9915a6d1b049d71cebd9d58e2d481d05507eb38740c1acff4c"
+      }
+    ],
+    [
+      {
+        "qid": 97,
+        "fingerprint": "2d51756a5e4a87c37bdb2ea4b8b35acbf09bbb2bef14ac14e94b536edeb02b76"
+      },
+      {
+        "qid": 1515,
+        "fingerprint": "585ea1e6d1db8e617e5e3f484a82d6e4f05c388eb93898c245052c033913b884"
+      },
+      {
+        "qid": 18382,
+        "fingerprint": "4e5c4c0fe08368cf5183004ed7234a9544a5fef900f0a70ae7743c7ed781a4d6"
+      }
+    ],
+    [
+      {
+        "qid": 12086,
+        "fingerprint": "813f70a4283f5bf3c731af067efbe942f16a86c5d8b6eead491d3c7c15898ebc"
+      },
+      {
+        "qid": 18305,
+        "fingerprint": "7775bbe70e56d85fc52145b0de654fe7895cdc33d7be471fb384426bad30d079"
+      }
+    ],
+    [
+      {
+        "qid": 15688,
+        "fingerprint": "d047ddd99b934090a6797ac336e76f512e4ace0dbc1a1b1aba0178d6d3485a76"
+      },
+      {
+        "qid": 18501,
+        "fingerprint": "10143b02c2322b57d0fd7bb2a2b03abd20d8e80be583abbea3cfcebe118fa4b2"
+      }
+    ],
+    [
+      {
+        "qid": 90089,
+        "fingerprint": "d740ce67bb6ff7887d98398ef30f4ec6d589a81a55612616f2cafda5605e11b5"
+      },
+      {
+        "qid": 17945,
+        "fingerprint": "7595de6856aec1859786992ccc311a2ae86293f6c363fd3d32e4d0ca6951859b"
+      }
+    ],
+    [
+      {
+        "qid": 12784,
+        "fingerprint": "e641e51ae1cd9b127835aa36d30f98213415176c3228213334b795deb5184c13"
+      },
+      {
+        "qid": 1471,
+        "fingerprint": "80a2485de4d5af1c1c901a38cf3a685697f54444c2056f14da83cbe2d1c6fe29"
+      },
+      {
+        "qid": 14813,
+        "fingerprint": "f9ed1da7569cac9d5778b6bc46c8a0f29aecb9c337c31ba1c12084c8d64e6b2a"
+      },
+      {
+        "qid": 20129,
+        "fingerprint": "661c10bc2f7f3d515967f5e34a5c636e39d2bb817818d219d27cdd5b6a9a3064"
+      }
+    ],
+    [
+      {
+        "qid": 15994,
+        "fingerprint": "6cf42ddac884142af682b516e1c44701439c84f6f2bf9aa0fb62a6d6a4879904"
+      },
+      {
+        "qid": 19324,
+        "fingerprint": "e982bd7d139ba9866dfd0c230e8c5a468c4d17952c723380912f25cbbb16e91d"
+      }
+    ],
+    [
+      {
+        "qid": 11634,
+        "fingerprint": "add40883b79e3989c3ebf1a866f558c5182a9f15543d32aa048f89a58c462d0e"
+      },
+      {
+        "qid": 12437,
+        "fingerprint": "62448c86a56587263d189bccd911dc30a58bfa6c5cef2bf7c2ba25f2e53729b0"
+      },
+      {
+        "qid": 18206,
+        "fingerprint": "d24196a6b63589d5bbfb2df1a6e82f5378854abebc88417a1b72684fc8be3ac4"
+      }
+    ],
+    [
+      {
+        "qid": 12912,
+        "fingerprint": "8b62979b3de6755517aea4664d1c93ef754fd2b870f21fd5a2e99f73a506c2df"
+      },
+      {
+        "qid": 14460,
+        "fingerprint": "339c28121edfc25e5bab646f0f3688400299e2901ac4ab9c7cc50a8d810ceb00"
+      }
+    ],
+    [
+      {
+        "qid": 13449,
+        "fingerprint": "90f1db157507761aea2e5a3946dc0ee69bbb895b93e74eb9c0459d255cad5e19"
+      },
+      {
+        "qid": 18283,
+        "fingerprint": "6d2eea022bc7380fcb2c604da4a21affeda42b2da34663dc372eec0f3c5f0954"
+      }
+    ],
+    [
+      {
+        "qid": 12930,
+        "fingerprint": "92ba07f995eae3aed05f6e616cbf1bb9e061c2acda5a719c5b0a16d98ae57341"
+      },
+      {
+        "qid": 12294,
+        "fingerprint": "787c06101bfdfbb5fdc27fef028b287ab5290f178c764c199277ab85226e0330"
+      },
+      {
+        "qid": 15855,
+        "fingerprint": "469733174d675704e72c367bb734c437432552f3b6022b6f17caabc96ce6c26d"
+      },
+      {
+        "qid": 16633,
+        "fingerprint": "c7826a44c35849cf6da6eccc2fae33b860e579f81a14fa643c9fe1c79bf7fad8"
+      }
+    ],
+    [
+      {
+        "qid": 1374,
+        "fingerprint": "24b6ebe11e5529de2dceba173b83903238d0def64bdb44e426d4168796d7d809"
+      },
+      {
+        "qid": 15217,
+        "fingerprint": "f7c24f1fd54e8885c821799b6b6bc7f0b494aa441ce5c990148dfd728e2ddc67"
+      }
+    ],
+    [
+      {
+        "qid": 12206,
+        "fingerprint": "df08140e30a26029c9c2768643e24681b8fc6b006e0f800a1880efa8ff3345d2"
+      },
+      {
+        "qid": 15387,
+        "fingerprint": "bda8e6f0dbe3118801df8f9de06214fd41ec5dd2976a71aac661fd673a130eee"
+      }
+    ],
+    [
+      {
+        "qid": 12721,
+        "fingerprint": "5f9de3c5fa785e4e6e5fd0c4bdbee7aa455713d7bb6c956825bd4601880589c5"
+      },
+      {
+        "qid": 13139,
+        "fingerprint": "f76bd0c49702220d55db307df002a94a99cf0b124b4b8de95821c642281bdd3b"
+      }
+    ],
+    [
+      {
+        "qid": 1431,
+        "fingerprint": "9ae51bdee2404f7fe8a286cb122b17d8843de9da2b8cf2a252416b69d2974656"
+      },
+      {
+        "qid": 14663,
+        "fingerprint": "dda6a0dbe45a1d77aee1c99d7e62ea727803794e4ae9f85fa1068b80df86e6c1"
+      }
+    ],
+    [
+      {
+        "qid": 13001,
+        "fingerprint": "c92317f0543314bd7a18b45ab782142e4f633636034960c18b65091644b539e0"
+      },
+      {
+        "qid": 17971,
+        "fingerprint": "0a1c079edeec2863a0fed756427af49924547a9f9de6d5dd274b082c650e292a"
+      }
+    ],
+    [
+      {
+        "qid": 11961,
+        "fingerprint": "4a5718a3a3a6629c7776d3ea43e8dbdd5fe5f7045032fb2b74876d60dff33cb5"
+      },
+      {
+        "qid": 19166,
+        "fingerprint": "1d0f19f7ff27f3aaa2accba13814f792a2abbe0ef4da35da9b4a4da0536cd024"
+      }
+    ],
+    [
+      {
+        "qid": 22024,
+        "fingerprint": "61a971d1825f2d2e5a4bb6ec204965ad9a2b80f326a8df8a3ffd3db01c65dd59"
+      },
+      {
+        "qid": 11778,
+        "fingerprint": "53cad6a41a3caf1a327d220e79d0fc15e4cd89f8d71bf9fcac1a0be4452b342e"
+      }
+    ],
+    [
+      {
+        "qid": 18246,
+        "fingerprint": "bc1ac82ed22e8ac549f6c1224c7ad92f59678235e69524a02219466ddcc19eb6"
+      },
+      {
+        "qid": 14832,
+        "fingerprint": "fc09e58c6b1a756b5477c2f4e6abf808f8e2b8eea4758efbbad32519bde01dcd"
+      }
+    ],
+    [
+      {
+        "qid": 15730,
+        "fingerprint": "362048dcab5c0ace5514bdd90fd8e9004e1b85864a1c077adbfd4afbb2df1e68"
+      },
+      {
+        "qid": 17036,
+        "fingerprint": "fcb1448854aa9cb4e0c3b3ef5c42a61352d1554c6e94a9042015acdbcecc9b95"
+      }
+    ],
+    [
+      {
+        "qid": 13216,
+        "fingerprint": "6f6d86f3fd21cd08f52f06595ed6326ee5cc728f965095111909912b00c3590f"
+      },
+      {
+        "qid": 12908,
+        "fingerprint": "32a31e99a6df2fdd1311c105059b0341f3d2e5c3a30b578725e6078e55802ca4"
+      }
+    ],
+    [
+      {
+        "qid": 16873,
+        "fingerprint": "bc172c19871b38e19cdc3643a3a84378e4d769cabc9a55a1e779f2d122dbc101"
+      },
+      {
+        "qid": 18738,
+        "fingerprint": "2fd4ed20ec7ce36c50bc091910c8dc69c53ef9629695a34009862307d1384275"
+      },
+      {
+        "qid": 19833,
+        "fingerprint": "1bdb6fb4f487caa1456c0f4bdfc40eb91e7371ef9a8c452d4d32541ec5d52b27"
+      }
+    ],
+    [
+      {
+        "qid": 16124,
+        "fingerprint": "d7d2eebb278f00875f92644178fe39aafd3e6c6399121ea5e0680086dd058401"
+      },
+      {
+        "qid": 12852,
+        "fingerprint": "8686496a0337f8e1eee08efc40a72fbf1719d8f8e2f6f4ed8f3162d6a298f2a3"
+      }
+    ],
+    [
+      {
+        "qid": 1000001675,
+        "fingerprint": "4c19de36c5676d81bd0e114e7d794991b5430b3fd67891a9366dfad7025cdc1b"
+      },
+      {
+        "qid": 1000001634,
+        "fingerprint": "01554673821a20b5c0e60bb4e32dfc7b5cea7162cc9617fa2a38c8515d587420"
+      }
+    ],
+    [
+      {
+        "qid": 1000000620,
+        "fingerprint": "3d42d856ad6a8300019bea04ba81a51dd38bd8d1aaabd653971674bfd4c03db4"
+      },
+      {
+        "qid": 1000001015,
+        "fingerprint": "0905a0e206dd7f7a2a7997d7d43f2e218eed10c1957e6422c5afe24ffe973064"
+      }
+    ],
+    [
+      {
+        "qid": 1000000867,
+        "fingerprint": "f065099cc05ff1531eba67ae8eb656554db12f307b82bd7d447337ee83b27561"
+      },
+      {
+        "qid": 1000002605,
+        "fingerprint": "a538cfcd1933d9ab3cfb0bb66c1ba084ace3dc037d9cbc780aa53ed5ca51f6d9"
+      }
+    ],
+    [
+      {
+        "qid": 1000003165,
+        "fingerprint": "9e4edd3adf18a44d5df6664de15c420c55274c9327f36a375ac3adc8e81a4dfd"
+      },
+      {
+        "qid": 1000003133,
+        "fingerprint": "d6e3de3acfc9e77901aadade10ef5bc28ec2d9ceaae4b58de7e7d8a21f35a9b2"
+      }
+    ],
+    [
+      {
+        "qid": 1000000827,
+        "fingerprint": "ff5098957fbbc665a915368bc55a522a3f8b9c515543798d34d7046a4a3f9b1e"
+      },
+      {
+        "qid": 1000000680,
+        "fingerprint": "8a0c41714035bad207dcbb3898a8ce98c6ae9cf3b3065b710196e21aea34fa0d"
+      }
+    ],
+    [
+      {
+        "qid": 1000001401,
+        "fingerprint": "4d0f3ee709a085da32fe2c97bff56b74364b80bc714b8217cc64687900c6da58"
+      },
+      {
+        "qid": 1000001395,
+        "fingerprint": "eb1430484de8ead33946e120cb5d399f4d4637649cb6816f0630b9befee960d2"
+      }
+    ],
+    [
+      {
+        "qid": 1000000483,
+        "fingerprint": "565ea0e8d1e260d854540d6676fe823769b2f6cc19f77f66ae7b616de1709007"
+      },
+      {
+        "qid": 1000000554,
+        "fingerprint": "47afd86c6a78c5b54a75caf7574cf331593d2e24e5735ea9b3c75b82201b6eb6"
+      }
+    ],
+    [
+      {
+        "qid": 1000003033,
+        "fingerprint": "a2241b9219aae3074d7535ca403a8cb27afeab7f9d04715f4b749482f733f14c"
+      },
+      {
+        "qid": 1000003259,
+        "fingerprint": "ab642b134978b9e0817b9a87d83c3deade3323911047a4fc407e4335e99045a0"
+      }
+    ],
+    [
+      {
+        "qid": 1000002055,
+        "fingerprint": "cc26f7b6816fe201d10201e917f7b29110f0d0e610520f33fd8d00069eb5442f"
+      },
+      {
+        "qid": 1000001775,
+        "fingerprint": "94a7e0b89ffb6db624470feb5a9e8353f23c1b3123b0859fb001c411b4fe5eb1"
+      }
+    ],
+    [
+      {
+        "qid": 1000000786,
+        "fingerprint": "0304a9f5ce0d99bd8301ae3d789cb65da6248f6f0d4d2be9056d6729c0c144c8"
+      },
+      {
+        "qid": 1000000789,
+        "fingerprint": "395d8877a55dddec812946689a92267610d2131c61a4da85a31a0ba3ee9bf0c8"
+      }
+    ],
+    [
+      {
+        "qid": 1000002629,
+        "fingerprint": "64e35027679d0b48f6f7da1b172b601346f706f5137944e92ffa776328e1851a"
+      },
+      {
+        "qid": 1000002302,
+        "fingerprint": "1d8785d6246fa9b1c0a90d999a4dcf713c4c218fe4c9ea12763c4fd7992263fc"
+      }
+    ],
+    [
+      {
+        "qid": 1000002644,
+        "fingerprint": "05676ed14d2e133d708a61086220ca37a8f22b63366c86849e7d82b7b378bcce"
+      },
+      {
+        "qid": 1000002666,
+        "fingerprint": "89832f9314549db8a9d8206312d6ef0ffd9440835da483a9d54cc88c554b00a2"
+      }
+    ],
+    [
+      {
+        "qid": 1000000535,
+        "fingerprint": "543725c058efa24b15a0cf1faaf24dfc1bc086fb97969f22cfc99e56a3fc94c0"
+      },
+      {
+        "qid": 1000000353,
+        "fingerprint": "11c392fd7dc9bf5542e142684ec5f9fb76848a52b9ac1cfca532311e5de0f0c4"
+      }
+    ],
+    [
+      {
+        "qid": 1000000100,
+        "fingerprint": "0af3624b7e517d7ca0b073f06761c38ef3b24244b1d9c4a5fa6423228a242fc9"
+      },
+      {
+        "qid": 1000000512,
+        "fingerprint": "e63be19a2efc134b6515d9e7c1e12bc3be338ca1ada88d1598091d58b7d76ba3"
+      }
+    ],
+    [
+      {
+        "qid": 1000001576,
+        "fingerprint": "693e591e246d7122903791aa41f13bc3a182f188e6327f272319cd8cdc2bec45"
+      },
+      {
+        "qid": 1000002930,
+        "fingerprint": "99c90e12d916e0ddcde6e03515aee0d03946036cf1accc22a4f655ab8c83d533"
+      }
+    ],
+    [
+      {
+        "qid": 1000002783,
+        "fingerprint": "e1d0ae8329d29aeccdf285a68b2bf38d03fa663b60c63b01e40be5e59e856320"
+      },
+      {
+        "qid": 1000003295,
+        "fingerprint": "9b3670035226fb673ad0f6bd43986cf30fc6dbf061f06e1e2b6086ff89d00143"
+      }
+    ],
+    [
+      {
+        "qid": 1000001602,
+        "fingerprint": "f88212a71c38f0f302429f147e71a15f694e1ac781cc04d3d0d5b5bf63c71099"
+      },
+      {
+        "qid": 1000001665,
+        "fingerprint": "5d1e055205a9799cd4a7c504b4577314f1e2cb6b6ac1b6eefd8c595035cfb543"
+      }
+    ],
+    [
+      {
+        "qid": 1000002966,
+        "fingerprint": "13fed2a19232e424941b39d3fef2264685bad73e7381cd455b5209a69786eb70"
+      },
+      {
+        "qid": 1000001474,
+        "fingerprint": "7c044465b83825170a49de89dc825e74b52bb4144958cf55ab5b9521ebd86ca2"
+      }
+    ],
+    [
+      {
+        "qid": 1000001834,
+        "fingerprint": "0dc244a9480a82cd25001c784f82d05e9e4d68be4736e8559df051e0a94ad9e7"
+      },
+      {
+        "qid": 1000001823,
+        "fingerprint": "a8fa727c01e8e2a019e52950bcac2c3144eba1a54d51e5be7cfd9326b1c4028e"
+      }
+    ],
+    [
+      {
+        "qid": 1000001703,
+        "fingerprint": "af3e995cbed20e26c505ed55a3290f5c589420919dd176e4deea34a57e222b7e"
+      },
+      {
+        "qid": 1000001858,
+        "fingerprint": "f1195a6013e1bbe3dad4084a9d35277ac9220ef6cfd2afe5ec564de734a95503"
+      }
+    ],
+    [
+      {
+        "qid": 1000003561,
+        "fingerprint": "3ab3925f1397b662114e9ed7789a54e5e3124285fd7d386af6f18c343b351784"
+      },
+      {
+        "qid": 1000003656,
+        "fingerprint": "9302ab3ad60d234d9d23e2451557567182837dbd36ddaf54602157bc2f2ffd16"
+      }
+    ],
+    [
+      {
+        "qid": 1000001594,
+        "fingerprint": "2853aaa1fe6c54ce8fb50ed27475aa5532f8f77b2fe85573c29c6ed248606f68"
+      },
+      {
+        "qid": 1000001569,
+        "fingerprint": "b41680866b869af385fa8702de50bd0857037cdc348d5f892f6b80df8f16df5d"
+      }
+    ],
+    [
+      {
+        "qid": 1000001663,
+        "fingerprint": "ce0b91d410580f72f06b87da9b12009d339b1159c5b38b7286693c64febe781e"
+      },
+      {
+        "qid": 1000000894,
+        "fingerprint": "4f49378477f0316d225271d50bc13232a4ffdbfe3cc675fefcd49f94b3a96ce8"
+      }
+    ],
+    [
+      {
+        "qid": 1000000686,
+        "fingerprint": "74dfbfa6626e8a0dbdbb9461dbafd627fe234ae2f3b557d0b89568f674c0d1aa"
+      },
+      {
+        "qid": 1000000903,
+        "fingerprint": "f2c629a2675c6ed0a50f2e6e39a0742f4a88e69a6f0766f9a823b3a4659782a5"
+      }
+    ],
+    [
+      {
+        "qid": 1000000402,
+        "fingerprint": "00f85a1cbc2f201b2a5a14c89749f3188fb1b4b3c10d4730a26c05893e32e2d5"
+      },
+      {
+        "qid": 1000000327,
+        "fingerprint": "b9510efa087a9f9aff5c2a20d4b7f8b264452063efc93f5040fe568547e869ec"
+      }
+    ],
+    [
+      {
+        "qid": 1000003118,
+        "fingerprint": "2cc875d6d35d433eb6958001b7173109346db21d0baf595a0a4971e7868f57f3"
+      },
+      {
+        "qid": 1000001555,
+        "fingerprint": "046222f6ad4b1d8814d71e24f0b765168744717ec53b3fe16862c206c882aab4"
+      }
+    ],
+    [
+      {
+        "qid": 1000001670,
+        "fingerprint": "a95e7d57d3a40e045402602196cb3ec3de1758b42ab21fcd5782d7aba29a1def"
+      },
+      {
+        "qid": 1000001429,
+        "fingerprint": "8142b6381847681638537908772060a6f4ecfb015c5d8f4357634f560aabf4ed"
+      }
+    ],
+    [
+      {
+        "qid": 1000000549,
+        "fingerprint": "a079f7bed0dcf94b40cb804eaff7f8c27d5960660f6fce2036f282dce9e81a1b"
+      },
+      {
+        "qid": 1000001147,
+        "fingerprint": "f461e6763afd9c08875197acd9bdec0a688ce48b5d9530d06798103311857a1f"
+      }
+    ],
+    [
+      {
+        "qid": 1000001830,
+        "fingerprint": "9c253a4413e6ccf40236653820c24daf0794039a924d6d7c87763e209c4396d3"
+      },
+      {
+        "qid": 1000001919,
+        "fingerprint": "c8fd03f8191e7d3dde8388f09966ef0a0679523ce8e93519faadb9bc7501634c"
+      }
+    ],
+    [
+      {
+        "qid": 1000001379,
+        "fingerprint": "57a5cd10052f151bd95c34a0dbc87436300a155d2818b204a94ca9b942fbb516"
+      },
+      {
+        "qid": 1000001374,
+        "fingerprint": "d03e0a1a0d660bd33b291422c61ceb9c38f1f787804d047a76dcfb44f438be2f"
+      }
+    ],
+    [
+      {
+        "qid": 13568,
+        "fingerprint": "50fac7bb3d99f298b5b9cb74cf8d5d660bd8e760efc95918f151a27ad212cab7"
+      },
+      {
+        "qid": 14448,
+        "fingerprint": "6ae970f9ce461ba7a709639e3771e96fc9c90b9a35cfa9814b1d9d295bc4a396"
+      }
+    ],
+    [
+      {
+        "qid": 12872,
+        "fingerprint": "8e102a69722574845efd5a88673d9a6f4520db71354eef9c8d0d47ed1bd4c5e4"
+      },
+      {
+        "qid": 13633,
+        "fingerprint": "0934bf1e52ccd0199cb8c6b958251059e0eab6913dda82bc27a6ad51e98228c3"
+      }
+    ],
+    [
+      {
+        "qid": 1309,
+        "fingerprint": "f8a75e1535dca0a9ce788da07e2b23514b7cc4b8a41dd5804cce2497427a64e7"
+      },
+      {
+        "qid": 12209,
+        "fingerprint": "a929b0afb703c5026f10edac3ffc044972a8dda7b0445d29650a60cc0449484d"
+      }
+    ],
+    [
+      {
+        "qid": 71,
+        "fingerprint": "9581c1b8658ff9916a9e496d27a6df1f77823908b1a1c1138edadf818e73c10e"
+      },
+      {
+        "qid": 16900,
+        "fingerprint": "9702a47fa66470db6467ad67351a47efcd3e2dcd7324cd5ace380a530a8e5aee"
+      },
+      {
+        "qid": 14503,
+        "fingerprint": "3faffabf68e79981bd7efc0335da402703d578980196658690575d79a8a04bd2"
+      },
+      {
+        "qid": 14999,
+        "fingerprint": "9e8fba6cce34f441b3c352502b1defe1e6d1c738ef82951db4c226b18cf4bbe9"
+      }
+    ],
+    [
+      {
+        "qid": 18404,
+        "fingerprint": "bebc0ce72fef43a4ec3b6651c95a555ecc573708791e3c15bdee6301edf328c1"
+      },
+      {
+        "qid": 19809,
+        "fingerprint": "ec61ca12fd0341a3e018819f85785ec4376ab8589469301b7dc5972b496647c5"
+      }
+    ],
+    [
+      {
+        "qid": 18085,
+        "fingerprint": "6435807b41e3978f05b98dea0d1c745b42ad965a0b5ff6626e65a66999280ad1"
+      },
+      {
+        "qid": 19388,
+        "fingerprint": "a68ee91c3be2f72cf342f9976e95713ca9fd43a9cc7519192ef48a1a2a88e98c"
+      }
+    ],
+    [
+      {
+        "qid": 18556,
+        "fingerprint": "dff08a14fa5ca52d21700a7f5650babf7609c2cde4d554751ce239c6947472f4"
+      },
+      {
+        "qid": 18997,
+        "fingerprint": "c090af41513b9d8139b23bc1eaab7142df1f15e731acd79d46dbaa0b756384dc"
+      },
+      {
+        "qid": 12068,
+        "fingerprint": "2bbdcd378e5c56d6d6f9ae13754e8c62afe1745dcc6a53c09e7f8e10d4877224"
+      }
+    ],
+    [
+      {
+        "qid": 14385,
+        "fingerprint": "33e66d532c4354605105f560eb8db662c74302ad4833bf75d05200f87d5f41a4"
+      },
+      {
+        "qid": 16827,
+        "fingerprint": "28ba4790829cac3221f9115dcda0b9810dc645cb73ed365fc53dbe9cf7b46ea7"
+      }
+    ],
+    [
+      {
+        "qid": 15407,
+        "fingerprint": "019b3b2e202f02835711bcc760b4995f491bf82bf27477bd45408352e648e131"
+      },
+      {
+        "qid": 17640,
+        "fingerprint": "fecb6d31c74023f44b31c08ee50fcbc981d2bdb9ad8b68bb17c1c23ae8ce98d0"
+      },
+      {
+        "qid": 11432,
+        "fingerprint": "bcd1d9f0f4ae20a553286cc6cf913a2b22941f95a72f8cbf263a05ac63cb0b71"
+      },
+      {
+        "qid": 19719,
+        "fingerprint": "cb59956258badf221ded8395ecf0dedc3a58a8f27ee85b058644a0acbd1e37e3"
+      },
+      {
+        "qid": 16248,
+        "fingerprint": "c8ed0701fb8638669168e150b5075cdb4f0d0a07710f69ec0e8a606c4fab5289"
+      }
+    ],
+    [
+      {
+        "qid": 19740,
+        "fingerprint": "fc353aefca11fc2f377961dfa1bc4ab2afee39f0d6d8e2fa4d61e676168dab38"
+      },
+      {
+        "qid": 17469,
+        "fingerprint": "d7c9d1c2781f8100d6845bbe72751e3a96b7f20be393328e2bcee2c7efc216e4"
+      },
+      {
+        "qid": 14478,
+        "fingerprint": "cab019de04b34467ceb3935baf60822eef04ffd19164244879d71b67f8f42027"
+      }
+    ],
+    [
+      {
+        "qid": 17452,
+        "fingerprint": "b7b75df5d73f75d27ebff8b07e7bd3add89de72b302a5982ebc3c0b8d856f3ce"
+      },
+      {
+        "qid": 17804,
+        "fingerprint": "3cacf5716ae41717baf6dbfe1ae6c79da9c54f0d7d870276ea1a299172a48dc1"
+      },
+      {
+        "qid": 14643,
+        "fingerprint": "bcd1445e8fd7888ad4a78e7d3f1cdfd51342ad5bd35ba693393932295ddea944"
+      }
+    ],
+    [
+      {
+        "qid": 14549,
+        "fingerprint": "40a63e727face9c70d12e5e3ad61921674cfae643a7cc012f7a8ede9a0502450"
+      },
+      {
+        "qid": 19605,
+        "fingerprint": "8bac6f9c2f513f39f527dbb2ee8efbaadbb308946c9354be692f333fb13756b9"
+      }
+    ],
+    [
+      {
+        "qid": 14780,
+        "fingerprint": "03919658764c5b83ba0749fc41c7ecd035f74f63e6dffcd9aef3a49139d4f0e9"
+      },
+      {
+        "qid": 18875,
+        "fingerprint": "5ed4ed31b1ad1a7e82379ca7e16e972106bea17710e2aeacc437abaed4dd0a89"
+      }
+    ],
+    [
+      {
+        "qid": 19115,
+        "fingerprint": "ada449a51b4b132fdd1023425cf9774b7fbf15652d8e801965bbd922b93558dc"
+      },
+      {
+        "qid": 15037,
+        "fingerprint": "e269828517539b329c334fece3df845c6e53b45497d37b835d9d926df6e24b7a"
+      }
+    ],
+    [
+      {
+        "qid": 19547,
+        "fingerprint": "2a6ab7e0b5069b9e6136413b8fb2e4b809e24b1ec4aeda81730ee66beaa8e79e"
+      },
+      {
+        "qid": 15475,
+        "fingerprint": "fddfc737eedfe555831498fdd6e812ba9366d8e17543e7ed0899cde40102e351"
+      }
+    ],
+    [
+      {
+        "qid": 11610,
+        "fingerprint": "947ac01eef914fea2686716ab2c9bbd8d12eb64896b900acdb9165dc6c5ad336"
+      },
+      {
+        "qid": 16622,
+        "fingerprint": "cef802320964a2eaba9ebf6b9b251c43408c0f5b9d28e3b59f8c02771050c053"
+      }
+    ],
+    [
+      {
+        "qid": 16643,
+        "fingerprint": "c04580857428cb3263c4e4c5956ea1c8df95e4aa6bbd7e063d3f7df04b3d73f1"
+      },
+      {
+        "qid": 18771,
+        "fingerprint": "ac3790c4dfdd4ae2ee17af0bcbc4bfbd47f9872e89ff2a05747351c4a85eb509"
+      }
+    ],
+    [
+      {
+        "qid": 14982,
+        "fingerprint": "942cdc9391e332cbf4ec128efa0ddd9462f67f36768c01b5bd04ec170a43a51a"
+      },
+      {
+        "qid": 17081,
+        "fingerprint": "fb14c74d1af5783dbbf0248a8087c835c1bba8b325dab518fc820cc65212fcce"
+      }
+    ],
+    [
+      {
+        "qid": 17765,
+        "fingerprint": "060a6b5bec42250a2e0935a75e4294cce73b35e2b4a5228c0d39f0c8938f4f45"
+      },
+      {
+        "qid": 17994,
+        "fingerprint": "9f33bf71483f71dfb6f488273cafc7e4a490d407ab1a6d35767f42d1f5eda1f9"
+      }
+    ],
+    [
+      {
+        "qid": 772,
+        "fingerprint": "4573789a4b66a3f6a07922412b96764e81ee1042aa8bd2a505cb5794cf7c5ab8"
+      },
+      {
+        "qid": 11590,
+        "fingerprint": "5f1fcae2052a5d1f01453559a47607edc61199b0982514a8d2883c5f05d829ec"
+      }
+    ],
+    [
+      {
+        "qid": 15494,
+        "fingerprint": "7b82831b37117fd919370ec3ccb7554b253f98b46bccf39a6693a9599d4fa8f5"
+      },
+      {
+        "qid": 16593,
+        "fingerprint": "497e29ce93da8688804eb4ad163823534426a9a8eaaa369bbfbec5a1956c6e11"
+      }
+    ],
+    [
+      {
+        "qid": 14624,
+        "fingerprint": "10ba53a0b7882175492047f6b77d2578633f9b83217a49a7cca646235414b3a8"
+      },
+      {
+        "qid": 15403,
+        "fingerprint": "a1ffcfe95d315c20cba065ca3b7aef119debe557a7709b6d03aeedf1d9c138ec"
+      }
+    ],
+    [
+      {
+        "qid": 11392,
+        "fingerprint": "4dca61e95f5cd6bc786a86146d73e8f39786a34ab00287723464472536b8d2ce"
+      },
+      {
+        "qid": 15983,
+        "fingerprint": "31858c3e68ff93be93ed79284d2b202dff3bdce0886210641e8551b73030ed40"
+      }
+    ],
+    [
+      {
+        "qid": 18849,
+        "fingerprint": "b86687653671b24feafe0c4af41a727c74f26351eb464b0e20cbeed3cbeececb"
+      },
+      {
+        "qid": 19921,
+        "fingerprint": "a6ccb19252c6061680a29948768ad3fc55b47e7eca094ad5845bdb1f9d7a1c9b"
+      }
+    ],
+    [
+      {
+        "qid": 15168,
+        "fingerprint": "de439e0baa7e2f9d944ace080687d9b290415a42f2de5d0d3ad0717e10ab8754"
+      },
+      {
+        "qid": 19116,
+        "fingerprint": "a46be6a005d819fcf89a9da827c828bd1c34fb4595a953e2fdee59dc843de2ae"
+      }
+    ],
+    [
+      {
+        "qid": 16916,
+        "fingerprint": "5dfa6bfcbdab530e859703da971d2ffa31f64d9e0ffd2f86a2fb0e64975f4e40"
+      },
+      {
+        "qid": 19145,
+        "fingerprint": "c600d40a6a70790da6cd23e48dca3e97052360f407ae2930524bcaaa5e379370"
+      }
+    ],
+    [
+      {
+        "qid": 18933,
+        "fingerprint": "88ea6fc4195dc90afe9a3668bd3aee139886be86b49291802adf3a35beb76778"
+      },
+      {
+        "qid": 18985,
+        "fingerprint": "1882e9eb8b99f76e6c5bbe5425dbefec86de44d84b24c3e7fc95674900d6ea0b"
+      },
+      {
+        "qid": 14013,
+        "fingerprint": "3d4a8814b5aacede1f61eac07e7204d6de37d85b1077cac8bb39dcb4e93e50b5"
+      },
+      {
+        "qid": 14051,
+        "fingerprint": "910a5c1e01de2f483e1a9a2015127552b936ba6a63ef2bdce842789ceb1c9b92"
+      }
+    ],
+    [
+      {
+        "qid": 14433,
+        "fingerprint": "1d770cce9bfc329df0e46130536001df97f73635374bec3c19db1ee529f35c7d"
+      },
+      {
+        "qid": 14421,
+        "fingerprint": "024d6fe175c41520b0893f41b002c0d3e4b7387d7fd42708fe2c9a7a9e63737b"
+      }
+    ],
+    [
+      {
+        "qid": 11637,
+        "fingerprint": "bbabd41ea00b382c8e03e999889498d3f21981fdce66fe718a7035b8f59a3806"
+      },
+      {
+        "qid": 17015,
+        "fingerprint": "62b856d3450fea89bd6dc4de4e0c785816a0fe173b322a60641988fe2109c526"
+      }
+    ],
+    [
+      {
+        "qid": 1616,
+        "fingerprint": "43433955b3be5c35fff70561727758f2b20e2a938c37db1f88f17e1d339310bc"
+      },
+      {
+        "qid": 17718,
+        "fingerprint": "6480971e68163bfbf1710b802769fc5d7bde91ab352df79911fed80a4db113d7"
+      }
+    ],
+    [
+      {
+        "qid": 16273,
+        "fingerprint": "8c8734695fbc871e521873b86aabcf4fbf87d3cf98cbc5b40170cc8f61384c93"
+      },
+      {
+        "qid": 17511,
+        "fingerprint": "5495a6410f18749c1da521954000ae6cc24bf75d63c5e92301f37f1ce417adf9"
+      }
+    ],
+    [
+      {
+        "qid": 16602,
+        "fingerprint": "18ece83cae6890ef8509c75e8ee49ec9ed301011aac6a275a609e7fc37e593ff"
+      },
+      {
+        "qid": 16787,
+        "fingerprint": "05fdbcbb40d8b94d05b7b5f5663fc99376c5b75c1c61757afda8f6fa66380b49"
+      }
+    ],
+    [
+      {
+        "qid": 11353,
+        "fingerprint": "28a612afcfd3c711e58341ed0a87173bb9eaf334f7f41893a84e6409eb67a66e"
+      },
+      {
+        "qid": 15515,
+        "fingerprint": "3f5f88972cc87bc4dddb239419429a41877b8f3fac4288cf3047a30958331269"
+      }
+    ],
+    [
+      {
+        "qid": 18071,
+        "fingerprint": "b02c32bbe3b88c722cfab29da471862c3cfc40d01a6f10bda7dcc190becbda6a"
+      },
+      {
+        "qid": 12106,
+        "fingerprint": "5d0e2900482940c6bcef3114b8c80dc3e5175da61bbe79b69ca64cd84acc07e1"
+      }
+    ]
+  ]
+}

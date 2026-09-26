@@ -3,6 +3,27 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 
 const fixtureUrl = "http://127.0.0.1:54329";
 
+test("saved preferences update the authenticated player without a reload", async ({ page, context }) => {
+  await useBillingState(context, "active");
+  await page.goto("/settings");
+  await expect(page.getByText(/1 questions saved/)).toBeVisible();
+  await page.getByRole("switch", { name: "Show keyboard shortcuts", exact: true }).click();
+  await page.getByRole("switch", { name: "Explanation auto-scroll", exact: true }).click();
+  await page.getByRole("button", { name: "Save preferences", exact: true }).click();
+  await expect(page.getByText("Preferences saved", { exact: true })).toBeVisible();
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "New session", exact: true }).click();
+  await page.getByRole("button", { name: "Start session", exact: false }).click();
+  await expect(page.getByText("Question ID 101", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Tap an answer or press/)).toHaveCount(0);
+  const saved = await page.evaluate(() => new Promise<{ showShortcuts: boolean; explanationAutoScroll: boolean }>((resolve) => {
+    const open = indexedDB.open("montreal-study-v1", 1);
+    open.onsuccess = () => { const db = open.result; const tx = db.transaction("records", "readonly"); const data = tx.objectStore("records").get("00000000-0000-4000-8000-000000000101:mccqe"); tx.oncomplete = () => { resolve(data.result.profile); db.close(); }; };
+  }));
+  expect(saved).toMatchObject({ showShortcuts: false, explanationAutoScroll: true });
+  const serverProfile = await page.request.get(`${fixtureUrl}/rest/v1/profiles`);
+  expect(await serverProfile.json()).toEqual([expect.objectContaining({ show_shortcuts: false, explanation_auto_scroll: true })]);
+});
+
 async function useBillingState(context: BrowserContext, state: string) {
   await context.clearCookies();
   const stateResponse = await fetch(`${fixtureUrl}/__fixture/state`, {

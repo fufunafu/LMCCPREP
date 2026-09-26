@@ -1,26 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, Clock3, RotateCcw, Target, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Attempt, Question, Session, Topic } from "@/lib/types";
-import { readDemoPractice } from "@/lib/demo-practice";
 
 export function ReviewView({ session, questions, attempts, topics }: { session: Session; questions: Question[]; attempts: Attempt[]; topics: Topic[] }) {
-  const [effectiveAttempts, setEffectiveAttempts] = useState(attempts);
-  useEffect(() => {
-    if (session.id !== "demo") return;
-    const timer = window.setTimeout(() => {
-      const saved = readDemoPractice(session.mode);
-      if (saved) setEffectiveAttempts(saved.attempts);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [session.id, session.mode]);
-  const byQuestion = new Map(effectiveAttempts.map((attempt) => [attempt.questionId, attempt]));
+  const byQuestion = new Map(attempts.map((attempt) => [attempt.questionId, attempt]));
   const results = questions.map((question) => byQuestion.get(question.id)).filter((attempt): attempt is Attempt => Boolean(attempt));
   const answered = results.filter((attempt) => attempt.chosenIdx !== null);
   const correct = results.filter((attempt) => attempt.correct).length;

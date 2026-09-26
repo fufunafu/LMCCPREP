@@ -9,8 +9,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { qid } = await params;
   if (await isDemoSession()) {
     const questions = await getQuestions();
-    const index = Math.max(0, questions.findIndex((question) => String(question.qid) === qid));
-    return NextResponse.redirect(new URL(`/session/demo?q=${index + 1}`, request.url));
+    const question = questions.find((question) => String(question.qid) === qid);
+    return NextResponse.redirect(new URL(question ? `/session/demo-question-${question.qid}` : "/questions", request.url));
   }
   const supabase = await createClient();
   let userId: string;

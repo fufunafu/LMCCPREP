@@ -125,7 +125,7 @@ function subscriptionRows() {
   return [];
 }
 
-const subject = { id: "medicine", name: "Medicine", question_count: 1 };
+const subject = { id: "medicine", name: "Medicine", question_count: 1, exam_id: "mccqe" };
 const topic = { id: "medicine/fixture", name: "Fixture topic", question_count: 1, subject_id: "medicine" };
 const question = {
   answer_index: 0,
@@ -148,6 +148,7 @@ const profile = {
 
 function rowsForTable(table, request) {
   switch (table) {
+    case "exams": return [{ id: "mccqe", name: "MCCQE", short_name: "MCCQE", seconds_per_question: 83, section_size: 115 }];
     case "billing_access_grants": return [];
     case "billing_customers": return customerRows();
     case "billing_subscriptions": return subscriptionRows();
@@ -189,6 +190,8 @@ const server = createServer(async (request, response) => {
     const allowed = ["unsubscribed", "active", "canceled_active", "expired", "past_due", "rollback_disabled"];
     if (!allowed.includes(body?.state)) return json(response, 400, { error: "Unknown fixture state" });
     billingState = body.state;
+    profile.show_shortcuts = true;
+    profile.explanation_auto_scroll = false;
     return json(response, 200, { state: billingState });
   }
   if (url.pathname === "/auth/v1/.well-known/jwks.json") return json(response, 200, { keys: [publicJwk] });
@@ -199,12 +202,17 @@ const server = createServer(async (request, response) => {
     const rpc = url.pathname.slice("/rest/v1/rpc/".length);
     if (rpc === "current_exam_id") return json(response, 200, "mccqe");
     if (rpc === "has_billing_access") return json(response, 200, entitled());
+    if (rpc === "billing_access_snapshot") return json(response, 200, { allowed: entitled(), exam_id: "mccqe", valid_until: new Date(Date.now() + 72 * 3600_000).toISOString() });
     if (rpc === "pick_questions") return json(response, 200, entitled() ? [101] : []);
     if (rpc === "get_public_subject_counts") return json(response, 200, [subject]);
     return json(response, 200, null);
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     const table = url.pathname.slice("/rest/v1/".length);
+    if (table === "profiles" && request.method === "POST") {
+      Object.assign(profile, await requestBody(request));
+      return json(response, 201, [profile]);
+    }
     if (table === "sessions" && request.method === "POST") {
       await requestBody(request);
       const row = { id: sessionId };

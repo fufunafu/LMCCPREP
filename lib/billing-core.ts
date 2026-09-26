@@ -257,6 +257,11 @@ export function billingMarketingAvailable(env: BillingEnvironment = process.env)
   return billingPlans(env).every((plan) => plan.amountCad !== undefined);
 }
 
+/** Keep marketing and purchase disclosures on the same availability decision. */
+export function publicCheckoutAvailable(env: BillingEnvironment = process.env) {
+  return billingMarketingAvailable(env) && billingConfigured(env);
+}
+
 /** The trusted price configuration defines exam access, never client metadata. */
 export function examForPrice(priceId: string | undefined, env: BillingEnvironment = process.env) {
   const key = planForPrice(priceId, env);

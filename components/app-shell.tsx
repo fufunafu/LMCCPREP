@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, CalendarClock, CircleHelp, GraduationCap, LayoutDashboard, PlusCircle, Settings, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, BookOpenText, CalendarClock, CircleHelp, GraduationCap, LayoutDashboard, LoaderCircle, PlusCircle, Settings, ShieldCheck, Sparkles, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { Exam } from "@/lib/types";
+import { StudyProvider } from "@/components/study-provider";
+import { StudyStatus } from "@/components/study-status";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -17,25 +19,32 @@ const items = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+function NavigationIcon({ icon: Icon, className }: { icon: LucideIcon; className: string }) {
+  const { pending } = useLinkStatus();
+  return pending
+    ? <span role="status" aria-label="Loading page" className={className}><LoaderCircle aria-hidden="true" className="size-full motion-safe:animate-spin" /></span>
+    : <Icon aria-hidden="true" className={className} />;
+}
+
 function activePath(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === href;
   return pathname.startsWith(href) || (href === "/create" && pathname.startsWith("/session"));
 }
 
-export function AppShell({ children, user, demo = false, admin = false, tutor = false, exams = [], currentExamId = "" }: { children: React.ReactNode; user?: { name: string; email: string; streakDays?: number }; demo?: boolean; admin?: boolean; tutor?: boolean; exams?: Exam[]; currentExamId?: string }) {
+export function AppShell({ children, user, demo = false, admin = false, tutor = false, exams = [], currentExamId = "" }: { children: React.ReactNode; user?: { id?: string; name: string; email: string; streakDays?: number }; demo?: boolean; admin?: boolean; tutor?: boolean; exams?: Exam[]; currentExamId?: string }) {
   const currentExam = exams.find((exam) => exam.id === currentExamId);
   const navItems = [...items, ...(tutor ? [{ href: "/coaching/tutor", label: "Tutor", icon: CalendarClock }] : []), ...(admin ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : [])];
   const initials = (user?.name ?? "LP").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const pathname = usePathname();
   return (
-    <div className="min-h-screen bg-muted/30">
+    <StudyProvider userId={demo ? "demo-user" : user?.id} examId={currentExamId}><div className="min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col border-r bg-background md:flex">
         <div className="flex h-20 items-center px-6"><Logo className="text-lg" /></div>
         {currentExam && <div className="mb-4 px-6"><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Your question bank</p><p className="mt-1 text-sm font-semibold text-emerald-800 dark:text-emerald-300">{currentExam.shortName}</p></div>}
         <nav aria-label="Main navigation" className="flex-1 space-y-1 px-3">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} aria-current={activePath(pathname, href) ? "page" : undefined} className={cn("flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground", activePath(pathname, href) && "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300")}>
-              <Icon className="size-[18px]" />{label}
+              <NavigationIcon icon={Icon} className="size-[18px] shrink-0" />{label}
             </Link>
           ))}
         </nav>
@@ -51,14 +60,14 @@ export function AppShell({ children, user, demo = false, admin = false, tutor = 
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">
         <Logo className="text-base" /><div className="flex items-center gap-1">{currentExam && <span className="mr-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">{currentExam.shortName}</span>}<ThemeToggle /><Link href="/faq" aria-label="Help" className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><CircleHelp className="size-4" /></Link></div>
       </header>
-      <main id="main-content" tabIndex={-1} className="pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none md:ml-[248px] md:pb-0">{demo && <div role="status" className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-center text-xs font-medium text-blue-950 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-100">Simulated demo data. Changes are temporary and remain only in this browser.</div>}{children}</main>
+      <main id="main-content" tabIndex={-1} className="pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none md:ml-[248px] md:pb-0">{demo && <div role="status" className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-center text-xs font-medium text-blue-950 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-100">Simulated demo data. Changes are temporary and remain only in this browser.</div>}<StudyStatus />{children}</main>
       <nav aria-label="Primary" className={cn("fixed inset-x-0 bottom-0 z-50 grid min-h-[76px] border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden", navItems.length > 6 ? "grid-cols-7" : "grid-cols-6")}>
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} aria-current={activePath(pathname, href) ? "page" : undefined} className={cn("flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground", activePath(pathname, href) && "text-emerald-800 dark:text-emerald-400")}>
-            <Icon className="size-5" />{label === "New session" ? "Practice" : label}
+            <NavigationIcon icon={Icon} className="size-5 shrink-0" />{label === "New session" ? "Practice" : label}
           </Link>
         ))}
       </nav>
-    </div>
+    </div></StudyProvider>
   );
 }
